@@ -32,8 +32,7 @@ type TileType byte
 
 // Grid represents a game.
 type Grid struct {
-	Tiles         [][]Tile
-	Width, Height int
+	Tiles [][]Tile
 }
 
 // Tile represents a tile in the game of gridspech. The default value of a tile will have

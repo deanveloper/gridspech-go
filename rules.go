@@ -13,9 +13,9 @@ func (g Grid) ValidTile(t Tile) bool {
 	case Crown:
 		return g.validCrown(t)
 	case Dot1:
-		return g.neighborsWithState(t, Enabled).Len() == 1
+		return g.NeighborsWithState(t, Enabled).Len() == 1
 	case Dot2:
-		return g.neighborsWithState(t, Enabled).Len() == 2
+		return g.NeighborsWithState(t, Enabled).Len() == 2
 	default:
 		panic(fmt.Sprintf("invalid tile type %v", t.Type))
 	}
@@ -34,14 +34,14 @@ func (g Grid) validGoal(start Tile) bool {
 			goals++
 
 			// requirement 2: The goals should have exactly 1 neighbor with the same state.
-			neighbors := g.neighborsWithState(t, t.State)
+			neighbors := g.NeighborsWithState(t, t.State)
 			if len(neighbors.Slice()) != 1 {
 				return false
 			}
 		}
 
 		// requirement 3: All other tiles in the blob should have exactly 2 neighbors with the same state.
-		if t.Type != Goal && len(g.neighborsWithState(t, t.State).Slice()) != 2 {
+		if t.Type != Goal && len(g.NeighborsWithState(t, t.State).Slice()) != 2 {
 			return false
 		}
 	}
