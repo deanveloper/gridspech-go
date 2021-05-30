@@ -39,7 +39,8 @@ type Grid struct {
 // Tile represents a tile in the game of gridspech. The default value of a tile will have
 // `Type = Hole`.
 type Tile struct {
-	State TileState
-	Type  TileType
-	X, Y  int
+	State  TileState
+	Type   TileType
+	Sticky bool
+	X, Y   int
 }
