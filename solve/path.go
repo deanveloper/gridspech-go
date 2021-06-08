@@ -20,7 +20,7 @@ type TileSet = gridspech.TileSet
 //   3. have the same state as start.
 func (g Grid) SolveGoals(start, end Tile) <-chan TileSet {
 	ch := make(chan TileSet)
-	if end.Sticky && start.State != end.State {
+	if end.Sticky && start.Color != end.Color {
 		close(ch)
 		return ch
 	}
@@ -49,7 +49,7 @@ func (g Grid) dfsDirectPaths(prev, end Tile, path TileSet, ch chan<- TileSet) {
 
 		// represents neighbors with the same state
 		prevNeighbors := g.NeighborsWith(prev, func(t Tile) bool {
-			return t.State == prev.State || path.Has(t)
+			return t.Color == prev.Color || path.Has(t)
 		})
 
 		// in diagrams: p is prev, n is next, x is same State, o is diff State
@@ -71,7 +71,7 @@ func (g Grid) dfsDirectPaths(prev, end Tile, path TileSet, ch chan<- TileSet) {
 		}
 
 		nextNeighbors := g.NeighborsWith(prev, func(t Tile) bool {
-			return t.State == prev.State || path.Has(t)
+			return t.Color == prev.Color || path.Has(t)
 		})
 
 		// prune if next will def be invalid
@@ -80,7 +80,7 @@ func (g Grid) dfsDirectPaths(prev, end Tile, path TileSet, ch chan<- TileSet) {
 		}
 		// we prune when we are next to a goal of the same type (and that neighbor is not prev)
 		for _, neighbor := range nextNeighbors.Slice() {
-			if neighbor.Type == gridspech.Goal && neighbor != prev {
+			if neighbor.Type == gridspech.TypeGoal && neighbor != prev {
 				continue
 			}
 		}

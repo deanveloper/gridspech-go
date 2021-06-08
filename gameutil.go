@@ -14,7 +14,7 @@ func (g Grid) Height() int {
 
 // NorthOf returns the tile north of t in g.
 func (g Grid) NorthOf(t Tile) Tile {
-	if t.Y == g.Height()-1 || t.Type == Hole {
+	if t.Y == g.Height()-1 || t.Type == TypeHole {
 		return Tile{}
 	}
 	return g.Tiles[t.X][t.Y+1]
@@ -22,7 +22,7 @@ func (g Grid) NorthOf(t Tile) Tile {
 
 // EastOf returns the tile east of t in g.
 func (g Grid) EastOf(t Tile) Tile {
-	if t.X == g.Width()-1 || t.Type == Hole {
+	if t.X == g.Width()-1 || t.Type == TypeHole {
 		return Tile{}
 	}
 	return g.Tiles[t.X+1][t.Y]
@@ -30,7 +30,7 @@ func (g Grid) EastOf(t Tile) Tile {
 
 // SouthOf returns the tile south of t in g.
 func (g Grid) SouthOf(t Tile) Tile {
-	if t.Y == 0 || t.Type == Hole {
+	if t.Y == 0 || t.Type == TypeHole {
 		return Tile{}
 	}
 	return g.Tiles[t.X][t.Y-1]
@@ -38,7 +38,7 @@ func (g Grid) SouthOf(t Tile) Tile {
 
 // WestOf returns the tile west of t in g.
 func (g Grid) WestOf(t Tile) Tile {
-	if t.X == 0 || t.Type == Hole {
+	if t.X == 0 || t.Type == TypeHole {
 		return Tile{}
 	}
 	return g.Tiles[t.X-1][t.Y]
@@ -48,16 +48,16 @@ func (g Grid) WestOf(t Tile) Tile {
 func (g Grid) Neighbors(t Tile) TileSet {
 	var ts TileSet
 	ts.Init()
-	if neighbor := g.NorthOf(t); neighbor.Type != Hole {
+	if neighbor := g.NorthOf(t); neighbor.Type != TypeHole {
 		ts.Add(neighbor)
 	}
-	if neighbor := g.EastOf(t); neighbor.Type != Hole {
+	if neighbor := g.EastOf(t); neighbor.Type != TypeHole {
 		ts.Add(neighbor)
 	}
-	if neighbor := g.SouthOf(t); neighbor.Type != Hole {
+	if neighbor := g.SouthOf(t); neighbor.Type != TypeHole {
 		ts.Add(neighbor)
 	}
-	if neighbor := g.WestOf(t); neighbor.Type != Hole {
+	if neighbor := g.WestOf(t); neighbor.Type != TypeHole {
 		ts.Add(neighbor)
 	}
 	return ts
@@ -70,7 +70,7 @@ func (g Grid) TilesWith(pred func(Tile) bool) TileSet {
 
 	for _, col := range g.Tiles {
 		for _, tile := range col {
-			if tile.Type != Hole && pred(tile) {
+			if tile.Type != TypeHole && pred(tile) {
 				ts.Add(tile)
 			}
 		}
@@ -90,7 +90,9 @@ func (g Grid) Blob(t Tile) TileSet {
 }
 
 func (g Grid) blobRecur(t Tile, ts TileSet) {
-	neighbors := g.NeighborsWithState(t, t.State)
+	neighbors := g.NeighborsWith(t, func(other Tile) bool {
+		return other.Color == t.Color
+	})
 
 	for _, neighbor := range neighbors.Slice() {
 		if !ts.Has(neighbor) {
@@ -101,7 +103,7 @@ func (g Grid) blobRecur(t Tile, ts TileSet) {
 }
 
 // NeighborsWith returns the set of neighbors such that `pred` returns true
-func (g Grid) NeighborsWith(t Tile, pred func(Tile) bool) TileSet {
+func (g Grid) NeighborsWith(t Tile, pred func(o Tile) bool) TileSet {
 	neighbors := g.Neighbors(t)
 	for _, neighbor := range neighbors.Slice() {
 		if !pred(neighbor) {
@@ -111,21 +113,10 @@ func (g Grid) NeighborsWith(t Tile, pred func(Tile) bool) TileSet {
 	return neighbors
 }
 
-// NeighborsWithState returns the set of neighbors which have a certain state
-func (g Grid) NeighborsWithState(t Tile, state TileState) TileSet {
-	neighbors := g.Neighbors(t)
-	for _, neighbor := range neighbors.Slice() {
-		if neighbor.State != state {
-			neighbors.Remove(neighbor)
-		}
-	}
-	return neighbors
-}
-
 // SetState sets the state of t in g.
-func (g Grid) SetState(t Tile, state TileState) {
+func (g Grid) SetState(t Tile, state TileColor) {
 	if !t.Sticky {
-		g.Tiles[t.X][t.Y].State = state
+		g.Tiles[t.X][t.Y].Color = state
 	}
 }
 
@@ -166,22 +157,24 @@ func (g Grid) tileFromBytes(hole, typ, state, sticky byte) Tile {
 	var tile Tile
 	switch typ {
 	case ' ':
-		tile.Type = Blank
+		tile.Type = TypeBlank
 	case 'g':
-		tile.Type = Goal
+		tile.Type = TypeGoal
 	case 'c':
-		tile.Type = Crown
+		tile.Type = TypeCrown
 	case '1':
-		tile.Type = Dot1
+		tile.Type = TypeDot1
 	case '2':
-		tile.Type = Dot2
+		tile.Type = TypeDot2
 	}
 
 	switch state {
 	case 'O':
-		tile.State = Disabled
-	case 'X':
-		tile.State = Enabled
+		tile.Color = 0
+	case 'A':
+		tile.Color = 1
+	case 'B':
+		tile.Color = 2
 	}
 
 	tile.Sticky = sticky == '/'
@@ -195,7 +188,7 @@ func (g Grid) String() string {
 	for _, col := range g.Tiles {
 		for _, tile := range col {
 
-			if tile.Type == Hole {
+			if tile.Type == TypeHole {
 				sb.WriteString("[   ] ")
 				continue
 			}
@@ -203,24 +196,24 @@ func (g Grid) String() string {
 			sb.WriteByte('[')
 
 			switch tile.Type {
-			case Blank:
+			case TypeBlank:
 				sb.WriteByte(' ')
-			case Goal:
+			case TypeGoal:
 				sb.WriteByte('g')
-			case Crown:
+			case TypeCrown:
 				sb.WriteByte('c')
-			case Dot1:
+			case TypeDot1:
 				sb.WriteByte('1')
-			case Dot2:
+			case TypeDot2:
 				sb.WriteByte('2')
 			}
 
-			switch tile.State {
-			case Enabled:
-				sb.WriteByte('X')
-			case Disabled:
+			if tile.Color == 0 {
 				sb.WriteByte('O')
+			} else {
+				sb.WriteByte('A' + byte(tile.Color) - 1)
 			}
+
 			if tile.Sticky {
 				sb.WriteByte('/')
 			} else {

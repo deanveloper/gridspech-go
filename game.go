@@ -1,31 +1,24 @@
 package gridspech
 
 const (
-	// Disabled is the disabled tile state.
-	Disabled TileState = iota
-	// Enabled is the Enabled tile state.
-	Enabled
-)
-
-const (
-	// Hole represents a tile which does not exist. They cannot have state.
-	Hole TileType = iota
-	// Blank is a tile which does not have any icons.
-	Blank
-	// Goal is a tile which must have a direct path to another goal.
-	Goal
-	// Crown tiles must touch all tiles of their state.
+	// TypeHole represents a tile which does not exist. They cannot have state.
+	TypeHole TileType = iota
+	// TypeBlank is a tile which does not have any icons.
+	TypeBlank
+	// TypeGoal is a tile which must have a direct path to another goal.
+	TypeGoal
+	// TypeCrown tiles must touch all tiles of their state.
 	// If there are multiple crowns on the same state, they must not not touch each other, and
 	// together they must touch all tiles of their state.
-	Crown
-	// Dot1 must be touching exactly 1 enabled tile.
-	Dot1
-	// Dot2 must be touching exactly 2 enabled tiles.
-	Dot2
+	TypeCrown
+	// TypeDot1 must be touching exactly 1 tile with Color>1.
+	TypeDot1
+	// TypeDot2 must be touching exactly 2 tile with Color>1.
+	TypeDot2
 )
 
-// TileState represents if a tile is Enabled or Disabled.
-type TileState byte
+// TileColor represents if a tile is Enabled or Disabled.
+type TileColor byte
 
 // TileType represents what kind of tile it is, ie "what icon to display on it".
 type TileType byte
@@ -38,7 +31,7 @@ type Grid struct {
 // Tile represents a tile in the game of gridspech. The default value of a tile will have
 // `Type = Hole`.
 type Tile struct {
-	State  TileState
+	Color  TileColor
 	Type   TileType
 	Sticky bool
 	X, Y   int

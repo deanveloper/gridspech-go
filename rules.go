@@ -6,16 +6,20 @@ import "fmt"
 // the grid is completed.
 func (g Grid) ValidTile(t Tile) bool {
 	switch t.Type {
-	case Hole, Blank:
+	case TypeHole, TypeBlank:
 		return true
-	case Goal:
+	case TypeGoal:
 		return g.validGoal(t)
-	case Crown:
+	case TypeCrown:
 		return g.validCrown(t)
-	case Dot1:
-		return g.NeighborsWithState(t, Enabled).Len() == 1
-	case Dot2:
-		return g.NeighborsWithState(t, Enabled).Len() == 2
+	case TypeDot1:
+		return g.NeighborsWith(t, func(other Tile) bool {
+			return other.Color != 0
+		}).Len() == 1
+	case TypeDot2:
+		return g.NeighborsWith(t, func(other Tile) bool {
+			return other.Color != 0
+		}).Len() == 2
 	default:
 		panic(fmt.Sprintf("invalid tile type %v", t.Type))
 	}
@@ -30,18 +34,23 @@ func (g Grid) validGoal(start Tile) bool {
 	blob := g.Blob(start)
 	var goals int
 	for _, t := range blob.Slice() {
-		if t.Type == Goal {
+		if t.Type == TypeGoal {
 			goals++
 
 			// requirement 2: The goals should have exactly 1 neighbor with the same state.
-			neighbors := g.NeighborsWithState(t, t.State)
+			neighbors := g.NeighborsWith(t, func(o Tile) bool {
+				return t.Color == o.Color
+			})
 			if len(neighbors.Slice()) != 1 {
 				return false
 			}
 		}
 
 		// requirement 3: All other tiles in the blob should have exactly 2 neighbors with the same state.
-		if t.Type != Goal && len(g.NeighborsWithState(t, t.State).Slice()) != 2 {
+		neighborsSameColor := g.NeighborsWith(t, func(o Tile) bool {
+			return t.Color == o.Color
+		}).Slice()
+		if t.Type != TypeGoal && len(neighborsSameColor) != 2 {
 			return false
 		}
 	}
@@ -58,13 +67,13 @@ func (g Grid) validCrown(start Tile) bool {
 
 	// requirement 1: No other crowns may be in this crown's blob.
 	for _, tile := range blob.Slice() {
-		if tile.Type == Crown && tile != start {
+		if tile.Type == TypeCrown && tile != start {
 			return false
 		}
 	}
 
 	crownsWithSameState := g.TilesWith(func(t Tile) bool {
-		return t.Type == Crown && t.State == start.State
+		return t.Type == TypeCrown && t.Color == start.Color
 	})
 
 	// set of blobs of all crowns with same state
@@ -75,7 +84,7 @@ func (g Grid) validCrown(start Tile) bool {
 
 	// set of all tiles with same state
 	stateSet := g.TilesWith(func(t Tile) bool {
-		return t.Type != Hole && t.State == start.State
+		return t.Type != TypeHole && t.Color == start.Color
 	})
 
 	// requirement 2: All tiles with the same state must have a crown in its blob.
