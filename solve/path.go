@@ -17,7 +17,7 @@ type TileSet = gridspech.TileSet
 // These paths will:
 //   1. never contain a goal tile that isn't start or end.
 //   2. never make a path that would cause start or end to become invalid Goal tiles.
-//   3. have the same state as start.
+//   3. have the same Color as start.
 func (g Grid) SolveGoals(start, end Tile) <-chan TileSet {
 	ch := make(chan TileSet)
 	if end.Sticky && start.Color != end.Color {
@@ -34,10 +34,19 @@ func (g Grid) SolveGoals(start, end Tile) <-chan TileSet {
 }
 
 // we do not iterate in any particular order since it does not matter.
+// this function will only create direct paths, aka ones which would satisfy
+// a Goal tile.
 func (g Grid) dfsDirectPaths(prev, end Tile, path TileSet, ch chan<- TileSet) {
 	neighbors := g.Neighbors(prev)
 	for _, next := range neighbors.Slice() {
+
+		// no circular paths
 		if path.Has(next) {
+			continue
+		}
+
+		// we cannot traverse into a Goal tile
+		if next.Type == gridspech.TypeGoal {
 			continue
 		}
 
@@ -47,17 +56,19 @@ func (g Grid) dfsDirectPaths(prev, end Tile, path TileSet, ch chan<- TileSet) {
 			return
 		}
 
-		// represents neighbors with the same state
+		// represents neighbors with the same Color (or prospective Color)
 		prevNeighbors := g.NeighborsWith(prev, func(t Tile) bool {
 			return t.Color == prev.Color || path.Has(t)
 		})
 
-		// in diagrams: p is prev, n is next, x is same State, o is diff State
+		// in diagrams: p is prev, n is next, x is same Color, o is diff Color
 
 		// we prune:
 		// ooo
 		// xpn
 		// oxo
+		// (aka we will not create a new tile of a different color if
+		// we already have 2 neighbors of the same color)
 		if prevNeighbors.Len() == 2 && !prevNeighbors.Has(next) {
 			continue
 		}
@@ -65,24 +76,10 @@ func (g Grid) dfsDirectPaths(prev, end Tile, path TileSet, ch chan<- TileSet) {
 		// ooo
 		// xpn
 		// ooo
-		// where n is a sticky element with different State
+		// where n is a sticky element with different Color
+		// (aka we cannot change a tile that is sticky)
 		if prevNeighbors.Len() == 1 && !prevNeighbors.Has(next) && next.Sticky {
 			continue
-		}
-
-		nextNeighbors := g.NeighborsWith(prev, func(t Tile) bool {
-			return t.Color == prev.Color || path.Has(t)
-		})
-
-		// prune if next will def be invalid
-		if nextNeighbors.Len() > 2 {
-			continue
-		}
-		// we prune when we are next to a goal of the same type (and that neighbor is not prev)
-		for _, neighbor := range nextNeighbors.Slice() {
-			if neighbor.Type == gridspech.TypeGoal && neighbor != prev {
-				continue
-			}
 		}
 
 		// setup for recursion
