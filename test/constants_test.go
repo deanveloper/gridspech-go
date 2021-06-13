@@ -1,4 +1,4 @@
-package game_test
+package gridspech_test
 
 import (
 	"testing"
@@ -30,13 +30,19 @@ var invalidTestGrid = `
 [c  ] [ B ] [   ] [   ] [ A ]
 `
 
+// MakeValidGrid returns a grid which contains a tile of every single Type and Color,
+// and all tiles are valid.
 func MakeValidGrid() gs.Grid {
 	return gs.MakeGridFromString(validTestGrid)
 }
+
+// MakeInvalidGrid returns a grid which contains a tile of every single Type and Color,
+// and all non-blank and non-hole tiles are invalid.
 func MakeInvalidGrid() gs.Grid {
 	return gs.MakeGridFromString(invalidTestGrid)
 }
 
+// TestMakeGridFromString tests creating a grid from a string.
 func TestMakeGridFromString(t *testing.T) {
 	tiles := MakeValidGrid().Tiles
 
@@ -54,15 +60,12 @@ func TestMakeGridFromString(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		testCase.Expected.X = testCase.Actual.X
-		testCase.Expected.Y = testCase.Actual.Y
+		// discard X/Y so we can use ==
+		testCase.Actual.X = 0
+		testCase.Actual.Y = 0
 
 		if testCase.Expected != testCase.Actual {
 			t.Errorf("\nexpected: %#v\ngot:      %#v\n", testCase.Expected, testCase.Actual)
 		}
 	}
-}
-
-func TestRules(t *testing.T) {
-
 }
