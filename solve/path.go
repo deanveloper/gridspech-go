@@ -26,8 +26,7 @@ func (g Grid) SolveGoals(start, end Tile) <-chan TileSet {
 	}
 	go func() {
 		var ts TileSet
-		ts.Init()
-		g.dfsDirectPaths(start, end, ts, ch)
+		g.dfsDirectPaths(start, end, &ts, ch)
 		close(ch)
 	}()
 	return ch
@@ -36,7 +35,7 @@ func (g Grid) SolveGoals(start, end Tile) <-chan TileSet {
 // we do not iterate in any particular order since it does not matter.
 // this function will only create direct paths, aka ones which would satisfy
 // a Goal tile.
-func (g Grid) dfsDirectPaths(prev, end Tile, path TileSet, ch chan<- TileSet) {
+func (g Grid) dfsDirectPaths(prev, end Tile, path *TileSet, ch chan<- TileSet) {
 	neighbors := g.Neighbors(prev)
 	for _, next := range neighbors.Slice() {
 
@@ -52,7 +51,10 @@ func (g Grid) dfsDirectPaths(prev, end Tile, path TileSet, ch chan<- TileSet) {
 
 		if next == end {
 			path.Add(next)
-			ch <- path
+
+			var cloned TileSet
+			cloned.Merge(*path)
+			ch <- cloned
 			return
 		}
 
