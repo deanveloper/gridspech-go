@@ -20,6 +20,8 @@ func (g Grid) ValidTile(t Tile) bool {
 		return g.NeighborsWith(t, func(other Tile) bool {
 			return other.Color != 0
 		}).Len() == 2
+	case TypePlus:
+		return g.validPlus(t)
 	default:
 		panic(fmt.Sprintf("invalid tile type %v", t.Type))
 	}
@@ -89,4 +91,17 @@ func (g Grid) validCrown(start Tile) bool {
 
 	// requirement 2: All tiles with the same state must have a crown in its blob.
 	return crownsBlobSet.Eq(stateSet)
+}
+
+func (g Grid) validPlus(t Tile) bool {
+	var foundExactlyOne bool
+	for _, blobTile := range g.Blob(t).Slice() {
+		if blobTile.Type != TypeHole && blobTile.Type != TypeBlank {
+			if foundExactlyOne {
+				return false
+			}
+			foundExactlyOne = true
+		}
+	}
+	return foundExactlyOne
 }

@@ -166,6 +166,8 @@ func (g Grid) tileFromBytes(hole, typ, state, sticky byte) Tile {
 		tile.Type = TypeDot1
 	case '2':
 		tile.Type = TypeDot2
+	case '+':
+		tile.Type = TypePlus
 	}
 
 	switch state {
@@ -206,6 +208,8 @@ func (g Grid) String() string {
 				sb.WriteByte('1')
 			case TypeDot2:
 				sb.WriteByte('2')
+			case TypePlus:
+				sb.WriteByte('+')
 			}
 
 			if tile.Color == 0 {

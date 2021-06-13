@@ -15,6 +15,8 @@ const (
 	TypeDot1
 	// TypeDot2 must be touching exactly 2 tile with Color >= 1.
 	TypeDot2
+	// TypePlus must touch exactly 1 tile with a non-blank type.
+	TypePlus
 )
 
 // TileColor represents if a tile is disabled (0), or has a color (> 0, different colors have increasing numbers).
