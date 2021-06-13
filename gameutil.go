@@ -1,6 +1,8 @@
 package gridspech
 
-import "strings"
+import (
+	"strings"
+)
 
 // Width of the grid.
 func (g Grid) Width() int {
@@ -79,7 +81,7 @@ func (g Grid) TilesWith(pred func(Tile) bool) TileSet {
 	return ts
 }
 
-// Blob returns all tiles which can form a path to t such that all tiles in the path have the same state.
+// Blob returns all tiles which can form a path to t such that all tiles in the path have the same Color.
 func (g Grid) Blob(t Tile) TileSet {
 	var ts TileSet
 	ts.Init()
@@ -122,12 +124,23 @@ func (g Grid) SetState(t Tile, state TileColor) {
 
 // MakeGridFromString returns a Grid made from a string.
 // See Grid.String() for the format.
+//
+// May panic if the format is invalid.
 func MakeGridFromString(str string) Grid {
 	var grid Grid
-	firstLine := strings.SplitN(str, "\n", 1)[0]
 
-	height := strings.Count(str, "\n")
-	width := strings.Count(firstLine, "[")
+	lines := strings.Split(str, "\n")
+
+	// remove leading/trailing newlines
+	if lines[0] == "" {
+		lines = lines[1:]
+	}
+	if lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
+	}
+
+	height := len(lines)
+	width := strings.Count(lines[0], "[")
 
 	grid.Tiles = make([][]Tile, width)
 
@@ -135,11 +148,11 @@ func MakeGridFromString(str string) Grid {
 		grid.Tiles[x] = make([]Tile, height)
 
 		for y := 0; y < height; y++ {
-			index := x*6 + (height-y)*width*6
-			substr := str[index : index+4]
-			holeByte, typeByte, stateByte, stickyByte := substr[0], substr[1], substr[2], substr[3]
+			index := x * 6
+			substr := lines[height-y-1][index : index+4]
+			holeByte, typeByte, colorByte, stickyByte := substr[0], substr[1], substr[2], substr[3]
 
-			tile := grid.tileFromBytes(holeByte, typeByte, stateByte, stickyByte)
+			tile := grid.tileFromBytes(holeByte, typeByte, colorByte, stickyByte)
 			tile.X = x
 			tile.Y = y
 			grid.Tiles[x][y] = tile
@@ -149,7 +162,7 @@ func MakeGridFromString(str string) Grid {
 	return grid
 }
 
-func (g Grid) tileFromBytes(hole, typ, state, sticky byte) Tile {
+func (g Grid) tileFromBytes(hole, typ, color, sticky byte) Tile {
 	if hole == ' ' {
 		return Tile{}
 	}
@@ -170,7 +183,10 @@ func (g Grid) tileFromBytes(hole, typ, state, sticky byte) Tile {
 		tile.Type = TypePlus
 	}
 
-	switch state {
+	if color >= 'A' && color <= 'Z' {
+		tile.Color = TileColor(color - 'A' + 1)
+	}
+	switch color {
 	case 'O':
 		tile.Color = 0
 	case 'A':
@@ -187,11 +203,13 @@ func (g Grid) tileFromBytes(hole, typ, state, sticky byte) Tile {
 // String returns the string representation of g.
 func (g Grid) String() string {
 	var sb strings.Builder
-	for _, col := range g.Tiles {
+	for x, col := range g.Tiles {
 		for _, tile := range col {
-
+			if x > 0 {
+				sb.WriteByte(' ')
+			}
 			if tile.Type == TypeHole {
-				sb.WriteString("[   ] ")
+				sb.WriteString("[   ]")
 				continue
 			}
 
