@@ -45,7 +45,7 @@ func (ts TileSet) Len() int {
 }
 
 // Merge adds all tiles in other into ts.
-func (ts TileSet) Merge(other TileSet) {
+func (ts *TileSet) Merge(other TileSet) {
 	ts.checkInit()
 	for tile := range other.set {
 		ts.set[tile] = struct{}{}
