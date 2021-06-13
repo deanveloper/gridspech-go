@@ -49,7 +49,6 @@ func (g Grid) WestOf(t Tile) Tile {
 // Neighbors returns all tiles directly next to t.
 func (g Grid) Neighbors(t Tile) TileSet {
 	var ts TileSet
-	ts.Init()
 	if neighbor := g.NorthOf(t); neighbor.Type != TypeHole {
 		ts.Add(neighbor)
 	}
@@ -68,7 +67,6 @@ func (g Grid) Neighbors(t Tile) TileSet {
 // TilesWith returns all non-hole tiles such that `pred` returns true.
 func (g Grid) TilesWith(pred func(Tile) bool) TileSet {
 	var ts TileSet
-	ts.Init()
 
 	for _, col := range g.Tiles {
 		for _, tile := range col {
@@ -84,14 +82,13 @@ func (g Grid) TilesWith(pred func(Tile) bool) TileSet {
 // Blob returns all tiles which can form a path to t such that all tiles in the path have the same Color.
 func (g Grid) Blob(t Tile) TileSet {
 	var ts TileSet
-	ts.Init()
 
-	g.blobRecur(t, ts)
+	g.blobRecur(t, &ts)
 
 	return ts
 }
 
-func (g Grid) blobRecur(t Tile, ts TileSet) {
+func (g Grid) blobRecur(t Tile, ts *TileSet) {
 	neighbors := g.NeighborsWith(t, func(other Tile) bool {
 		return other.Color == t.Color
 	})

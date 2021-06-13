@@ -5,13 +5,25 @@ type TileSet struct {
 	set map[Tile]struct{}
 }
 
+// NewTileSet returns a TileSet containing only tiles.
+func NewTileSet(tiles ...Tile) TileSet {
+	var ts TileSet
+	for _, tile := range tiles {
+		ts.Add(tile)
+	}
+	return ts
+}
+
 // Init initializes the tileset.
-func (ts *TileSet) Init() {
-	ts.set = make(map[Tile]struct{})
+func (ts *TileSet) checkInit() {
+	if ts.set == nil {
+		ts.set = make(map[Tile]struct{})
+	}
 }
 
 // Add adds t to the TileSet ts.
-func (ts TileSet) Add(t Tile) {
+func (ts *TileSet) Add(t Tile) {
+	ts.checkInit()
 	ts.set[t] = struct{}{}
 }
 
@@ -22,7 +34,8 @@ func (ts TileSet) Has(t Tile) bool {
 }
 
 // Remove removes t from ts.
-func (ts TileSet) Remove(t Tile) {
+func (ts *TileSet) Remove(t Tile) {
+	ts.checkInit()
 	delete(ts.set, t)
 }
 
@@ -33,8 +46,9 @@ func (ts TileSet) Len() int {
 
 // Merge adds all tiles in other into ts.
 func (ts TileSet) Merge(other TileSet) {
+	ts.checkInit()
 	for tile := range other.set {
-		ts.Add(tile)
+		ts.set[tile] = struct{}{}
 	}
 }
 
