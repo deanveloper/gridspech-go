@@ -34,7 +34,7 @@ func TestDirections(t *testing.T) {
 		testCase.Actual.Y = 0
 
 		if testCase.Expected != testCase.Actual {
-			t.Errorf("\nexpected: %#v\ngot:      %#v\n", testCase.Expected, testCase.Actual)
+			t.Errorf("\nexpected: %#v\ngot:      %#v", testCase.Expected, testCase.Actual)
 		}
 	}
 }
@@ -64,7 +64,7 @@ func TestNeighbors(t *testing.T) {
 	for _, testCase := range cases {
 		actual := grid.Neighbors(testCase.Tile)
 		if !actual.Eq(testCase.Expected) {
-			t.Errorf("\nexpected: %#v\ngot:      %#v\n", testCase.Expected, actual)
+			t.Errorf("\nexpected: %#v\ngot:      %#v", testCase.Expected, actual)
 		}
 	}
 }
@@ -91,7 +91,7 @@ func TestNeighborsWith(t *testing.T) {
 	for _, testCase := range cases {
 		actual := grid.NeighborsWith(testCase.Tile, testCase.Func)
 		if !actual.Eq(testCase.Expected) {
-			t.Errorf("\nexpected: %#v\ngot:      %#v\n", testCase.Expected, actual)
+			t.Errorf("\nexpected: %#v\ngot:      %#v", testCase.Expected, actual)
 		}
 	}
 }
