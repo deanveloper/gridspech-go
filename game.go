@@ -1,22 +1,37 @@
 package gridspech
 
+//go:generate stringer -type=TileType,TileColor -linecomment -output=stringers.go
+
 const (
 	// TypeHole represents a tile which does not exist. They cannot have Color.
-	TypeHole TileType = iota
+	TypeHole TileType = iota // Hole
+
 	// TypeBlank is a tile which does not have any icons.
-	TypeBlank
+	TypeBlank // Blank
+
 	// TypeGoal is a tile which must have a direct path to another goal.
-	TypeGoal
+	TypeGoal // Goal
+
 	// TypeCrown tiles must touch all tiles of their state.
 	// If there are multiple crowns on the same state, they must not not touch each other, and
 	// together they must touch all tiles of their state.
-	TypeCrown
+	TypeCrown // Crown
+
 	// TypeDot1 must be touching exactly 1 tile with Color >= 1.
-	TypeDot1
+	TypeDot1 // Dot1
+
 	// TypeDot2 must be touching exactly 2 tile with Color >= 1.
-	TypeDot2
+	TypeDot2 // Dot2
+
 	// TypePlus must touch exactly 1 tile with a non-blank type.
-	TypePlus
+	TypePlus // Plus
+)
+
+// Constants for TileColor
+const (
+	ColorNone TileColor = iota //
+	ColorA                     // A
+	ColorB                     // B
 )
 
 // TileColor represents if a tile is disabled (0), or has a color (> 0, different colors have increasing numbers).
