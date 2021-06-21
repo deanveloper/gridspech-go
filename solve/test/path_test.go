@@ -50,7 +50,7 @@ func TestSolvePaths_level1(t *testing.T) {
 
 	// should return the one and only solution
 	var sols int
-	ch := grid.SolveGoals(grid.Tiles[0][0], grid.Tiles[2][0])
+	ch := grid.SolveGoals(grid.Tiles[0][0], grid.Tiles[3][0])
 	for each := range ch {
 		if !each.Eq(solution) {
 			t.Errorf(`incorrect solution %v`, each)
@@ -73,7 +73,7 @@ func TestSolvePaths_level2(t *testing.T) {
 
 	// should return the one and only solution
 	var sols int
-	ch := grid.SolveGoals(grid.Tiles[0][0], grid.Tiles[2][0])
+	ch := grid.SolveGoals(grid.Tiles[0][0], grid.Tiles[3][0])
 	for each := range ch {
 		if !each.Eq(solution) {
 			t.Errorf(`incorrect solution %v`, each)
