@@ -7,7 +7,7 @@ import (
 )
 
 // has every TileType, and all are valid
-var validTestGrid = `
+const validTestGrid = `
 [2A ] [gA ] [   ] [gA ] [   ]
 [ A ]       [   ] [ A ] [   ]
 [ A ] [ A/] [ A/] [ A ] [   ]
@@ -19,7 +19,7 @@ var validTestGrid = `
 `
 
 // has every TileType, and all are invalid
-var invalidTestGrid = `
+const invalidTestGrid = `
 [+B ] [+B/] [+B ] [gA ] [ A ]
 [   ]       [   ] [gA ] [   ]
 [2  ] [   ] [   ] [   ] [   ]
