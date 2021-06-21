@@ -126,18 +126,10 @@ func (g Grid) SetState(t Tile, state TileColor) {
 func MakeGridFromString(str string) Grid {
 	var grid Grid
 
-	lines := strings.Split(str, "\n")
-
-	// remove leading/trailing newlines
-	if lines[0] == "" {
-		lines = lines[1:]
-	}
-	if lines[len(lines)-1] == "" {
-		lines = lines[:len(lines)-1]
-	}
+	lines := strings.Split(strings.Trim(str, "\n"), "\n")
 
 	height := len(lines)
-	width := strings.Count(lines[0], "[")
+	width := (len(lines[0]) + 1) / 6
 
 	grid.Tiles = make([][]Tile, width)
 
