@@ -1,6 +1,8 @@
 package solve
 
-import gridspech "github.com/deanveloper/gridspech-go"
+import (
+	gridspech "github.com/deanveloper/gridspech-go"
+)
 
 // Grid is an "extension" of gridspech.Grid with solving capabilities
 type Grid struct {
@@ -26,6 +28,7 @@ func (g Grid) SolveGoals(start, end Tile) <-chan TileSet {
 	}
 	go func() {
 		var ts TileSet
+		ts.Add(start)
 		g.dfsDirectPaths(start, end, &ts, ch)
 		close(ch)
 	}()
@@ -39,6 +42,16 @@ func (g Grid) dfsDirectPaths(prev, end Tile, path *TileSet, ch chan<- TileSet) {
 	neighbors := g.Neighbors(prev)
 	for _, next := range neighbors.Slice() {
 
+		// awww yea we found a solution
+		if next == end {
+			path.Add(next)
+
+			var cloned TileSet
+			cloned.Merge(*path)
+			ch <- cloned
+			continue
+		}
+
 		// no circular paths
 		if path.Has(next) {
 			continue
@@ -47,15 +60,6 @@ func (g Grid) dfsDirectPaths(prev, end Tile, path *TileSet, ch chan<- TileSet) {
 		// we cannot traverse into a Goal tile
 		if next.Type == gridspech.TypeGoal {
 			continue
-		}
-
-		if next == end {
-			path.Add(next)
-
-			var cloned TileSet
-			cloned.Merge(*path)
-			ch <- cloned
-			return
 		}
 
 		// represents neighbors with the same Color (or prospective Color)
