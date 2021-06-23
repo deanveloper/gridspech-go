@@ -36,9 +36,9 @@ func _() {
 	_ = x[ColorB-2]
 }
 
-const _TileColor_name = "AB"
+const _TileColor_name = "_AB"
 
-var _TileColor_index = [...]uint8{0, 0, 1, 2}
+var _TileColor_index = [...]uint8{0, 1, 2, 3}
 
 func (i TileColor) String() string {
 	if i >= TileColor(len(_TileColor_index)-1) {

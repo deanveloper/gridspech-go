@@ -4,7 +4,7 @@ package gridspech
 
 const (
 	// TypeHole represents a tile which does not exist. They cannot have Color.
-	TypeHole TileType = iota // Hole
+	TypeHole TileType = iota // _
 
 	// TypeBlank is a tile which does not have any icons.
 	TypeBlank // Blank
@@ -29,7 +29,7 @@ const (
 
 // Constants for TileColor
 const (
-	ColorNone TileColor = iota //
+	ColorNone TileColor = iota // _
 	ColorA                     // A
 	ColorB                     // B
 )
