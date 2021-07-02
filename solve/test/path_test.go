@@ -1,7 +1,6 @@
 package solve_test
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -43,7 +42,6 @@ func tileSetNotHas(t *testing.T, ts gs.TileSet, tile gs.Tile) {
 }
 
 func TestSolvePaths_level1(t *testing.T) {
-	fmt.Println("level1")
 	const level = `[gA/] [   ] [   ] [g  ]`
 	grid := solve.Grid{Grid: gs.MakeGridFromString(level)}
 	solution := tileSetFromString(grid.Grid, "xxxx")
@@ -73,7 +71,7 @@ func TestSolvePaths_level2(t *testing.T) {
 
 	// should return the one and only solution
 	var sols int
-	ch := grid.SolveGoals(grid.Tiles[0][0], grid.Tiles[3][0])
+	ch := grid.SolveGoals(grid.Tiles[0][1], grid.Tiles[3][1])
 	for each := range ch {
 		if !each.Eq(solution) {
 			t.Errorf(`incorrect solution %v`, each)
