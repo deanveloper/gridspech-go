@@ -41,24 +41,62 @@ func tileSetNotHas(t *testing.T, ts gs.TileSet, tile gs.Tile) {
 	}
 }
 
-func TestSolvePaths_level1(t *testing.T) {
-	const level = `[gA/] [   ] [   ] [g  ]`
-	grid := solve.Grid{Grid: gs.MakeGridFromString(level)}
-	solution := tileSetFromString(grid.Grid, "xxxx")
+func testUnorderedTilesetSliceEq(t *testing.T, expected, actual []gs.TileSet) {
+	t.Helper()
 
-	// should return the one and only solution
-	var sols int
-	ch := grid.SolveGoals(grid.Tiles[0][0], grid.Tiles[3][0])
-	for each := range ch {
-		if !each.Eq(solution) {
-			t.Errorf(`incorrect solution %v`, each)
+	if len(expected) != len(actual) {
+		t.Errorf("not correct length, expected %d, actual %d\nexpected: %v\nactual: %v", len(expected), len(actual), expected, actual)
+		return
+	}
+
+	for i1 := range expected {
+		var found bool
+		for i2 := range actual {
+			if expected[i1].Eq(actual[i2]) {
+				found = true
+				break
+			}
 		}
-		sols++
+		if !found {
+			t.Errorf("expected to find tileset %v", expected[i1])
+		}
 	}
 
-	if sols != 1 {
-		t.Errorf(`expected %v solutions, found %v solutions`, 1, sols)
+	for i1 := range actual {
+		var found bool
+		for i2 := range expected {
+			if expected[i1].Eq(actual[i2]) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("incorrect solution %v", expected[i1])
+		}
 	}
+}
+
+func testSolvePathsAbstract(t *testing.T, level string, solutions []string) {
+	t.Helper()
+
+	grid := solve.Grid{Grid: gs.MakeGridFromString(level)}
+
+	var expectedSolutions []gs.TileSet
+	for i := range solutions {
+		expectedSolutions = append(expectedSolutions, tileSetFromString(grid.Grid, solutions[i]))
+	}
+
+	ch := grid.SolveGoals(grid.Tiles[0][0], grid.Tiles[3][0])
+	var actualSolutions []gs.TileSet
+	for ts := range ch {
+		actualSolutions = append(actualSolutions, ts)
+	}
+}
+
+func TestSolvePaths_levelA1(t *testing.T) {
+	const level = `[gA/] [   ] [   ] [g  ]`
+
+	testSolvePathsAbstract(t, level, []string{"xxxx"})
 }
 
 func TestSolvePaths_level2(t *testing.T) {
@@ -66,21 +104,16 @@ func TestSolvePaths_level2(t *testing.T) {
 [gA/]       [   ] [g  ]
 [   ] [   ] [   ]      
 `
-	grid := solve.Grid{Grid: gs.MakeGridFromString(level)}
-	solution := tileSetFromString(grid.Grid, "x xx\nxxx ")
 
-	// should return the one and only solution
-	var sols int
-	ch := grid.SolveGoals(grid.Tiles[0][1], grid.Tiles[3][1])
-	for each := range ch {
-		if !each.Eq(solution) {
-			t.Errorf(`incorrect solution %v`, each)
-		}
+	testSolvePathsAbstract(t, level, []string{"x xx\nxxx "})
+}
 
-		sols++
-	}
-
-	if sols != 1 {
-		t.Errorf(`expected %v solutions, found %v solutions`, 1, sols)
-	}
+func TestSolvePaths_level3(t *testing.T) {
+	const level = `
+      [   ] [   ] [   ]      
+[gA/] [   ] [  /] [   ] [g  ]
+      [   ] [   ] [   ]      
+`
+	solutions := []string{" xxx \nxx xx\n     ", "     \nxx xx\n xxx "}
+	testSolvePathsAbstract(t, level, solutions)
 }
