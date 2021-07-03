@@ -1,5 +1,7 @@
 package gridspech
 
+import "strings"
+
 // TileSet represents a mathematical set of tiles.
 type TileSet struct {
 	set map[Tile]struct{}
@@ -72,4 +74,45 @@ func (ts TileSet) Slice() []Tile {
 		slice = append(slice, tile)
 	}
 	return slice
+}
+
+func (ts TileSet) String() string {
+	slice := ts.Slice()
+
+	var maxX, maxY int
+	for _, tile := range slice {
+		if tile.X > maxX {
+			maxX = tile.X
+		}
+		if tile.Y > maxY {
+			maxY = tile.Y
+		}
+	}
+	maxX++
+	maxY++
+
+	tilesAt := make([][]bool, maxX)
+	for x := range tilesAt {
+		tilesAt[x] = make([]bool, maxY)
+	}
+	for _, v := range slice {
+		tilesAt[v.X][v.Y] = true
+	}
+
+	var sb strings.Builder
+	sb.WriteByte('{')
+	for y := maxY - 1; y >= 0; y-- {
+		for x := 0; x < maxX; x++ {
+			if tilesAt[x][y] {
+				sb.WriteByte('x')
+			} else {
+				sb.WriteByte(' ')
+			}
+		}
+		if y > 0 {
+			sb.WriteByte('|')
+		}
+	}
+	sb.WriteByte('}')
+	return sb.String()
 }

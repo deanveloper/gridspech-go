@@ -9,7 +9,7 @@ import (
 )
 
 func tileSetFromString(grid gs.Grid, str string) gs.TileSet {
-	lines := strings.Split(str, "\n")
+	lines := strings.Split(strings.Trim(str, "{}"), "|")
 	var ts gs.TileSet
 	for i, line := range lines {
 		y := len(lines) - i - 1
@@ -26,28 +26,16 @@ func tileSetFromString(grid gs.Grid, str string) gs.TileSet {
 	return ts
 }
 
-func tileSetHas(t *testing.T, ts gs.TileSet, tile gs.Tile) {
-	t.Helper()
-
-	if !ts.Has(tile) {
-		t.Errorf(`expected tileset to have tile %v`, tile)
+func commaSeparatedSlice(slice []gs.TileSet) string {
+	var asStr []string
+	for _, v := range slice {
+		asStr = append(asStr, v.String())
 	}
-}
-func tileSetNotHas(t *testing.T, ts gs.TileSet, tile gs.Tile) {
-	t.Helper()
-
-	if ts.Has(tile) {
-		t.Errorf(`expected tileset to not have tile %v`, tile)
-	}
+	return strings.Join(asStr, ",")
 }
 
 func testUnorderedTilesetSliceEq(t *testing.T, expected, actual []gs.TileSet) {
 	t.Helper()
-
-	if len(expected) != len(actual) {
-		t.Errorf("not correct length, expected %d, actual %d\nexpected: %v\nactual: %v", len(expected), len(actual), expected, actual)
-		return
-	}
 
 	for i1 := range expected {
 		var found bool
@@ -65,13 +53,13 @@ func testUnorderedTilesetSliceEq(t *testing.T, expected, actual []gs.TileSet) {
 	for i1 := range actual {
 		var found bool
 		for i2 := range expected {
-			if expected[i1].Eq(actual[i2]) {
+			if actual[i1].Eq(expected[i2]) {
 				found = true
 				break
 			}
 		}
 		if !found {
-			t.Errorf("incorrect solution %v", expected[i1])
+			t.Errorf("incorrect solution %v", actual[i1])
 		}
 	}
 }
@@ -91,6 +79,8 @@ func testSolvePathsAbstract(t *testing.T, level string, x1, y1, x2, y2 int, solu
 	for ts := range ch {
 		actualSolutions = append(actualSolutions, ts)
 	}
+
+	testUnorderedTilesetSliceEq(t, expectedSolutions, actualSolutions)
 }
 
 func TestSolvePaths_levelA1(t *testing.T) {
@@ -100,40 +90,55 @@ func TestSolvePaths_levelA1(t *testing.T) {
 	testSolvePathsAbstract(t, level, 0, 0, 3, 0, solutions)
 }
 
-func TestSolvePaths_level2(t *testing.T) {
+func TestSolvePaths_levelA2(t *testing.T) {
 	const level = `
 [gA/]       [   ] [g  ]
 [   ] [   ] [   ]      
 `
-	solutions := []string{"x xx\nxxx "}
+	solutions := []string{"x xx|xxx "}
 	testSolvePathsAbstract(t, level, 0, 1, 3, 1, solutions)
 }
 
-func TestSolvePaths_level3(t *testing.T) {
+func TestSolvePaths_levelA3(t *testing.T) {
 	const level = `
       [   ] [   ] [   ]      
 [gA/] [   ] [  /] [   ] [g  ]
       [   ] [   ] [   ]      
 `
-	solutions := []string{" xxx \nxx xx\n     ", "     \nxx xx\n xxx "}
+	solutions := []string{" xxx |xx xx|     ", "     |xx xx| xxx "}
 	testSolvePathsAbstract(t, level, 0, 1, 4, 1, solutions)
 }
 
-func TestSolvePaths_level4(t *testing.T) {
+func TestSolvePaths_levelA4(t *testing.T) {
 	const level = `
 [gA/] [   ] [g  ]
 [   ] [   ] [ A/]
 `
-	solutions := []string{"x x\nxxx"}
+	solutions := []string{"x x|xxx"}
 	testSolvePathsAbstract(t, level, 0, 1, 2, 1, solutions)
 }
 
-func TestSolvePaths_level5(t *testing.T) {
+func TestSolvePaths_levelA5(t *testing.T) {
 	const level = `
 [   ] [ A/] [   ] [   ]
 [   ] [   ] [ A/] [   ]
 [gA/] [   ] [  /] [g  ]
 `
-	solutions := []string{"xxx \nx xx\nx  x"}
+	solutions := []string{"xxx |x xx|x  x"}
 	testSolvePathsAbstract(t, level, 0, 0, 3, 0, solutions)
+}
+
+func TestSolvePaths_levelA6(t *testing.T) {
+	const level = `
+[   ] [   ] [   ] [   ] [ A/] [   ] [   ] [   ]
+[   ] [   ] [ A/] [   ] [ A/] [   ] [ A/] [   ]
+[gA/] [   ] [   ] [   ] [ A/] [   ] [   ] [g  ]
+`
+	solutions := []string{
+		"xxx xxx |x x x x |x xxx xx",
+		"    xxx |xxx x x |x xxx xx",
+		"xxx xxx |x x x xx|x xxx  x",
+		"    xxx |xxx x xx|x xxx  x",
+	}
+	testSolvePathsAbstract(t, level, 0, 0, 7, 0, solutions)
 }

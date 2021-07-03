@@ -1,19 +1,19 @@
 package solve
 
 import (
-	gridspech "github.com/deanveloper/gridspech-go"
+	gs "github.com/deanveloper/gridspech-go"
 )
 
 // Grid is an "extension" of gridspech.Grid with solving capabilities
 type Grid struct {
-	gridspech.Grid
+	gs.Grid
 }
 
 // Tile is an alias for gridspech.Tile
-type Tile = gridspech.Tile
+type Tile = gs.Tile
 
 // TileSet is an alias for gridspech.TileSet
-type TileSet = gridspech.TileSet
+type TileSet = gs.TileSet
 
 // SolveGoals returns an channel of DFS direct paths from start to end.
 // These paths will:
@@ -29,7 +29,7 @@ func (g Grid) SolveGoals(start, end Tile) <-chan TileSet {
 	go func() {
 		var ts TileSet
 		ts.Add(start)
-		g.dfsDirectPaths(start, end, &ts, ch)
+		g.dfsDirectPaths(start.Color, start, end, &ts, ch)
 		close(ch)
 	}()
 	return ch
@@ -38,12 +38,31 @@ func (g Grid) SolveGoals(start, end Tile) <-chan TileSet {
 // we do not iterate in any particular order since it does not matter.
 // this function will only create direct paths, aka ones which would satisfy
 // a Goal tile.
-func (g Grid) dfsDirectPaths(prev, end Tile, path *TileSet, ch chan<- TileSet) {
+func (g Grid) dfsDirectPaths(color gs.TileColor, prev, end Tile, path *TileSet, ch chan<- TileSet) {
 	neighbors := g.Neighbors(prev)
+
 	for _, next := range neighbors.Slice() {
 
-		// awww yea we found a solution
+		// represents neighbors with the same Color (or prospective Color)
+		prevNeighbors := g.NeighborsWith(prev, func(o Tile) bool {
+			return o.Color == color || path.Has(o)
+		})
+
+		// first make sure that we never have an invalid path, ever
+		if prevNeighbors.Len() > 2 {
+			continue
+		}
+
+		// we found a possible solution
 		if next == end {
+			// goals can only have 1 neighbor of the same color
+			endNeighbors := g.NeighborsWith(end, func(o gs.Tile) bool {
+				return o.Color == color || path.Has(o)
+			})
+			if endNeighbors.Len() > 1 {
+				continue
+			}
+
 			path.Add(next)
 
 			var cloned TileSet
@@ -58,14 +77,13 @@ func (g Grid) dfsDirectPaths(prev, end Tile, path *TileSet, ch chan<- TileSet) {
 		}
 
 		// we cannot traverse into a Goal tile
-		if next.Type == gridspech.TypeGoal {
+		if next.Type == gs.TypeGoal {
 			continue
 		}
 
-		// represents neighbors with the same Color (or prospective Color)
-		prevNeighbors := g.NeighborsWith(prev, func(t Tile) bool {
-			return t.Color == prev.Color || path.Has(t)
-		})
+		if prevNeighbors.Len() > 2 {
+			continue
+		}
 
 		// in diagrams: p is prev, n is next, x is same Color, o is diff Color
 
@@ -92,7 +110,7 @@ func (g Grid) dfsDirectPaths(prev, end Tile, path *TileSet, ch chan<- TileSet) {
 		path.Add(next)
 
 		// RECURSION
-		g.dfsDirectPaths(next, end, path, ch)
+		g.dfsDirectPaths(color, next, end, path, ch)
 
 		// recursion takedown
 		path.Remove(next)
