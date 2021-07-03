@@ -76,7 +76,7 @@ func testUnorderedTilesetSliceEq(t *testing.T, expected, actual []gs.TileSet) {
 	}
 }
 
-func testSolvePathsAbstract(t *testing.T, level string, solutions []string) {
+func testSolvePathsAbstract(t *testing.T, level string, x1, y1, x2, y2 int, solutions []string) {
 	t.Helper()
 
 	grid := solve.Grid{Grid: gs.MakeGridFromString(level)}
@@ -86,7 +86,7 @@ func testSolvePathsAbstract(t *testing.T, level string, solutions []string) {
 		expectedSolutions = append(expectedSolutions, tileSetFromString(grid.Grid, solutions[i]))
 	}
 
-	ch := grid.SolveGoals(grid.Tiles[0][0], grid.Tiles[3][0])
+	ch := grid.SolveGoals(grid.Tiles[x1][y1], grid.Tiles[x2][y2])
 	var actualSolutions []gs.TileSet
 	for ts := range ch {
 		actualSolutions = append(actualSolutions, ts)
@@ -96,7 +96,8 @@ func testSolvePathsAbstract(t *testing.T, level string, solutions []string) {
 func TestSolvePaths_levelA1(t *testing.T) {
 	const level = `[gA/] [   ] [   ] [g  ]`
 
-	testSolvePathsAbstract(t, level, []string{"xxxx"})
+	solutions := []string{"xxxx"}
+	testSolvePathsAbstract(t, level, 0, 0, 3, 0, solutions)
 }
 
 func TestSolvePaths_level2(t *testing.T) {
@@ -104,8 +105,8 @@ func TestSolvePaths_level2(t *testing.T) {
 [gA/]       [   ] [g  ]
 [   ] [   ] [   ]      
 `
-
-	testSolvePathsAbstract(t, level, []string{"x xx\nxxx "})
+	solutions := []string{"x xx\nxxx "}
+	testSolvePathsAbstract(t, level, 0, 1, 3, 1, solutions)
 }
 
 func TestSolvePaths_level3(t *testing.T) {
@@ -115,5 +116,24 @@ func TestSolvePaths_level3(t *testing.T) {
       [   ] [   ] [   ]      
 `
 	solutions := []string{" xxx \nxx xx\n     ", "     \nxx xx\n xxx "}
-	testSolvePathsAbstract(t, level, solutions)
+	testSolvePathsAbstract(t, level, 0, 1, 4, 1, solutions)
+}
+
+func TestSolvePaths_level4(t *testing.T) {
+	const level = `
+[gA/] [   ] [g  ]
+[   ] [   ] [ A/]
+`
+	solutions := []string{"x x\nxxx"}
+	testSolvePathsAbstract(t, level, 0, 1, 2, 1, solutions)
+}
+
+func TestSolvePaths_level5(t *testing.T) {
+	const level = `
+[   ] [ A/] [   ] [   ]
+[   ] [   ] [ A/] [   ]
+[gA/] [   ] [  /] [g  ]
+`
+	solutions := []string{"xxx \nx xx\nx  x"}
+	testSolvePathsAbstract(t, level, 0, 0, 3, 0, solutions)
 }
