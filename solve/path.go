@@ -15,12 +15,12 @@ type Tile = gs.Tile
 // TileSet is an alias for gridspech.TileSet
 type TileSet = gs.TileSet
 
-// SolveGoals returns an channel of DFS direct paths from start to end.
+// SolvePath returns an channel of DFS direct paths from start to end.
 // These paths will:
 //   1. never contain a goal tile that isn't start or end.
 //   2. never make a path that would cause start or end to become invalid Goal tiles.
 //   3. have the same Color as start.
-func (g Grid) SolveGoals(start, end Tile) <-chan TileSet {
+func (g Grid) SolvePath(start, end Tile) <-chan TileSet {
 	ch := make(chan TileSet)
 	if end.Sticky && start.Color != end.Color {
 		close(ch)
@@ -29,7 +29,7 @@ func (g Grid) SolveGoals(start, end Tile) <-chan TileSet {
 	go func() {
 		var ts TileSet
 		ts.Add(start)
-		g.dfsDirectPaths(start.Color, start, end, &ts, ch)
+		g.dfsDirectPaths(start.Color, start, end, ts, ch)
 		close(ch)
 	}()
 	return ch
@@ -38,18 +38,33 @@ func (g Grid) SolveGoals(start, end Tile) <-chan TileSet {
 // we do not iterate in any particular order since it does not matter.
 // this function will only create direct paths, aka ones which would satisfy
 // a Goal tile.
-func (g Grid) dfsDirectPaths(color gs.TileColor, prev, end Tile, path *TileSet, ch chan<- TileSet) {
+func (g Grid) dfsDirectPaths(color gs.TileColor, prev, end Tile, path TileSet, ch chan<- TileSet) {
 	neighbors := g.Neighbors(prev)
 
 	for _, next := range neighbors.Slice() {
 
+		// no circular paths
+		if path.Has(next) {
+			continue
+		}
+
 		// represents neighbors with the same Color (or prospective Color)
-		prevNeighbors := g.NeighborsWith(prev, func(o Tile) bool {
-			return o.Color == color || path.Has(o)
+		prevNeighborsSameColor := g.NeighborsWith(prev, func(o Tile) bool {
+			return o.Color == color || path.Has(o) || o == next
 		})
 
 		// first make sure that we never have an invalid path, ever
-		if prevNeighbors.Len() > 2 {
+		if prevNeighborsSameColor.Len() > 2 {
+			continue
+		}
+
+		// cannot traverse into sticky tile of different color
+		if next.Color != color && next.Sticky {
+			continue
+		}
+
+		// we cannot traverse through a Goal tile that is not the end tile
+		if next.Type == gs.TypeGoal && next != end {
 			continue
 		}
 
@@ -63,56 +78,18 @@ func (g Grid) dfsDirectPaths(color gs.TileColor, prev, end Tile, path *TileSet, 
 				continue
 			}
 
-			path.Add(next)
-
-			var cloned TileSet
-			cloned.Merge(*path)
-			ch <- cloned
+			var finalPath TileSet
+			finalPath.Merge(path)
+			finalPath.Add(next)
+			ch <- finalPath
 			continue
 		}
 
-		// no circular paths
-		if path.Has(next) {
-			continue
-		}
-
-		// we cannot traverse into a Goal tile
-		if next.Type == gs.TypeGoal {
-			continue
-		}
-
-		if prevNeighbors.Len() > 2 {
-			continue
-		}
-
-		// in diagrams: p is prev, n is next, x is same Color, o is diff Color
-
-		// we prune:
-		// ooo
-		// xpn
-		// oxo
-		// (aka we will not create a new tile of a different color if
-		// we already have 2 neighbors of the same color)
-		if prevNeighbors.Len() == 2 && !prevNeighbors.Has(next) {
-			continue
-		}
-		// we prune:
-		// ooo
-		// xpn
-		// ooo
-		// where n is a sticky element with different Color
-		// (aka we cannot change a tile that is sticky)
-		if prevNeighbors.Len() == 1 && !prevNeighbors.Has(next) && next.Sticky {
-			continue
-		}
-
-		// setup for recursion
-		path.Add(next)
+		var nextPath gs.TileSet
+		nextPath.Merge(path)
+		nextPath.Add(next)
 
 		// RECURSION
-		g.dfsDirectPaths(color, next, end, path, ch)
-
-		// recursion takedown
-		path.Remove(next)
+		g.dfsDirectPaths(color, next, end, nextPath, ch)
 	}
 }

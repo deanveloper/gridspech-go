@@ -74,7 +74,7 @@ func testSolvePathsAbstract(t *testing.T, level string, x1, y1, x2, y2 int, solu
 		expectedSolutions = append(expectedSolutions, tileSetFromString(grid.Grid, solutions[i]))
 	}
 
-	ch := grid.SolveGoals(grid.Tiles[x1][y1], grid.Tiles[x2][y2])
+	ch := grid.SolvePath(grid.Tiles[x1][y1], grid.Tiles[x2][y2])
 	var actualSolutions []gs.TileSet
 	for ts := range ch {
 		actualSolutions = append(actualSolutions, ts)
@@ -141,4 +141,14 @@ func TestSolvePaths_levelA6(t *testing.T) {
 		"    xxx |xxx x xx|x xxx  x",
 	}
 	testSolvePathsAbstract(t, level, 0, 0, 7, 0, solutions)
+}
+
+func TestSolvePaths_levelA9(t *testing.T) {
+	const level = `
+[   ] [ A/] [   ] [   ] [ A/] [   ] [   ]
+[gA/] [   ] [   ] [ A/] [   ] [   ] [g  ]
+[   ] [   ] [ A/] [   ] [ A/] [   ] [   ]
+`
+	solutions := []string{"   xxxx|x xx  x|xxx    ", "   xxx |x xx xx|xxx    "}
+	testSolvePathsAbstract(t, level, 0, 1, 6, 1, solutions)
 }
