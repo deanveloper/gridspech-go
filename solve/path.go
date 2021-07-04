@@ -20,16 +20,16 @@ type TileSet = gs.TileSet
 //   1. never contain a goal tile that isn't start or end.
 //   2. never make a path that would cause start or end to become invalid Goal tiles.
 //   3. have the same Color as start.
-func (g Grid) SolvePath(start, end Tile) <-chan TileSet {
+func (g Grid) SolvePath(start, end Tile, color gs.TileColor) <-chan TileSet {
 	ch := make(chan TileSet)
-	if end.Sticky && start.Color != end.Color {
+	if end.Sticky && color != end.Color {
 		close(ch)
 		return ch
 	}
 	go func() {
 		var ts TileSet
 		ts.Add(start)
-		g.dfsDirectPaths(start.Color, start, end, ts, ch)
+		g.dfsDirectPaths(color, start, end, ts, ch)
 		close(ch)
 	}()
 	return ch
