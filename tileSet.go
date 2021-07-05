@@ -41,6 +41,23 @@ func (ts *TileSet) Remove(t Tile) {
 	delete(ts.set, t)
 }
 
+// RemoveAll removes all of the elements in o from ts (making ts the intersection of ts and o)
+func (ts *TileSet) RemoveAll(o TileSet) {
+	if ts.Len() < o.Len() {
+		for tile := range ts.set {
+			if o.Has(tile) {
+				ts.Remove(tile)
+			}
+		}
+	} else {
+		for tile := range o.set {
+			if ts.Has(tile) {
+				ts.Remove(tile)
+			}
+		}
+	}
+}
+
 // Len returns the number of tiles in ts.
 func (ts TileSet) Len() int {
 	return len(ts.set)
