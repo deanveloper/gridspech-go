@@ -44,7 +44,7 @@ func Goals(g Grid, maxColors gs.TileColor) <-chan Grid {
 			goal1, goal2 := goalTiles[i1], goalTiles[i2]
 
 			for color := gs.TileColor(0); color < maxColors; color++ {
-				paths := g.SolvePath(goal1, goal2, color)
+				paths := g.Path(goal1, goal2, color)
 				solutionsChans = append(solutionsChans, goalSolutionsChan{
 					start: goal1,
 					end:   goal2,

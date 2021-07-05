@@ -74,7 +74,7 @@ func testSolvePathsAbstract(t *testing.T, level string, x1, y1, x2, y2 int, solu
 		expectedSolutions = append(expectedSolutions, tileSetFromString(grid.Grid, solutions[i]))
 	}
 
-	ch := grid.SolvePath(grid.Tiles[x1][y1], grid.Tiles[x2][y2], 1)
+	ch := grid.Path(grid.Tiles[x1][y1], grid.Tiles[x2][y2], 1)
 	var actualSolutions []gs.TileSet
 	for ts := range ch {
 		actualSolutions = append(actualSolutions, ts)
