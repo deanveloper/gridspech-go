@@ -9,25 +9,19 @@ type Grid struct {
 	gs.Grid
 }
 
-// Tile is an alias for gridspech.Tile
-type Tile = gs.Tile
-
-// TileSet is an alias for gridspech.TileSet
-type TileSet = gs.TileSet
-
 // SolvePath returns an channel of DFS direct paths from start to end.
 // These paths will:
 //   1. never contain a goal tile that isn't start or end.
 //   2. never make a path that would cause start or end to become invalid Goal tiles.
 //   3. have the same Color as start.
-func (g Grid) SolvePath(start, end Tile, color gs.TileColor) <-chan TileSet {
-	ch := make(chan TileSet)
+func (g Grid) SolvePath(start, end gs.Tile, color gs.TileColor) <-chan gs.TileSet {
+	ch := make(chan gs.TileSet)
 	if end.Sticky && color != end.Color {
 		close(ch)
 		return ch
 	}
 	go func() {
-		var ts TileSet
+		var ts gs.TileSet
 		ts.Add(start)
 		g.dfsDirectPaths(color, start, end, ts, ch)
 		close(ch)
@@ -38,7 +32,7 @@ func (g Grid) SolvePath(start, end Tile, color gs.TileColor) <-chan TileSet {
 // we do not iterate in any particular order since it does not matter.
 // this function will only create direct paths, aka ones which would satisfy
 // a Goal tile.
-func (g Grid) dfsDirectPaths(color gs.TileColor, prev, end Tile, path TileSet, ch chan<- TileSet) {
+func (g Grid) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path gs.TileSet, ch chan<- gs.TileSet) {
 	neighbors := g.Neighbors(prev)
 
 	for _, next := range neighbors.Slice() {
@@ -49,7 +43,7 @@ func (g Grid) dfsDirectPaths(color gs.TileColor, prev, end Tile, path TileSet, c
 		}
 
 		// represents neighbors with the same Color (or prospective Color)
-		prevNeighborsSameColor := g.NeighborsWith(prev, func(o Tile) bool {
+		prevNeighborsSameColor := g.NeighborsWith(prev, func(o gs.Tile) bool {
 			return o.Color == color || path.Has(o) || o == next
 		})
 
@@ -78,7 +72,7 @@ func (g Grid) dfsDirectPaths(color gs.TileColor, prev, end Tile, path TileSet, c
 				continue
 			}
 
-			var finalPath TileSet
+			var finalPath gs.TileSet
 			finalPath.Merge(path)
 			finalPath.Add(next)
 			ch <- finalPath
