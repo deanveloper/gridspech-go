@@ -1,6 +1,7 @@
 package solve
 
 import (
+	"log"
 	"sync"
 
 	"github.com/deanveloper/gridspech-go"
@@ -74,6 +75,16 @@ func assembleSolutions(baseGrid Grid, allSolutions <-chan goalSolution, goalTile
 			// first, try out the solution with all prev solutions found
 			grids := makeFullSolutions(baseGrid, solution, goalsToSolutions, pairingsSet)
 			for _, grid := range grids {
+
+				// and just in case... validate all goals in the grid!
+				invalidGoals := grid.TilesWith(func(t gs.Tile) bool {
+					return t.Type == gs.TypeGoal && !grid.ValidTile(t)
+				}).Len()
+				if invalidGoals > 0 {
+					log.Printf("invalid goal found")
+					continue
+				}
+
 				ch <- grid
 			}
 
