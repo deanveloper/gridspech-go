@@ -10,15 +10,16 @@ import (
 func main() {
 	const levelAaa = `
 [   ] [   ] [   ] [   ] [   ] [   ] [   ] [   ] 
-[   ] [g /] [   ] [   ] [gA/] [   ] [   ] [   ] 
+[   ] [gA/] [   ] [   ] [gA/] [   ] [   ] [   ] 
 [   ] [   ] [   ] [   ] [   ] [   ] [   ] [   ] 
 [   ] [   ] [   ] [   ] [   ] [ A/] [   ] [   ] 
 [   ] [   ] [   ] [   ] [   ] [g  ] [   ] [   ] 
 [   ] [   ] [   ] [   ] [   ] [   ] [   ] [   ] 
 [   ] [   ] [   ] [   ] [   ] [   ] [   ] [   ] 
-[   ] [   ] [g /] [   ] [   ] [   ] [   ] [   ] 
+[   ] [   ] [gA/] [   ] [   ] [   ] [   ] [   ] 
 `
 	grid := gridspech.MakeGridFromString(levelAaa)
+	fmt.Println(grid)
 	ch := solve.Goals(solve.Grid{Grid: grid}, 2)
 	for solvedGrid := range ch {
 		fmt.Println(solvedGrid)
