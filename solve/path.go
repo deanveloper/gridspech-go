@@ -16,7 +16,11 @@ type Grid struct {
 //   3. have the same Color as start.
 func (g Grid) SolvePath(start, end gs.Tile, color gs.TileColor) <-chan gs.TileSet {
 	ch := make(chan gs.TileSet)
-	if (start.Sticky || end.Sticky) && color != start.Color {
+	if start.Sticky && color != start.Color {
+		close(ch)
+		return ch
+	}
+	if end.Sticky && color != end.Color {
 		close(ch)
 		return ch
 	}
