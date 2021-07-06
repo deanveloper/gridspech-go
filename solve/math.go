@@ -13,44 +13,40 @@ func sliceIntersectGoalSolutions(s1, s2 []goalSolution) []goalSolution {
 	return out
 }
 
-// AllPairingSets returns all pairing sets for alphabet. for instance with alphabet [1, 2, 3, 4], this would return something like:
-// [1, 2] [3, 4]
-// [1, 3] [2, 4]
-// [1, 4] [2, 3]
-func AllPairingSets(alphabet []int) [][][2]int {
-	if len(alphabet) == 0 {
-		return nil
+// AllPairingSets returns all pairing sets for alphabet. for instance with limit=4, this would return something like:
+// [[0, 1] [2, 3]]
+// [[0, 2] [1, 3]]
+// [[0, 3] [1, 2]]
+func AllPairingSets(limit int) [][][2]int {
+	alphabet := make([]int, limit)
+	for i := range alphabet {
+		alphabet[i] = i
 	}
 
-	var setsOfPairs [][][2]int
-	forEachPairing(alphabet, func(start, end int, remaining []int) {
-		setsOfPairs = append(setsOfPairs, allPairingSetsStartingWith(start, end, remaining))
-	})
-
-	return setsOfPairs
+	return allPairingSetsForAlphabet(alphabet)
 }
-func allPairingSetsStartingWith(i1, i2 int, remaining []int) [][2]int {
-	all := [][2]int{{i1, i2}}
+func allPairingSetsForAlphabet(alphabet []int) [][][2]int {
+	if len(alphabet) == 2 {
+		return [][][2]int{{{alphabet[0], alphabet[1]}}}
+	}
 
-	forEachPairing(remaining, func(start, end int, remaining []int) {
-		all = append(all, allPairingSetsStartingWith(start, end, remaining)...)
-	})
+	first := alphabet[0]
+	rest := alphabet[1:]
+	var pairingsSet [][][2]int
+	for i, v := range rest {
+		pair := [2]int{first, v}
+		withoutV := make([]int, len(rest)-1)
+		copy(withoutV[:i], rest[:i])
+		copy(withoutV[i:], rest[i+1:])
 
-	return all
-}
-func forEachPairing(alphabet []int, forEach func(start, end int, remaining []int)) {
-	for i1 := 0; i1 < len(alphabet)-1; i1++ {
-		for i2 := i1 + 1; i2 < len(alphabet); i2++ {
-			start, end := alphabet[i1], alphabet[i2]
-
-			var remaining []int
-			for _, each := range alphabet {
-				if each != start && each != end {
-					remaining = append(remaining, each)
-				}
-			}
-
-			forEach(start, end, remaining)
+		// recursive call
+		otherPairingsSet := allPairingSetsForAlphabet(withoutV)
+		for _, otherPairings := range otherPairingsSet {
+			thisPairing := make([][2]int, len(otherPairings)+1)
+			thisPairing[0] = pair
+			copy(thisPairing[1:], otherPairings)
+			pairingsSet = append(pairingsSet, thisPairing)
 		}
 	}
+	return pairingsSet
 }

@@ -1,15 +1,27 @@
 package main
 
+import (
+	"fmt"
+
+	"github.com/deanveloper/gridspech-go"
+	"github.com/deanveloper/gridspech-go/solve"
+)
+
 func main() {
-	const level = `
-[   ] [   ] [   ] [1  ] [1  ] [   ] [   ] [   ] 
-[   ] [g  ] [   ] [   ] [gA/] [   ] [   ] [   ] 
-[   ] [   ] [   ] [   ] [   ] [   ] [cA/] [   ] 
+	const levelAaa = `
 [   ] [   ] [   ] [   ] [   ] [   ] [   ] [   ] 
+[   ] [g /] [   ] [   ] [gA/] [   ] [   ] [   ] 
+[   ] [   ] [   ] [   ] [   ] [   ] [   ] [   ] 
+[   ] [   ] [   ] [   ] [   ] [ A/] [   ] [   ] 
 [   ] [   ] [   ] [   ] [   ] [g  ] [   ] [   ] 
 [   ] [   ] [   ] [   ] [   ] [   ] [   ] [   ] 
 [   ] [   ] [   ] [   ] [   ] [   ] [   ] [   ] 
-[   ] [   ] [g  ] [1  ] [1  ] [   ] [   ] [   ] 
+[   ] [   ] [g /] [   ] [   ] [   ] [   ] [   ] 
 `
-
+	grid := gridspech.MakeGridFromString(levelAaa)
+	ch := solve.Goals(solve.Grid{Grid: grid}, 2)
+	for solvedGrid := range ch {
+		fmt.Println(solvedGrid)
+		fmt.Println("=============")
+	}
 }

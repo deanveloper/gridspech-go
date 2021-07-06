@@ -191,52 +191,61 @@ func (g Grid) tileFromBytes(hole, typ, color, sticky byte) Tile {
 
 // String returns the string representation of g.
 func (g Grid) String() string {
-	var sb strings.Builder
+	byteSlice := make([]byte, (g.Width()*6)*g.Height()-1)
 	for x, col := range g.Tiles {
-		for _, tile := range col {
-			if x > 0 {
-				sb.WriteByte(' ')
-			}
+		for y, tile := range col {
+
+			index := x*6 + (g.Height()-y-1)*g.Width()*6
 			if tile.Type == TypeHole {
-				sb.WriteString("[   ]")
+				copy(byteSlice[index:index+6], "     ")
 				continue
 			}
 
-			sb.WriteByte('[')
+			byteSlice[index] = '['
 
+			var typeChar byte
 			switch tile.Type {
 			case TypeBlank:
-				sb.WriteByte(' ')
+				typeChar = ' '
 			case TypeGoal:
-				sb.WriteByte('g')
+				typeChar = 'g'
 			case TypeCrown:
-				sb.WriteByte('c')
+				typeChar = 'c'
 			case TypeDot1:
-				sb.WriteByte('1')
+				typeChar = '1'
 			case TypeDot2:
-				sb.WriteByte('2')
+				typeChar = '2'
 			case TypePlus:
-				sb.WriteByte('+')
+				typeChar = '+'
 			}
 
+			var colorChar byte
 			if tile.Color == 0 {
-				sb.WriteByte('O')
+				colorChar = ' '
 			} else {
-				sb.WriteByte('A' + byte(tile.Color) - 1)
+				colorChar = 'A' + byte(tile.Color) - 1
 			}
 
+			var stickyChar byte
 			if tile.Sticky {
-				sb.WriteByte('/')
+				stickyChar = '/'
 			} else {
-				sb.WriteByte(' ')
+				stickyChar = ' '
 			}
 
-			sb.WriteByte(']')
-			sb.WriteByte(' ')
+			byteSlice[index+1] = typeChar
+			byteSlice[index+2] = colorChar
+			byteSlice[index+3] = stickyChar
+			byteSlice[index+4] = ']'
+			if x < g.Width()-1 {
+				byteSlice[index+5] = ' '
+			}
+			if x == g.Width()-1 && y != 0 {
+				byteSlice[index+5] = '\n'
+			}
 		}
-		sb.WriteByte('\n')
 	}
-	return sb.String()
+	return string(byteSlice)
 }
 
 // Clone returns a clone of the grid. Modifications to the new grid will not modify the original grid.

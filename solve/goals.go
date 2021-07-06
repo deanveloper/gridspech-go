@@ -1,6 +1,7 @@
 package solve
 
 import (
+	"fmt"
 	"log"
 	"sync"
 
@@ -24,8 +25,18 @@ func (g goalSolution) eq(o goalSolution) bool {
 	return g.start == o.start && g.end == o.end && g.color == o.color && g.solution.Eq(o.solution)
 }
 
+// allows us to use a slice of goal pairings in a map
+type goalPairingKey string
+
+func makeGoalPairingKey(pairings [][2]gs.Tile) goalPairingKey {
+	return goalPairingKey(fmt.Sprint(pairings))
+}
+
 // Goals will return a channels of solutions for all the goal tiles in g
 func Goals(g Grid, maxColors gs.TileColor) <-chan Grid {
+
+	var gridChanWg sync.WaitGroup
+	gridChan := make(chan Grid, 50)
 
 	// get all goal tiles
 	var goalTiles []gs.Tile
@@ -37,29 +48,140 @@ func Goals(g Grid, maxColors gs.TileColor) <-chan Grid {
 		}
 	}
 
-	// find all solutions for each goal tile going to every other goal tile
-	var solutionsChans []goalSolutionsChan
-	for i1 := 0; i1 < len(goalTiles)-1; i1++ {
-		for i2 := i1 + 1; i2 < len(goalTiles); i2++ {
-			goal1, goal2 := goalTiles[i1], goalTiles[i2]
+	goalPairingsSet := allTilePairingSets(goalTiles)
 
-			for color := gs.TileColor(0); color < maxColors; color++ {
-				paths := g.Path(goal1, goal2, color)
-				solutionsChans = append(solutionsChans, goalSolutionsChan{
-					start: goal1,
-					end:   goal2,
-					color: color,
-					sols:  paths,
+	// map of pairs to pairings which contain that pair
+	pairToPairingsSet := make(map[[2]gs.Tile]([][][2]gs.Tile))
+	for _, pairings := range goalPairingsSet {
+		for _, pairing := range pairings {
+			pairToPairingsSet[pairing] = append(pairToPairingsSet[pairing], pairings)
+		}
+	}
+
+	// map of pair to solutions (so far) for that pair
+	var pairToSolutionsLock sync.RWMutex
+	pairToSolutions := make(map[[2]gs.Tile][]goalSolution)
+	for k := range pairToPairingsSet {
+		for color := gs.ColorNone; color < maxColors; color++ {
+			k, color := k, color
+			pair := [2]gs.Tile{k[0], k[1]}
+			gridChanWg.Add(1)
+			go func() {
+				for solution := range g.SolvePath(k[0], k[1], color) {
+					newGoalSolution := goalSolution{
+						start:    k[0],
+						end:      k[1],
+						color:    color,
+						solution: solution,
+					}
+
+					pairToSolutionsLock.RLock()
+					grids := onNewSolutionFound(g, newGoalSolution, pairToPairingsSet[pair], pairToSolutions)
+					pairToSolutionsLock.RUnlock()
+
+					pairToSolutionsLock.Lock()
+					pairToSolutions[pair] = append(pairToSolutions[pair], newGoalSolution)
+					pairToSolutionsLock.Unlock()
+
+					for _, grid := range grids {
+						invalidGoals := grid.TilesWith(func(t gs.Tile) bool {
+							return t.Type == gs.TypeGoal && !grid.ValidTile(t)
+						})
+						if invalidGoals.Len() > 0 {
+							continue
+						}
+						gridChan <- grid
+					}
+				}
+				gridChanWg.Done()
+			}()
+		}
+	}
+
+	go func() {
+		gridChanWg.Wait()
+		close(gridChan)
+	}()
+
+	return gridChan
+}
+
+func onNewSolutionFound(
+	baseGrid Grid,
+	newSolution goalSolution,
+	pairingsToUpdate [][][2]gs.Tile,
+	currentSolutions map[[2]gs.Tile][]goalSolution,
+) []Grid {
+	var grids []Grid
+pairingsToUpdateLoop:
+	for _, pairings := range pairingsToUpdate {
+		solutions := make(map[[2]gs.Tile][]goalSolution, len(pairings)-1)
+		for _, pair := range pairings {
+			newPair := [2]gs.Tile{newSolution.start, newSolution.end}
+			if pair != newPair {
+				// if this pair does not have any solutions yet,
+				// we do not care about this pairing
+				if len(solutions) == 0 {
+					continue pairingsToUpdateLoop
+				}
+				solutions[pair] = currentSolutions[pair]
+			} else {
+				solutions[pair] = []goalSolution{newSolution}
+			}
+		}
+
+		forEachSolutionSet(solutions, func(gs []goalSolution) {
+			grids = append(grids, combineSolutions(baseGrid, gs))
+		})
+	}
+
+	return grids
+}
+
+func forEachSolutionSet(solutionSet map[[2]gs.Tile][]goalSolution, forEach func([]goalSolution)) {
+	for pair, solutions := range solutionSet {
+
+		remainingSolutions := make(map[[2]gs.Tile][]goalSolution, len(solutionSet)-1)
+		for pair2, solutions2 := range solutionSet {
+			if pair2 != pair {
+				remainingSolutions[pair] = solutions2
+			}
+		}
+
+		if len(remainingSolutions) == 0 {
+			for _, solution := range solutions {
+				forEach([]goalSolution{solution})
+			}
+		} else {
+			for _, solution := range solutions {
+				forEachSolutionSet(remainingSolutions, func(solSet []goalSolution) {
+					newGoalSolution := make([]goalSolution, len(solSet)+1)
+					newGoalSolution[0] = solution
+					copy(newGoalSolution[1:], solSet)
+					if anyIntersections(newGoalSolution) {
+						return
+					}
+
+					forEach(newGoalSolution)
 				})
 			}
 		}
 	}
+}
 
-	// aggregate solutions into a single channel
-	allSolutions := aggregateGoalSolutionChans(solutionsChans)
+func anyIntersections(solSet []goalSolution) bool {
+	var allTiles gs.TileSet
 
-	// make a map of tiles to their solutions, to be populated as time goes on
-	return assembleSolutions(g, allSolutions, goalTiles)
+	for _, solution := range solSet {
+		for _, tile := range solution.solution.Slice() {
+			if allTiles.Has(tile) {
+				return true
+			}
+			allTiles.Add(tile)
+		}
+	}
+
+	return false
 }
 
 // assembles solutions together
@@ -79,9 +201,9 @@ func assembleSolutions(baseGrid Grid, allSolutions <-chan goalSolution, goalTile
 				// and just in case... validate all goals in the grid!
 				invalidGoals := grid.TilesWith(func(t gs.Tile) bool {
 					return t.Type == gs.TypeGoal && !grid.ValidTile(t)
-				}).Len()
-				if invalidGoals > 0 {
-					log.Printf("invalid goal found")
+				})
+				if invalidGoals.Len() > 0 {
+					log.Printf("invalid goals found %v", invalidGoals)
 					continue
 				}
 
@@ -91,6 +213,7 @@ func assembleSolutions(baseGrid Grid, allSolutions <-chan goalSolution, goalTile
 			// add this solution to previously found solutions
 			goalsToSolutions[solution.start] = append(goalsToSolutions[solution.start], solution)
 		}
+		close(ch)
 	}()
 
 	return ch
@@ -102,9 +225,10 @@ func makeFullSolutions(
 	solutionsForGoals map[gs.Tile][]goalSolution,
 	pairingsSet [][][2]gs.Tile,
 ) []Grid {
-
 	var grids []Grid
 	for _, pairings := range pairingsSet {
+
+		// skip if relevant pairing set
 		var relevantPairingSet bool
 		for _, pairing := range pairings {
 			if pairing[0] == solution.start && pairing[1] == solution.end {
@@ -119,13 +243,15 @@ func makeFullSolutions(
 		pairingToSolutions := make(map[[2]gs.Tile][]goalSolution)
 		for _, pairing := range pairings {
 			var goalsForPairing []goalSolution
-			for _, solution := range solutionsForGoals[pairing[0]] {
-				if solution.end == pairing[1] {
-					goalsForPairing = append(goalsForPairing, solution)
+			for _, oldSolution := range solutionsForGoals[pairing[0]] {
+				if oldSolution.end == pairing[1] {
+					goalsForPairing = append(goalsForPairing, oldSolution)
 				}
 			}
 			pairingToSolutions[pairing] = goalsForPairing
 		}
+		solPairing := [2]gs.Tile{solution.start, solution.end}
+		pairingToSolutions[solPairing] = append(pairingToSolutions[solPairing], solution)
 
 		eachSolutionSet := eachSolutionForPairings(pairings, pairingToSolutions)
 		for _, solutionSet := range eachSolutionSet {
@@ -147,6 +273,9 @@ func eachSolutionForPairings(pairings [][2]gs.Tile, pairingToSolutions map[[2]gs
 
 	var result [][]goalSolution
 	for _, newSolution := range solutions {
+		if len(remainingSolutions) == 0 {
+			result = append(result, []goalSolution{newSolution})
+		}
 	oldSolutionsLoop:
 		for _, oldSolutions := range remainingSolutions {
 			newSolutions := make([]goalSolution, len(oldSolutions)+1)
@@ -173,12 +302,8 @@ func eachSolutionForPairings(pairings [][2]gs.Tile, pairingToSolutions map[[2]gs
 }
 
 func allTilePairingSets(tiles []gs.Tile) [][][2]gs.Tile {
-	ints := make([]int, len(tiles))
-	for i := range ints {
-		ints[i] = i
-	}
 
-	pairingSets := AllPairingSets(ints)
+	pairingSets := AllPairingSets(len(tiles))
 	tilePairingSets := make([][][2]gs.Tile, len(pairingSets))
 	for i, pairings := range pairingSets {
 		tilePairings := make([][2]gs.Tile, len(pairings))
@@ -195,9 +320,9 @@ func allTilePairingSets(tiles []gs.Tile) [][][2]gs.Tile {
 func combineSolutions(baseGrid Grid, sols []goalSolution) Grid {
 	grid := baseGrid.Clone()
 
-	for i1 := 0; i1 < len(sols)-1; i1++ {
-		for _, tile := range sols[i1].solution.Slice() {
-			grid.Tiles[tile.X][tile.Y].Color = sols[i1].color
+	for _, sol := range sols {
+		for _, tile := range sol.solution.Slice() {
+			grid.Tiles[tile.X][tile.Y].Color = sol.color
 		}
 	}
 
@@ -213,11 +338,13 @@ func aggregateGoalSolutionChans(solutions []goalSolutionsChan) <-chan goalSoluti
 	mergeIn := func(solsCh goalSolutionsChan) {
 		for sol := range solsCh.sols {
 			ch <- goalSolution{
+				start:    solsCh.start,
+				end:      solsCh.end,
 				color:    solsCh.color,
 				solution: sol,
 			}
-			wg.Done()
 		}
+		wg.Done()
 	}
 
 	for _, solutionCh := range solutions {

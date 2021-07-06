@@ -9,14 +9,14 @@ type Grid struct {
 	gs.Grid
 }
 
-// Path returns an channel of DFS direct paths from start to end.
+// SolvePath returns an channel of DFS direct paths from start to end.
 // These paths will:
 //   1. never contain a goal tile that isn't start or end.
 //   2. never make a path that would cause start or end to become invalid Goal tiles.
 //   3. have the same Color as start.
-func (g Grid) Path(start, end gs.Tile, color gs.TileColor) <-chan gs.TileSet {
+func (g Grid) SolvePath(start, end gs.Tile, color gs.TileColor) <-chan gs.TileSet {
 	ch := make(chan gs.TileSet)
-	if end.Sticky && color != end.Color {
+	if (start.Sticky || end.Sticky) && color != start.Color {
 		close(ch)
 		return ch
 	}
@@ -65,11 +65,13 @@ func (g Grid) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path gs.Tile
 		// we found a possible solution
 		if next == end {
 			// goals can only have 1 neighbor of the same color
-			endNeighbors := g.NeighborsWith(end, func(o gs.Tile) bool {
-				return o.Color == color || path.Has(o)
-			})
-			if endNeighbors.Len() > 1 {
-				continue
+			if end.Type == gs.TypeGoal {
+				endNeighbors := g.NeighborsWith(end, func(o gs.Tile) bool {
+					return o.Color == color || path.Has(o)
+				})
+				if endNeighbors.Len() > 1 {
+					continue
+				}
 			}
 
 			var finalPath gs.TileSet
