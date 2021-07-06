@@ -92,8 +92,8 @@ func TestSolvePaths_levelA1(t *testing.T) {
 
 func TestSolvePaths_levelA2(t *testing.T) {
 	const level = `
-[gA/]       [   ] [g  ]
-[   ] [   ] [   ]      
+[gA/] [---] [   ] [g  ]
+[   ] [   ] [   ] [---]
 `
 	solutions := []string{"x xx|xxx "}
 	testSolvePathsAbstract(t, level, 0, 1, 3, 1, solutions)
@@ -101,9 +101,9 @@ func TestSolvePaths_levelA2(t *testing.T) {
 
 func TestSolvePaths_levelA3(t *testing.T) {
 	const level = `
-      [   ] [   ] [   ]      
+[---] [   ] [   ] [   ] [---]
 [gA/] [   ] [  /] [   ] [g  ]
-      [   ] [   ] [   ]      
+[---] [   ] [   ] [   ] [---]
 `
 	solutions := []string{" xxx |xx xx|     ", "     |xx xx| xxx "}
 	testSolvePathsAbstract(t, level, 0, 1, 4, 1, solutions)

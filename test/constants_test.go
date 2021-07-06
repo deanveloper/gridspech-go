@@ -9,7 +9,7 @@ import (
 // has every TileType, and all are valid
 const validTestGrid = `
 [2A ] [gA ] [   ] [gA ] [   ]
-[ A ]       [   ] [ A ] [   ]
+[ A ] [---] [   ] [ A ] [   ]
 [ A ] [ A/] [ A/] [ A ] [   ]
 [   ] [   ] [   ] [   ] [   ]
 [   ] [   ] [   ] [cB ] [   ]
@@ -21,7 +21,7 @@ const validTestGrid = `
 // has every TileType, and all are invalid
 const invalidTestGrid = `
 [+B ] [+B/] [+B ] [gA ] [ A ]
-[   ]       [   ] [gA ] [   ]
+[   ] [---] [   ] [gA ] [   ]
 [2  ] [   ] [   ] [   ] [   ]
 [1  ] [   ] [   ] [   ] [   ]
 [2  ] [ A ] [   ] [   ] [ A ]

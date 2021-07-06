@@ -1,6 +1,7 @@
 package gridspech
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -120,7 +121,7 @@ func (g Grid) SetState(t Tile, state TileColor) {
 }
 
 // MakeGridFromString returns a Grid made from a string.
-// See Grid.String() for the format.
+// See Grid.String() and Tile.String() for the format.
 //
 // May panic if the format is invalid.
 func MakeGridFromString(str string) Grid {
@@ -129,7 +130,7 @@ func MakeGridFromString(str string) Grid {
 	lines := strings.Split(strings.Trim(str, "\n"), "\n")
 
 	height := len(lines)
-	width := (len(lines[0]) + 1) / 6
+	width := strings.Count(lines[0], "[")
 
 	grid.Tiles = make([][]Tile, width)
 
@@ -138,10 +139,10 @@ func MakeGridFromString(str string) Grid {
 
 		for y := 0; y < height; y++ {
 			index := x * 6
-			substr := lines[height-y-1][index : index+4]
-			holeByte, typeByte, colorByte, stickyByte := substr[0], substr[1], substr[2], substr[3]
+			substr := lines[height-y-1][index+1 : index+4]
+			typeByte, colorByte, stickyByte := substr[0], substr[1], substr[2]
 
-			tile := grid.tileFromBytes(holeByte, typeByte, colorByte, stickyByte)
+			tile := grid.tileFromBytes(typeByte, colorByte, stickyByte)
 			tile.X = x
 			tile.Y = y
 			grid.Tiles[x][y] = tile
@@ -151,11 +152,7 @@ func MakeGridFromString(str string) Grid {
 	return grid
 }
 
-func (g Grid) tileFromBytes(hole, typ, color, sticky byte) Tile {
-	if hole == ' ' {
-		return Tile{}
-	}
-
+func (g Grid) tileFromBytes(typ, color, sticky byte) Tile {
 	var tile Tile
 	switch typ {
 	case ' ':
@@ -176,7 +173,7 @@ func (g Grid) tileFromBytes(hole, typ, color, sticky byte) Tile {
 		tile.Color = TileColor(color - 'A' + 1)
 	}
 	switch color {
-	case 'O':
+	case 'O', ' ':
 		tile.Color = 0
 	case 'A':
 		tile.Color = 1
@@ -189,54 +186,50 @@ func (g Grid) tileFromBytes(hole, typ, color, sticky byte) Tile {
 	return tile
 }
 
+func (t Tile) String() string {
+	if t.Type == TypeHole {
+		return "[---]"
+	}
+
+	var typeChar rune
+	switch t.Type {
+	case TypeBlank:
+		typeChar = ' '
+	case TypeGoal:
+		typeChar = 'g'
+	case TypeCrown:
+		typeChar = 'c'
+	case TypeDot1:
+		typeChar = '1'
+	case TypeDot2:
+		typeChar = '2'
+	}
+
+	var colorChar rune
+	switch t.Color {
+	case ColorNone:
+		colorChar = ' '
+	case ColorA:
+		colorChar = 'A'
+	case ColorB:
+		colorChar = 'B'
+	}
+
+	stickyChar := ' '
+	if t.Sticky {
+		stickyChar = '/'
+	}
+	return fmt.Sprintf("[%c%c%c]", typeChar, colorChar, stickyChar)
+}
+
 // String returns the string representation of g.
 func (g Grid) String() string {
 	byteSlice := make([]byte, (g.Width()*6)*g.Height()-1)
 	for x, col := range g.Tiles {
 		for y, tile := range col {
-
 			index := x*6 + (g.Height()-y-1)*g.Width()*6
-			if tile.Type == TypeHole {
-				copy(byteSlice[index:index+6], "     ")
-				continue
-			}
 
-			byteSlice[index] = '['
-
-			var typeChar byte
-			switch tile.Type {
-			case TypeBlank:
-				typeChar = ' '
-			case TypeGoal:
-				typeChar = 'g'
-			case TypeCrown:
-				typeChar = 'c'
-			case TypeDot1:
-				typeChar = '1'
-			case TypeDot2:
-				typeChar = '2'
-			case TypePlus:
-				typeChar = '+'
-			}
-
-			var colorChar byte
-			if tile.Color == 0 {
-				colorChar = ' '
-			} else {
-				colorChar = 'A' + byte(tile.Color) - 1
-			}
-
-			var stickyChar byte
-			if tile.Sticky {
-				stickyChar = '/'
-			} else {
-				stickyChar = ' '
-			}
-
-			byteSlice[index+1] = typeChar
-			byteSlice[index+2] = colorChar
-			byteSlice[index+3] = stickyChar
-			byteSlice[index+4] = ']'
+			copy(byteSlice[index:index+5], tile.String())
 			if x < g.Width()-1 {
 				byteSlice[index+5] = ' '
 			}

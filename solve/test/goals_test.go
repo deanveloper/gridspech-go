@@ -77,7 +77,7 @@ func TestGoals_levelB1(t *testing.T) {
 	const level = `
 [   ] [   ] [   ] [   ] [   ] [   ] 
 [ A/] [   ] [   ] [   ] [  /] [   ] 
-[gA/] [g  ]             [g  ] [g  ] 
+[gA/] [g  ] [---] [---] [g  ] [g  ] 
 `
 
 	solutions := []string{
