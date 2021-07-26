@@ -133,3 +133,12 @@ func (ts TileSet) String() string {
 	sb.WriteByte('}')
 	return sb.String()
 }
+
+// MultiLineString returns a string representation of this tileset on multiple lines
+func (ts TileSet) MultiLineString() string {
+	next := ts.String()
+	next = next[1 : len(next)-1]
+	next = strings.ReplaceAll(next, "|", "\n")
+	next += "\n"
+	return next
+}

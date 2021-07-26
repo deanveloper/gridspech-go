@@ -55,6 +55,9 @@ func (g Grid) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path gs.Tile
 		if prevNeighborsSameColor.Len() > 2 {
 			continue
 		}
+		if prev.Type == gs.TypeGoal && prevNeighborsSameColor.Len() > 1 {
+			continue
+		}
 
 		// cannot traverse into sticky tile of different color
 		if next.Color != color && next.Sticky {

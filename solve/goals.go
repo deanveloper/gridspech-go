@@ -59,7 +59,7 @@ func Goals(g Grid, maxColors gs.TileColor) <-chan Grid {
 	}
 
 	// map of pair to solutions (so far) for that pair
-	var pairToSolutionsLock sync.RWMutex
+	var pairToSolutionsLock sync.Mutex
 	pairToSolutions := make(map[[2]gs.Tile][]goalSolution)
 	for k := range pairToPairingsSet {
 		for color := gs.ColorNone; color < maxColors; color++ {
@@ -75,11 +75,9 @@ func Goals(g Grid, maxColors gs.TileColor) <-chan Grid {
 						solution: solution,
 					}
 
-					pairToSolutionsLock.RLock()
-					grids := onNewSolutionFound(g, newGoalSolution, pairToPairingsSet[pair], pairToSolutions)
-					pairToSolutionsLock.RUnlock()
-
 					pairToSolutionsLock.Lock()
+					grids := onNewSolutionFound(g, newGoalSolution, pairToPairingsSet[pair], pairToSolutions)
+
 					pairToSolutions[pair] = append(pairToSolutions[pair], newGoalSolution)
 					pairToSolutionsLock.Unlock()
 
@@ -112,20 +110,28 @@ func onNewSolutionFound(
 	pairingsToUpdate [][][2]gs.Tile,
 	currentSolutions map[[2]gs.Tile][]goalSolution,
 ) []Grid {
+	newPair := [2]gs.Tile{newSolution.start, newSolution.end}
 	var grids []Grid
+
+	{
+		// fmt.Println("//// new solution found:")
+		// fmt.Println(combineSolutions(baseGrid, []goalSolution{newSolution}))
+		// fmt.Println("////")
+	}
 pairingsToUpdateLoop:
-	for _, pairings := range pairingsToUpdate {
-		solutions := make(map[[2]gs.Tile][]goalSolution, len(pairings)-1)
-		for _, pair := range pairings {
-			newPair := [2]gs.Tile{newSolution.start, newSolution.end}
+	for _, pairing := range pairingsToUpdate {
+		solutions := make(map[[2]gs.Tile][]goalSolution, len(pairing)-1)
+		for _, pair := range pairing {
 			if pair != newPair {
 				// if this pair does not have any solutions yet,
 				// we do not care about this pairing
-				if len(solutions) == 0 {
+				if len(currentSolutions[pair]) == 0 {
 					continue pairingsToUpdateLoop
 				}
 				solutions[pair] = currentSolutions[pair]
 			} else {
+				// we do not care about previous solutions found for this pair,
+				// only add the new solution.
 				solutions[pair] = []goalSolution{newSolution}
 			}
 		}
@@ -138,35 +144,60 @@ pairingsToUpdateLoop:
 	return grids
 }
 
-func forEachSolutionSet(solutionSet map[[2]gs.Tile][]goalSolution, forEach func([]goalSolution)) {
-	for pair, solutions := range solutionSet {
+func forEachSolutionSet(pairsToSolutions map[[2]gs.Tile][]goalSolution, forEach func([]goalSolution)) {
+	for pair, solutions := range pairsToSolutions {
 
-		remainingSolutions := make(map[[2]gs.Tile][]goalSolution, len(solutionSet)-1)
-		for pair2, solutions2 := range solutionSet {
-			if pair2 != pair {
-				remainingSolutions[pair] = solutions2
-			}
-		}
-
-		if len(remainingSolutions) == 0 {
+		// base case: call forEach on all solutions in pairsToSolutions
+		if len(pairsToSolutions) == 1 {
 			for _, solution := range solutions {
 				forEach([]goalSolution{solution})
 			}
-		} else {
-			for _, solution := range solutions {
-				forEachSolutionSet(remainingSolutions, func(solSet []goalSolution) {
-					newGoalSolution := make([]goalSolution, len(solSet)+1)
-					newGoalSolution[0] = solution
-					copy(newGoalSolution[1:], solSet)
-					if anyIntersections(newGoalSolution) {
-						return
-					}
+			return
+		}
 
-					forEach(newGoalSolution)
-				})
+		// recursive case: call recursively on all pairs except this one, then append each solution from
+		// this pair onto all solutionSets from the recursive call
+		remainingSolutions := make(map[[2]gs.Tile][]goalSolution, len(pairsToSolutions)-1)
+		for pair2, solutions2 := range pairsToSolutions {
+			if pairCompare(pair, pair2) < 0 {
+				remainingSolutions[pair2] = solutions2
 			}
 		}
+
+		forEachSolutionSet(remainingSolutions, func(solSet []goalSolution) {
+			for _, solution := range solutions {
+				newSolSet := make([]goalSolution, len(solSet)+1)
+				newSolSet[0] = solution
+				copy(newSolSet[1:], solSet)
+				if anyIntersections(newSolSet) {
+					return
+				}
+				forEach(newSolSet)
+			}
+		})
 	}
+}
+
+func pairCompare(p1, p2 [2]gs.Tile) int8 {
+	if p1 == p2 {
+		return 0
+	}
+
+	if p1[0].X < p2[0].X {
+		return -1
+	}
+	if p1[0].Y < p2[0].Y {
+		return -1
+	}
+
+	if p1[1].X < p2[1].X {
+		return -1
+	}
+	if p1[1].Y < p2[1].Y {
+		return -1
+	}
+
+	return 1
 }
 
 func anyIntersections(solSet []goalSolution) bool {
