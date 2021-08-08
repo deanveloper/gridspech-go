@@ -1,6 +1,8 @@
 package solve_test
 
 import (
+	"encoding/hex"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -8,13 +10,16 @@ import (
 	"github.com/deanveloper/gridspech-go/solve"
 )
 
-func gridToSolutionString(t *testing.T, g solve.Grid) string {
+func gridToSolutionString(t *testing.T, gridSolver solve.GridSolver) string {
 	t.Helper()
+
+	g := gridSolver.Grid()
 
 	byteArray := make([]byte, g.Height()*(g.Width()+1))
 	for x, col := range g.Tiles {
 		for y, tile := range col {
-			index := x + (g.Height() - y - 1)
+			index := x + (g.Width()+1)*(g.Height()-y-1)
+			fmt.Println(tile.Color)
 			if tile.Color == gs.ColorNone {
 				byteArray[index] = ' '
 			} else {
@@ -26,6 +31,9 @@ func gridToSolutionString(t *testing.T, g solve.Grid) string {
 			}
 		}
 	}
+
+	fmt.Println(hex.EncodeToString(byteArray))
+
 	return string(byteArray)
 }
 
@@ -62,7 +70,7 @@ func testStringSlicesEq(t *testing.T, expected, actual []string) {
 func testSolveGoalsAbstract(t *testing.T, level string, maxColors gs.TileColor, solutions []string) {
 	t.Helper()
 
-	grid := solve.Grid{Grid: gs.MakeGridFromString(level)}
+	grid := solve.NewGridSolver(gs.MakeGridFromString(level))
 
 	ch := solve.Goals(grid, maxColors)
 	var actualSolutions []string
@@ -75,9 +83,9 @@ func testSolveGoalsAbstract(t *testing.T, level string, maxColors gs.TileColor, 
 
 func TestGoals_levelB1(t *testing.T) {
 	const level = `
-[   ] [   ] [   ] [   ] [   ] [   ] 
-[ A/] [   ] [   ] [   ] [  /] [   ] 
-[gA/] [g  ] [---] [---] [g  ] [g  ] 
+[    ] [    ] [    ] [    ] [    ] [    ] 
+[ A/ ] [    ] [    ] [    ] [  / ] [    ] 
+[gA/ ] [g   ] [----] [----] [g   ] [g   ] 
 `
 
 	solutions := []string{

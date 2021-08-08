@@ -1,6 +1,6 @@
 package gridspech
 
-//go:generate stringer -type=TileType,TileColor -linecomment -output=stringers.go
+//go:generate stringer -type=TileType -linecomment -output=stringers.go
 
 const (
 	// TypeHole represents a tile which does not exist. They cannot have Color.
@@ -52,4 +52,9 @@ type Tile struct {
 	Type   TileType
 	Sticky bool
 	X, Y   int
+
+	ArrowNorth bool
+	ArrowEast  bool
+	ArrowSouth bool
+	ArrowWest  bool
 }

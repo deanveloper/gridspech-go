@@ -33,14 +33,14 @@ func makeGoalPairingKey(pairings [][2]gs.Tile) goalPairingKey {
 }
 
 // Goals will return a channels of solutions for all the goal tiles in g
-func Goals(g Grid, maxColors gs.TileColor) <-chan Grid {
+func Goals(g GridSolver, maxColors gs.TileColor) <-chan GridSolver {
 
 	var gridChanWg sync.WaitGroup
-	gridChan := make(chan Grid, 50)
+	gridChan := make(chan GridSolver, 50)
 
 	// get all goal tiles
 	var goalTiles []gs.Tile
-	for _, col := range g.Tiles {
+	for _, col := range g.RawGrid.Tiles {
 		for _, tile := range col {
 			if tile.Type == gridspech.TypeGoal {
 				goalTiles = append(goalTiles, tile)
@@ -82,8 +82,8 @@ func Goals(g Grid, maxColors gs.TileColor) <-chan Grid {
 					pairToSolutionsLock.Unlock()
 
 					for _, grid := range grids {
-						invalidGoals := grid.TilesWith(func(t gs.Tile) bool {
-							return t.Type == gs.TypeGoal && !grid.ValidTile(t)
+						invalidGoals := grid.RawGrid.TilesWith(func(t gs.Tile) bool {
+							return t.Type == gs.TypeGoal && !grid.RawGrid.ValidTile(t)
 						})
 						if invalidGoals.Len() > 0 {
 							continue
@@ -105,19 +105,14 @@ func Goals(g Grid, maxColors gs.TileColor) <-chan Grid {
 }
 
 func onNewSolutionFound(
-	baseGrid Grid,
+	baseGrid GridSolver,
 	newSolution goalSolution,
 	pairingsToUpdate [][][2]gs.Tile,
 	currentSolutions map[[2]gs.Tile][]goalSolution,
-) []Grid {
+) []GridSolver {
 	newPair := [2]gs.Tile{newSolution.start, newSolution.end}
-	var grids []Grid
+	var grids []GridSolver
 
-	{
-		// fmt.Println("//// new solution found:")
-		// fmt.Println(combineSolutions(baseGrid, []goalSolution{newSolution}))
-		// fmt.Println("////")
-	}
 pairingsToUpdateLoop:
 	for _, pairing := range pairingsToUpdate {
 		solutions := make(map[[2]gs.Tile][]goalSolution, len(pairing)-1)
@@ -137,7 +132,8 @@ pairingsToUpdateLoop:
 		}
 
 		forEachSolutionSet(solutions, func(gs []goalSolution) {
-			grids = append(grids, combineSolutions(baseGrid, gs))
+			nextGrid := combineSolutions(baseGrid, gs)
+			grids = append(grids, nextGrid)
 		})
 	}
 
@@ -216,9 +212,9 @@ func anyIntersections(solSet []goalSolution) bool {
 }
 
 // assembles solutions together
-func assembleSolutions(baseGrid Grid, allSolutions <-chan goalSolution, goalTiles []gs.Tile) <-chan Grid {
+func assembleSolutions(baseGrid GridSolver, allSolutions <-chan goalSolution, goalTiles []gs.Tile) <-chan GridSolver {
 
-	ch := make(chan Grid)
+	ch := make(chan GridSolver)
 	go func() {
 		goalsToSolutions := make(map[gs.Tile][]goalSolution)
 		pairingsSet := allTilePairingSets(goalTiles)
@@ -230,8 +226,8 @@ func assembleSolutions(baseGrid Grid, allSolutions <-chan goalSolution, goalTile
 			for _, grid := range grids {
 
 				// and just in case... validate all goals in the grid!
-				invalidGoals := grid.TilesWith(func(t gs.Tile) bool {
-					return t.Type == gs.TypeGoal && !grid.ValidTile(t)
+				invalidGoals := grid.RawGrid.TilesWith(func(t gs.Tile) bool {
+					return t.Type == gs.TypeGoal && !grid.RawGrid.ValidTile(t)
 				})
 				if invalidGoals.Len() > 0 {
 					log.Printf("invalid goals found %v", invalidGoals)
@@ -251,12 +247,12 @@ func assembleSolutions(baseGrid Grid, allSolutions <-chan goalSolution, goalTile
 }
 
 func makeFullSolutions(
-	baseGrid Grid,
+	baseGrid GridSolver,
 	solution goalSolution,
 	solutionsForGoals map[gs.Tile][]goalSolution,
 	pairingsSet [][][2]gs.Tile,
-) []Grid {
-	var grids []Grid
+) []GridSolver {
+	var grids []GridSolver
 	for _, pairings := range pairingsSet {
 
 		// skip if relevant pairing set
@@ -348,8 +344,8 @@ func allTilePairingSets(tiles []gs.Tile) [][][2]gs.Tile {
 
 // combines solutions together and returns the grid of the combined solutions.
 // Second value is false if the solutions could not be combined.
-func combineSolutions(baseGrid Grid, sols []goalSolution) Grid {
-	grid := baseGrid.Clone()
+func combineSolutions(baseGrid GridSolver, sols []goalSolution) GridSolver {
+	grid := baseGrid.Grid()
 
 	for _, sol := range sols {
 		for _, tile := range sol.solution.Slice() {
@@ -357,7 +353,7 @@ func combineSolutions(baseGrid Grid, sols []goalSolution) Grid {
 		}
 	}
 
-	return Grid{Grid: grid}
+	return GridSolver{RawGrid: grid}
 }
 
 func aggregateGoalSolutionChans(solutions []goalSolutionsChan) <-chan goalSolution {

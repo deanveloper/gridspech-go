@@ -5,6 +5,82 @@ import (
 	"strings"
 )
 
+var wordsToArrowsMap = map[string]rune{
+	"north":              '╵',
+	"northeast":          '└',
+	"northsouth":         '│',
+	"northwest":          '┘',
+	"northeastsouth":     '├',
+	"northeastwest":      '┴',
+	"northsouthwest":     '┤',
+	"northeastsouthwest": '┼',
+	"east":               '╶',
+	"eastsouth":          '┌',
+	"eastwest":           '─',
+	"eastsouthwest":      '┬',
+	"south":              '╷',
+	"southwest":          '┐',
+	"west":               '╸',
+}
+var arrowsToWordsMap = map[rune]string{
+	'╵': "north",
+	'└': "northeast",
+	'│': "northsouth",
+	'┘': "northwest",
+	'├': "northeastsouth",
+	'┴': "northeastwest",
+	'┤': "northsouthwest",
+	'┼': "northeastsouthwest",
+	'╶': "east",
+	'┌': "eastsouth",
+	'─': "eastwest",
+	'┬': "eastsouthwest",
+	'╷': "south",
+	'┐': "southwest",
+	'╸': "west",
+}
+
+func encodeArrows(north, east, south, west bool) rune {
+	var str strings.Builder
+	if north {
+		str.WriteString("north")
+	}
+	if east {
+		str.WriteString("east")
+	}
+	if south {
+		str.WriteString("south")
+	}
+	if west {
+		str.WriteString("west")
+	}
+	if str.Len() == 0 {
+		return ' '
+	}
+	return wordsToArrowsMap[str.String()]
+}
+func decodeArrows(arrows rune) (north, east, south, west bool) {
+	oldStr := arrowsToWordsMap[arrows]
+	nextStr := oldStr
+	if nextStr = strings.TrimPrefix(oldStr, "north"); oldStr != nextStr {
+		north = true
+	}
+	oldStr = nextStr
+	if nextStr = strings.TrimPrefix(oldStr, "east"); oldStr != nextStr {
+		east = true
+	}
+	oldStr = nextStr
+	if nextStr = strings.TrimPrefix(oldStr, "south"); oldStr != nextStr {
+		south = true
+	}
+	oldStr = nextStr
+	if nextStr = strings.TrimPrefix(oldStr, "west"); oldStr != nextStr {
+		west = true
+	}
+
+	return north, east, south, west
+}
+
 // Width of the grid.
 func (g Grid) Width() int {
 	return len(g.Tiles)
@@ -17,6 +93,20 @@ func (g Grid) Height() int {
 
 // NorthOf returns the tile north of t in g.
 func (g Grid) NorthOf(t Tile) Tile {
+	// special behavior if we have an arrow
+	if t.ArrowNorth {
+		nextTile := findTile(t, func(each Tile) (Tile, bool) {
+			if each.Y == g.Height()-1 {
+				return g.Tiles[each.X][0], true
+			}
+			if each.Type == TypeHole {
+				return g.Tiles[each.X][each.Y+1], true
+			}
+			return Tile{}, false
+		})
+		return nextTile
+	}
+
 	if t.Y == g.Height()-1 || t.Type == TypeHole {
 		return Tile{}
 	}
@@ -25,6 +115,20 @@ func (g Grid) NorthOf(t Tile) Tile {
 
 // EastOf returns the tile east of t in g.
 func (g Grid) EastOf(t Tile) Tile {
+	// special behavior if we have an arrow
+	if t.ArrowEast {
+		nextTile := findTile(t, func(each Tile) (Tile, bool) {
+			if each.X == g.Width()-1 {
+				return g.Tiles[0][each.Y], true
+			}
+			if each.Type == TypeHole {
+				return g.Tiles[each.X+1][each.Y], true
+			}
+			return Tile{}, false
+		})
+		return nextTile
+	}
+
 	if t.X == g.Width()-1 || t.Type == TypeHole {
 		return Tile{}
 	}
@@ -33,6 +137,20 @@ func (g Grid) EastOf(t Tile) Tile {
 
 // SouthOf returns the tile south of t in g.
 func (g Grid) SouthOf(t Tile) Tile {
+	// special behavior if we have an arrow
+	if t.ArrowSouth {
+		nextTile := findTile(t, func(each Tile) (Tile, bool) {
+			if each.Y == 0 {
+				return g.Tiles[each.X][g.Height()-1], true
+			}
+			if each.Type == TypeHole {
+				return g.Tiles[each.X][each.Y-1], true
+			}
+			return Tile{}, false
+		})
+		return nextTile
+	}
+
 	if t.Y == 0 || t.Type == TypeHole {
 		return Tile{}
 	}
@@ -41,10 +159,39 @@ func (g Grid) SouthOf(t Tile) Tile {
 
 // WestOf returns the tile west of t in g.
 func (g Grid) WestOf(t Tile) Tile {
+	// special behavior if we have an arrow
+	if t.ArrowWest {
+		nextTile := findTile(t, func(each Tile) (Tile, bool) {
+			if each.X == 0 {
+				return g.Tiles[g.Width()-1][each.Y], true
+			}
+			if each.Type == TypeHole {
+				return g.Tiles[each.X-1][each.Y], true
+			}
+			return Tile{}, false
+		})
+		return nextTile
+	}
+
 	if t.X == 0 || t.Type == TypeHole {
 		return Tile{}
 	}
 	return g.Tiles[t.X-1][t.Y]
+}
+
+func findTile(start Tile, iter func(each Tile) (Tile, bool)) Tile {
+	last := start
+	next, ok := iter(start)
+	for {
+		if !ok {
+			return last
+		}
+		if next == start {
+			panic("no tile found")
+		}
+		last = next
+		next, ok = iter(next)
+	}
 }
 
 // Neighbors returns all tiles directly next to t.
@@ -138,11 +285,11 @@ func MakeGridFromString(str string) Grid {
 		grid.Tiles[x] = make([]Tile, height)
 
 		for y := 0; y < height; y++ {
-			index := x * 6
-			substr := lines[height-y-1][index+1 : index+4]
-			typeByte, colorByte, stickyByte := substr[0], substr[1], substr[2]
+			index := x * 7
+			substr := []rune(lines[height-y-1][index+1 : index+5])
+			typeRune, colorRune, stickyRune, arrowsRune := substr[0], substr[1], substr[2], substr[3]
 
-			tile := grid.tileFromBytes(typeByte, colorByte, stickyByte)
+			tile := tileFromRunes(typeRune, colorRune, stickyRune, arrowsRune)
 			tile.X = x
 			tile.Y = y
 			grid.Tiles[x][y] = tile
@@ -152,7 +299,7 @@ func MakeGridFromString(str string) Grid {
 	return grid
 }
 
-func (g Grid) tileFromBytes(typ, color, sticky byte) Tile {
+func tileFromRunes(typ, color, sticky, arrows rune) Tile {
 	var tile Tile
 	switch typ {
 	case ' ':
@@ -183,12 +330,14 @@ func (g Grid) tileFromBytes(typ, color, sticky byte) Tile {
 
 	tile.Sticky = sticky == '/'
 
+	tile.ArrowNorth, tile.ArrowEast, tile.ArrowSouth, tile.ArrowWest = decodeArrows(arrows)
+
 	return tile
 }
 
 func (t Tile) String() string {
 	if t.Type == TypeHole {
-		return "[---]"
+		return "[----]"
 	}
 
 	var typeChar rune
@@ -207,34 +356,41 @@ func (t Tile) String() string {
 
 	var colorChar rune
 	switch t.Color {
-	case ColorNone:
+	case 0:
 		colorChar = ' '
-	case ColorA:
+	case 1:
 		colorChar = 'A'
-	case ColorB:
+	case 2:
 		colorChar = 'B'
+
+		// special case for "unknown" color in solvers
+	case 100:
+		colorChar = ' '
 	}
 
 	stickyChar := ' '
 	if t.Sticky {
 		stickyChar = '/'
 	}
-	return fmt.Sprintf("[%c%c%c]", typeChar, colorChar, stickyChar)
+
+	arrowsChar := encodeArrows(t.ArrowNorth, t.ArrowEast, t.ArrowSouth, t.ArrowWest)
+
+	return fmt.Sprintf("[%c%c%c%c]", typeChar, colorChar, stickyChar, arrowsChar)
 }
 
 // String returns the string representation of g.
 func (g Grid) String() string {
-	byteSlice := make([]byte, (g.Width()*6)*g.Height()-1)
+	byteSlice := make([]byte, (g.Width()*7)*g.Height()-1)
 	for x, col := range g.Tiles {
 		for y, tile := range col {
-			index := x*6 + (g.Height()-y-1)*g.Width()*6
+			index := x*7 + (g.Height()-y-1)*g.Width()*7
 
-			copy(byteSlice[index:index+5], tile.String())
+			copy(byteSlice[index:index+6], tile.String())
 			if x < g.Width()-1 {
-				byteSlice[index+5] = ' '
+				byteSlice[index+6] = ' '
 			}
 			if x == g.Width()-1 && y != 0 {
-				byteSlice[index+5] = '\n'
+				byteSlice[index+6] = '\n'
 			}
 		}
 	}

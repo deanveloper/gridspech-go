@@ -8,26 +8,26 @@ import (
 
 // has every TileType, and all are valid
 const validTestGrid = `
-[2A ] [gA ] [   ] [gA ] [   ]
-[ A ] [---] [   ] [ A ] [   ]
-[ A ] [ A/] [ A/] [ A ] [   ]
-[   ] [   ] [   ] [   ] [   ]
-[   ] [   ] [   ] [cB ] [   ]
-[   ] [   ] [   ] [+B ] [   ]
-[ B ] [2B ] [   ] [   ] [   ]
-[1B ] [cB ] [   ] [   ] [   ]
+[2A  ] [gA  ] [    ] [gA  ] [    ]
+[ A  ] [----] [    ] [ A  ] [    ]
+[ A  ] [ A/ ] [ A/ ] [ A  ] [    ]
+[    ] [    ] [    ] [    ] [    ]
+[    ] [    ] [    ] [cB  ] [    ]
+[    ] [    ] [    ] [+B  ] [    ]
+[ B  ] [2B  ] [    ] [    ] [    ]
+[1B  ] [cB  ] [    ] [    ] [    ]
 `
 
 // has every TileType, and all are invalid
 const invalidTestGrid = `
-[+B ] [+B/] [+B ] [gA ] [ A ]
-[   ] [---] [   ] [gA ] [   ]
-[2  ] [   ] [   ] [   ] [   ]
-[1  ] [   ] [   ] [   ] [   ]
-[2  ] [ A ] [   ] [   ] [ A ]
-[   ] [   ] [   ] [ A ] [+  ]
-[ B ] [   ] [   ] [cA ] [   ]
-[c  ] [ B ] [   ] [   ] [ A ]
+[+B  ] [+B/ ] [+B  ] [gA  ] [ A  ]
+[    ] [----] [    ] [gA  ] [    ]
+[2   ] [    ] [    ] [    ] [    ]
+[1   ] [    ] [    ] [    ] [    ]
+[2   ] [ A  ] [    ] [    ] [ A  ]
+[    ] [    ] [    ] [ A  ] [+   ]
+[ B  ] [    ] [    ] [cA  ] [    ]
+[c   ] [ B  ] [    ] [    ] [ A  ]
 `
 
 // MakeValidGrid returns a grid which contains a tile of every single Type and Color,

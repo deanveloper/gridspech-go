@@ -4,17 +4,46 @@ import (
 	gs "github.com/deanveloper/gridspech-go"
 )
 
-// Grid is an "extension" of gridspech.Grid with solving capabilities
-type Grid struct {
-	gs.Grid
+// ColorUnknown is a special color which represents
+const ColorUnknown gs.TileColor = 'U' - 'A' - 1
+
+// GridSolver represents a gs.Grid, but with a special "unknown" tile color.
+type GridSolver struct {
+	RawGrid gs.Grid
 }
 
-// SolvePath returns an channel of DFS direct paths from start to end.
+// NewGridSolver creates a GridSolver
+func NewGridSolver(solving gs.Grid) GridSolver {
+	newSolving := solving.Clone()
+	for x := range newSolving.Tiles {
+		for y := range newSolving.Tiles[x] {
+			if !newSolving.Tiles[x][y].Sticky {
+				newSolving.Tiles[x][y].Color = ColorUnknown
+			}
+		}
+	}
+	return GridSolver{RawGrid: newSolving}
+}
+
+// Grid returns the underlying gridspech.Grid, with unknown tiles replaced with gridspech.ColorNone
+func (g GridSolver) Grid() gs.Grid {
+	newSolving := g.RawGrid.Clone()
+	for x := range newSolving.Tiles {
+		for y := range newSolving.Tiles[x] {
+			if newSolving.Tiles[x][y].Color == ColorUnknown {
+				newSolving.Tiles[x][y].Color = gs.ColorNone
+			}
+		}
+	}
+	return newSolving
+}
+
+// SolvePath returns an channel of direct paths from start to end.
 // These paths will:
 //   1. never contain a goal tile that isn't start or end.
 //   2. never make a path that would cause start or end to become invalid Goal tiles.
 //   3. have the same Color as start.
-func (g Grid) SolvePath(start, end gs.Tile, color gs.TileColor) <-chan gs.TileSet {
+func (g GridSolver) SolvePath(start, end gs.Tile, color gs.TileColor) <-chan gs.TileSet {
 	ch := make(chan gs.TileSet)
 	if start.Sticky && color != start.Color {
 		close(ch)
@@ -36,31 +65,28 @@ func (g Grid) SolvePath(start, end gs.Tile, color gs.TileColor) <-chan gs.TileSe
 // we do not iterate in any particular order since it does not matter.
 // this function will only create direct paths, aka ones which would satisfy
 // a Goal tile.
-func (g Grid) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path gs.TileSet, ch chan<- gs.TileSet) {
-	neighbors := g.Neighbors(prev)
+func (g GridSolver) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path gs.TileSet, ch chan<- gs.TileSet) {
 
-	for _, next := range neighbors.Slice() {
+	// possible next tiles include untraversed tiles, and tiles of the same color
+	possibleNext := g.RawGrid.NeighborsWith(prev, func(o gs.Tile) bool {
+		return o.Color == ColorUnknown || o.Color == color
+	})
 
+	for _, next := range possibleNext.Slice() {
 		// no circular paths
 		if path.Has(next) {
 			continue
 		}
 
-		// represents neighbors with the same Color (or prospective Color)
-		prevNeighborsSameColor := g.NeighborsWith(prev, func(o gs.Tile) bool {
+		// prev's neighbors with same color, including `next`
+		prevNeighborsSameColor := g.RawGrid.NeighborsWith(prev, func(o gs.Tile) bool {
 			return o.Color == color || path.Has(o) || o == next
 		})
-
-		// first make sure that we never have an invalid path, ever
+		// make sure that we never have an invalid path, ever
 		if prevNeighborsSameColor.Len() > 2 {
 			continue
 		}
 		if prev.Type == gs.TypeGoal && prevNeighborsSameColor.Len() > 1 {
-			continue
-		}
-
-		// cannot traverse into sticky tile of different color
-		if next.Color != color && next.Sticky {
 			continue
 		}
 
@@ -71,9 +97,10 @@ func (g Grid) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path gs.Tile
 
 		// we found a possible solution
 		if next == end {
-			// goals can only have 1 neighbor of the same color
+
+			// make sure the goal only has 1 neighbor of the same color
 			if end.Type == gs.TypeGoal {
-				endNeighbors := g.NeighborsWith(end, func(o gs.Tile) bool {
+				endNeighbors := g.RawGrid.NeighborsWith(end, func(o gs.Tile) bool {
 					return o.Color == color || path.Has(o)
 				})
 				if endNeighbors.Len() > 1 {
@@ -84,6 +111,8 @@ func (g Grid) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path gs.Tile
 			var finalPath gs.TileSet
 			finalPath.Merge(path)
 			finalPath.Add(next)
+			slice := finalPath.Slice()
+			_ = slice
 			ch <- finalPath
 			continue
 		}

@@ -9,19 +9,19 @@ import (
 
 func main() {
 	const levelAaa = `
-[   ] [   ] [   ] [   ] [   ] [   ]
-[   ] [gA/] [   ] [   ] [gA/] [   ]
-[   ] [ A/] [   ] [   ] [ A/] [   ]
-[   ] [ A/] [   ] [  /] [   ] [ A/]
-[   ] [ A/] [   ] [  /] [   ] [gA/]
-[   ] [ A/] [   ] [   ] [   ] [   ]
-[   ] [   ] [ A/] [   ] [   ] [   ]
-[   ] [   ] [gA/] [   ] [   ] [   ]
+[    ] [    ] [    ] [    ] [    ] [    ]
+[    ] [gA/ ] [    ] [    ] [gA/ ] [    ]
+[    ] [ A/ ] [    ] [    ] [ A/ ] [    ]
+[    ] [ A/ ] [    ] [  / ] [    ] [ A/ ]
+[    ] [ A/ ] [    ] [  / ] [    ] [gA/ ]
+[    ] [ A/ ] [    ] [    ] [    ] [    ]
+[    ] [    ] [ A/ ] [    ] [    ] [    ]
+[    ] [    ] [gA/ ] [    ] [    ] [    ]
 `
 	grid := gridspech.MakeGridFromString(levelAaa)
-	ch := solve.Goals(solve.Grid{Grid: grid}, 2)
+	ch := solve.Goals(solve.NewGridSolver(grid), 2)
 	for solvedGrid := range ch {
-		fmt.Println(solvedGrid)
+		fmt.Println(solvedGrid.Grid())
 		fmt.Println("=============")
 	}
 }

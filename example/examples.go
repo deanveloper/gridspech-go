@@ -76,6 +76,6 @@ func main() {
 
 // FindSolution returns a new grid as a solution to `grid`
 func FindSolution(grid gridspech.Grid) gridspech.Grid {
-	ch := solve.Goals(solve.Grid{Grid: grid}, 2)
-	return (<-ch).Grid
+	ch := solve.Goals(solve.NewGridSolver(grid), 2)
+	return (<-ch).Grid()
 }
