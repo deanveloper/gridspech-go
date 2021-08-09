@@ -38,6 +38,11 @@ func (g GridSolver) Grid() gs.Grid {
 	return newSolving
 }
 
+// Clone creates a copy of the underlying gridspech.Grid
+func (g GridSolver) Clone() GridSolver {
+	return GridSolver{RawGrid: g.RawGrid.Clone()}
+}
+
 // SolvePath returns an channel of direct paths from start to end.
 // These paths will:
 //   1. never contain a goal tile that isn't start or end.

@@ -2,48 +2,69 @@ package solve
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/deanveloper/gridspech-go"
 	gs "github.com/deanveloper/gridspech-go"
 )
 
-// Dots will return a channel of solutions for all of the dot tiles in g.
-func Dots(g GridSolver, maxColors int) <-chan GridSolver {
+// Dots will return a slice of solutions for all of the dot tiles in g.
+func Dots(g GridSolver, maxColors int) []gs.TileSet {
 
 	// get all dot-related tiles
 	dotTiles := g.RawGrid.TilesWith(func(o gs.Tile) bool {
 		return o.Type == gridspech.TypeDot1 || o.Type == gridspech.TypeDot2 || o.Type == gridspech.TypeDot3
 	}).Slice()
 
-	var wg sync.WaitGroup
-	ch := make(chan GridSolver)
-
-	wg.Add(len(dotTiles))
-	go func() {
-		wg.Wait()
-		close(ch)
-	}()
+	var solutions []gs.TileSet
+	solutions = append(solutions, gs.NewTileSet())
 
 	// solve each dot related tile
-	for _, dotTile := range dotTiles {
-		dotTile := dotTile
-		go func() {
-			solutions := g.solveDots(dotTile, maxColors)
-			for _, sol := range solutions {
-				// TODO - this isn't a complete solution, just a solution for this tile.
-				// assemble the solutions together!!
-				ch <- sol
+	for currentIndex, currentTile := range dotTiles {
+		newSolutions := g.solveDots(currentTile, maxColors)
+		mergedSolutions := mergeSolutions(g, solutions, newSolutions)
+
+		// check validity of each new solution
+		for _, solution := range mergedSolutions {
+
+			var valid bool
+
+			newGrid := g.Grid()
+			for _, tile := range solution.Slice() {
+				newGrid.Tiles[tile.X][tile.Y].Color = tile.Color
 			}
-			wg.Done()
-		}()
+			for prevIndex := 0; prevIndex < currentIndex; prevIndex++ {
+				prevTile := dotTiles[prevIndex]
+				if !newGrid.ValidTile(prevTile) {
+					valid = false
+					break
+				}
+			}
+
+			if valid {
+				solutions = append(solutions, solution)
+			}
+		}
 	}
 
-	return ch
+	return solutions
+}
+
+func mergeSolutions(g GridSolver, sols1, sols2 []gs.TileSet) []gs.TileSet {
+	var solutions []gs.TileSet
+	for _, sol1 := range sols1 {
+		for _, sol2 := range sols2 {
+
+			// merge the tilesets together, and check if t1/t2 are still valid
+			var merged gs.TileSet
+			merged.Merge(sol1)
+			merged.Merge(sol2)
+		}
+	}
+	return solutions
 }
 
 // there are very few valid solutions for an individual tile, so this just returns a slice
-func (g GridSolver) solveDots(t gs.Tile, maxColors int) []GridSolver {
+func (g GridSolver) solveDots(t gs.Tile, maxColors int) []gs.TileSet {
 	var numDots int
 
 	switch t.Type {
@@ -61,20 +82,29 @@ func (g GridSolver) solveDots(t gs.Tile, maxColors int) []GridSolver {
 		return o.Color != ColorUnknown && o.Color != gs.ColorNone
 	})
 
-	return g.solveDotsRecur(t, maxColors, numDots-enabledTiles.Len())
+	var ts gs.TileSet
+	return solveDotsRecur(g.Clone(), t, maxColors, ts, numDots-enabledTiles.Len())
 }
 
-func (g GridSolver) solveDotsRecur(t gs.Tile, maxColors int, remainingDots int) []GridSolver {
+func solveDotsRecur(
+	g GridSolver,
+	t gs.Tile,
+	maxColors int,
+	runningSolution gs.TileSet,
+	remainingDots int,
+) []gs.TileSet {
 
-	// base case: exactly 0 remaining dots means this tile is now valid, so this grid is a solution
+	// base case: exactly 0 remaining dots means this tile is now valid, so the solution we have is the solution
 	if remainingDots == 0 {
-		return []GridSolver{{g.RawGrid.Clone()}}
+		var finalSolution gs.TileSet
+		finalSolution.Merge(runningSolution)
+		return []gs.TileSet{finalSolution}
 	}
 
-	var grids []GridSolver
+	var solutions []gs.TileSet
 
 	unknownNeighbors := g.RawGrid.NeighborsWith(t, func(o gs.Tile) bool {
-		return o.Color == ColorUnknown
+		return o.Color == ColorUnknown && !runningSolution.Has(o)
 	})
 
 	// if there are not enough unknown neighbors to fulfil this dot, then there are no solutions
@@ -85,12 +115,14 @@ func (g GridSolver) solveDotsRecur(t gs.Tile, maxColors int, remainingDots int) 
 	// call recursively until dot is fulfilled
 	for _, tile := range unknownNeighbors.Slice() {
 		for c := 0; c < maxColors; c++ {
-			newGrid := GridSolver{RawGrid: g.RawGrid.Clone()}
-			newGrid.RawGrid.Tiles[tile.X][tile.Y].Color = gs.TileColor(c)
-			moreGrids := newGrid.solveDotsRecur(t, maxColors, remainingDots-1)
-			grids = append(grids, moreGrids...)
+
+			tile.Color = gs.TileColor(c)
+
+			runningSolution.Add(tile)
+			moreSolutions := solveDotsRecur(g, t, maxColors, runningSolution, remainingDots-1)
+			solutions = append(solutions, moreSolutions...)
 		}
 	}
 
-	return grids
+	return solutions
 }
