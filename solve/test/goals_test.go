@@ -10,10 +10,8 @@ import (
 	"github.com/deanveloper/gridspech-go/solve"
 )
 
-func gridToSolutionString(t *testing.T, gridSolver solve.GridSolver) string {
+func gridToSolutionString(t *testing.T, g gs.Grid) string {
 	t.Helper()
-
-	g := gridSolver.Grid()
 
 	byteArray := make([]byte, g.Height()*(g.Width()+1))
 	for x, col := range g.Tiles {
@@ -74,7 +72,10 @@ func testSolveGoalsAbstract(t *testing.T, level string, maxColors gs.TileColor, 
 
 	ch := solve.Goals(grid, maxColors)
 	var actualSolutions []string
-	for solvedGrid := range ch {
+	for solution := range ch {
+		solvedGrid := grid.Grid()
+		solvedGrid.ApplyTileSet(solution)
+
 		actualSolutions = append(actualSolutions, gridToSolutionString(t, solvedGrid))
 	}
 

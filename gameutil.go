@@ -236,6 +236,14 @@ func (g Grid) Blob(t Tile) TileSet {
 	return ts
 }
 
+// ApplyTileSet will loop through ts and update all tiles
+// with the same coordinates to have the same data as the tiles in ts.
+func (g Grid) ApplyTileSet(ts TileSet) {
+	for _, tile := range ts.Slice() {
+		g.Tiles[tile.X][tile.Y] = tile
+	}
+}
+
 func (g Grid) blobRecur(t Tile, ts *TileSet) {
 	neighbors := g.NeighborsWith(t, func(other Tile) bool {
 		return other.Color == t.Color

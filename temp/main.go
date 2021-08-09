@@ -21,7 +21,7 @@ func main() {
 	grid := gridspech.MakeGridFromString(levelAaa)
 	ch := solve.Goals(solve.NewGridSolver(grid), 2)
 	for solvedGrid := range ch {
-		fmt.Println(solvedGrid.Grid())
+		fmt.Println(solvedGrid.MultiLineString())
 		fmt.Println("=============")
 	}
 }

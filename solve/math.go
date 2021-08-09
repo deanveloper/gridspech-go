@@ -1,18 +1,5 @@
 package solve
 
-func sliceIntersectGoalSolutions(s1, s2 []goalSolution) []goalSolution {
-	var out []goalSolution
-	for i1 := 0; i1 < len(s1)-1; i1++ {
-		for i2 := i1 + 1; i2 < len(s1); i2++ {
-			if s1[i1].eq(s2[i2]) {
-				out = append(out, s1[i1])
-			}
-		}
-	}
-
-	return out
-}
-
 // AllPairingSets returns all pairing sets for alphabet. for instance with limit=4, this would return something like:
 // [[0, 1] [2, 3]]
 // [[0, 2] [1, 3]]
