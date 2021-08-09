@@ -17,11 +17,14 @@ const (
 	// together they must touch all tiles of their state.
 	TypeCrown // Crown
 
-	// TypeDot1 must be touching exactly 1 tile with Color >= 1.
+	// TypeDot1 must be touching exactly 1 tiles with Color >= 1.
 	TypeDot1 // Dot1
 
-	// TypeDot2 must be touching exactly 2 tile with Color >= 1.
+	// TypeDot2 must be touching exactly 2 tiles with Color >= 1.
 	TypeDot2 // Dot2
+
+	// TypeDot3 must be touching exactly 3 tiles with Color >= 1.
+	TypeDot3 // Dot3
 
 	// TypePlus must touch exactly 1 tile with a non-blank type.
 	TypePlus // Plus

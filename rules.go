@@ -14,12 +14,16 @@ func (g Grid) ValidTile(t Tile) bool {
 		return g.validCrown(t)
 	case TypeDot1:
 		return g.NeighborsWith(t, func(other Tile) bool {
-			return other.Color != 0
+			return other.Color != ColorNone && other.Color != 100
 		}).Len() == 1
 	case TypeDot2:
 		return g.NeighborsWith(t, func(other Tile) bool {
-			return other.Color != 0
+			return other.Color != ColorNone && other.Color != 100
 		}).Len() == 2
+	case TypeDot3:
+		return g.NeighborsWith(t, func(other Tile) bool {
+			return other.Color != ColorNone && other.Color != 100
+		}).Len() == 3
 	case TypePlus:
 		return g.validPlus(t)
 	default:

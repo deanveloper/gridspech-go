@@ -213,7 +213,7 @@ func (g Grid) Neighbors(t Tile) TileSet {
 }
 
 // TilesWith returns all non-hole tiles such that `pred` returns true.
-func (g Grid) TilesWith(pred func(Tile) bool) TileSet {
+func (g Grid) TilesWith(pred func(o Tile) bool) TileSet {
 	var ts TileSet
 
 	for _, col := range g.Tiles {
@@ -312,6 +312,8 @@ func tileFromRunes(typ, color, sticky, arrows rune) Tile {
 		tile.Type = TypeDot1
 	case '2':
 		tile.Type = TypeDot2
+	case '3':
+		tile.Type = TypeDot3
 	case '+':
 		tile.Type = TypePlus
 	}
@@ -352,6 +354,10 @@ func (t Tile) String() string {
 		typeChar = '1'
 	case TypeDot2:
 		typeChar = '2'
+	case TypeDot3:
+		typeChar = '3'
+	default:
+		panic(fmt.Sprint("invalid Type", t.Type))
 	}
 
 	var colorChar rune

@@ -14,12 +14,13 @@ func _() {
 	_ = x[TypeCrown-3]
 	_ = x[TypeDot1-4]
 	_ = x[TypeDot2-5]
-	_ = x[TypePlus-6]
+	_ = x[TypeDot3-6]
+	_ = x[TypePlus-7]
 }
 
-const _TileType_name = "_BlankGoalCrownDot1Dot2Plus"
+const _TileType_name = "_BlankGoalCrownDot1Dot2Dot3Plus"
 
-var _TileType_index = [...]uint8{0, 1, 6, 10, 15, 19, 23, 27}
+var _TileType_index = [...]uint8{0, 1, 6, 10, 15, 19, 23, 27, 31}
 
 func (i TileType) String() string {
 	if i >= TileType(len(_TileType_index)-1) {

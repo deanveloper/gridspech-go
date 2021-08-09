@@ -32,7 +32,7 @@ func makeGoalPairingKey(pairings [][2]gs.Tile) goalPairingKey {
 	return goalPairingKey(fmt.Sprint(pairings))
 }
 
-// Goals will return a channels of solutions for all the goal tiles in g
+// Goals will return a channel of solutions for all the goal tiles in g
 func Goals(g GridSolver, maxColors gs.TileColor) <-chan GridSolver {
 
 	var gridChanWg sync.WaitGroup
