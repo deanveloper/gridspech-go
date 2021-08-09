@@ -31,6 +31,8 @@ func Dots(g GridSolver, maxColors int) <-chan GridSolver {
 		go func() {
 			solutions := g.solveDots(dotTile, maxColors)
 			for _, sol := range solutions {
+				// TODO - this isn't a complete solution, just a solution for this tile.
+				// assemble the solutions together!!
 				ch <- sol
 			}
 			wg.Done()
