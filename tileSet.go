@@ -41,6 +41,15 @@ func (ts *TileSet) Remove(t Tile) {
 	delete(ts.set, t)
 }
 
+// RemoveIf removes each value for which pred returns true.
+func (ts *TileSet) RemoveIf(pred func(t Tile) bool) {
+	for tile := range ts.set {
+		if pred(tile) {
+			ts.Remove(tile)
+		}
+	}
+}
+
 // RemoveAll removes all of the elements in o from ts (making ts the intersection of ts and o)
 func (ts *TileSet) RemoveAll(o TileSet) {
 	if ts.Len() < o.Len() {
