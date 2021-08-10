@@ -1,8 +1,6 @@
 package solve_test
 
 import (
-	"encoding/hex"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -17,7 +15,6 @@ func gridToSolutionString(t *testing.T, g gs.Grid) string {
 	for x, col := range g.Tiles {
 		for y, tile := range col {
 			index := x + (g.Width()+1)*(g.Height()-y-1)
-			fmt.Println(tile.Color)
 			if tile.Color == gs.ColorNone {
 				byteArray[index] = ' '
 			} else {
@@ -29,8 +26,6 @@ func gridToSolutionString(t *testing.T, g gs.Grid) string {
 			}
 		}
 	}
-
-	fmt.Println(hex.EncodeToString(byteArray))
 
 	return string(byteArray)
 }
