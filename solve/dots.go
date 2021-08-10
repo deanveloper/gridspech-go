@@ -15,18 +15,18 @@ func Dots(g GridSolver, maxColors int) []gs.TileSet {
 		return o.Type == gridspech.TypeDot1 || o.Type == gridspech.TypeDot2 || o.Type == gridspech.TypeDot3
 	}).Slice()
 
-	var solutions []gs.TileSet
-	solutions = append(solutions, gs.NewTileSet())
+	runningSolutions := []gs.TileSet{gs.NewTileSet()}
 
 	// solve each dot related tile
 	for currentIndex, currentTile := range dotTiles {
 		newSolutions := g.solveDots(currentTile, maxColors)
-		mergedSolutions := mergeSolutions(g, solutions, newSolutions)
+		mergedSolutions := mergeSolutions(g, runningSolutions, newSolutions)
+		runningSolutions = nil
 
 		// check validity of each new solution
 		for _, solution := range mergedSolutions {
 
-			var allValid bool
+			var anyDotsInvalid bool
 
 			newGrid := g.Grid()
 			for _, tile := range solution.Slice() {
@@ -35,29 +35,30 @@ func Dots(g GridSolver, maxColors int) []gs.TileSet {
 			for prevIndex := 0; prevIndex < currentIndex; prevIndex++ {
 				prevTile := dotTiles[prevIndex]
 				if !newGrid.ValidTile(prevTile) {
-					allValid = false
+					anyDotsInvalid = false
 					break
 				}
 			}
 
-			if allValid {
-				solutions = append(solutions, solution)
+			if !anyDotsInvalid {
+				runningSolutions = append(runningSolutions, solution)
 			}
 		}
 	}
 
-	return solutions
+	return runningSolutions
 }
 
-func mergeSolutions(g GridSolver, sols1, sols2 []gs.TileSet) []gs.TileSet {
+func mergeSolutions(g GridSolver, prevSols, newSols []gs.TileSet) []gs.TileSet {
 	var solutions []gs.TileSet
-	for _, sol1 := range sols1 {
-		for _, sol2 := range sols2 {
+	for _, sol1 := range prevSols {
+		for _, sol2 := range newSols {
 
-			// merge the tilesets together, and check if t1/t2 are still valid
+			// merge the tilesets together
 			var merged gs.TileSet
 			merged.Merge(sol1)
 			merged.Merge(sol2)
+			solutions = append(solutions, merged)
 		}
 	}
 	return solutions
@@ -82,8 +83,7 @@ func (g GridSolver) solveDots(t gs.Tile, maxColors int) []gs.TileSet {
 		return o.Color != ColorUnknown && o.Color != gs.ColorNone
 	})
 
-	var ts gs.TileSet
-	return solveDotsRecur(g.Clone(), t, maxColors, ts, numDots-enabledTiles.Len())
+	return solveDotsRecur(g.Clone(), t, maxColors, gs.NewTileSet(), numDots-enabledTiles.Len())
 }
 
 func solveDotsRecur(
@@ -101,8 +101,6 @@ func solveDotsRecur(
 		return []gs.TileSet{finalSolution}
 	}
 
-	var solutions []gs.TileSet
-
 	unknownNeighbors := g.RawGrid.NeighborsWith(t, func(o gs.Tile) bool {
 		return o.Color == ColorUnknown && !runningSolution.Has(o)
 	})
@@ -112,17 +110,25 @@ func solveDotsRecur(
 		return nil
 	}
 
+	var solutions []gs.TileSet
+
 	// call recursively until dot is fulfilled
 	for _, tile := range unknownNeighbors.Slice() {
-		for c := 0; c < maxColors; c++ {
 
-			tile.Color = gs.TileColor(c)
+		// c=1 to avoid ColorNone
+		for c := 1; c < maxColors; c++ {
 
-			runningSolution.Add(tile)
+			newTile := tile
+			newTile.Color = gs.TileColor(c)
+
+			runningSolution.Add(newTile)
 			moreSolutions := solveDotsRecur(g, t, maxColors, runningSolution, remainingDots-1)
+			runningSolution.Remove(newTile)
+
 			solutions = append(solutions, moreSolutions...)
 		}
 	}
 
+	fmt.Println(solutions)
 	return solutions
 }
