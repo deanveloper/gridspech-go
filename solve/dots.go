@@ -26,7 +26,7 @@ func Dots(g GridSolver, maxColors int) []gs.TileSet {
 		// check validity of each new solution
 		for _, solution := range mergedSolutions {
 
-			var valid bool
+			var allValid bool
 
 			newGrid := g.Grid()
 			for _, tile := range solution.Slice() {
@@ -35,12 +35,12 @@ func Dots(g GridSolver, maxColors int) []gs.TileSet {
 			for prevIndex := 0; prevIndex < currentIndex; prevIndex++ {
 				prevTile := dotTiles[prevIndex]
 				if !newGrid.ValidTile(prevTile) {
-					valid = false
+					allValid = false
 					break
 				}
 			}
 
-			if valid {
+			if allValid {
 				solutions = append(solutions, solution)
 			}
 		}
