@@ -128,18 +128,3 @@ func (g GridSolver) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path g
 		g.dfsDirectPaths(color, next, end, nextPath, ch)
 	}
 }
-
-// returns a set of tiles which have unknown color, touching the given path.
-// all tiles in `path` must be part of `g` in order for this to function properly.
-func (g GridSolver) unknownTouchingTiles(path gs.TileSet) gs.TileSet {
-	var surrounding gs.TileSet
-
-	for _, tile := range path.Slice() {
-		unknownNeighbors := g.RawGrid.NeighborsWith(tile, func(o gs.Tile) bool {
-			return o.Color == ColorUnknown && !path.Has(o)
-		})
-		surrounding.Merge(unknownNeighbors)
-	}
-
-	return surrounding
-}
