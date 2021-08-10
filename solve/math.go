@@ -37,3 +37,26 @@ func allPairingSetsForAlphabet(alphabet []int) [][][2]int {
 	}
 	return pairingsSet
 }
+
+// Permutation returns a permutation with repetition of n (number of items) and r (size of container).
+// Returns an iterator function, which calls its argument for each permutation generated.
+func Permutation(n, r int) func(yield func(value []int)) {
+	return func(yield func([]int)) {
+
+		// base case r==0, return a single nil slice
+		if r == 0 {
+			yield(nil)
+			return
+		}
+
+		subPermIter := Permutation(n, r-1)
+		subPermIter(func(subPerm []int) {
+			for i := 0; i < n; i++ {
+				newPerm := make([]int, r)
+				newPerm[0] = i
+				copy(newPerm[1:], subPerm)
+				yield(newPerm)
+			}
+		})
+	}
+}
