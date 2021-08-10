@@ -22,7 +22,7 @@ func makeGoalPairingKey(pairings [][2]gs.Tile) goalPairingKey {
 }
 
 // Goals will return a channel of solutions for all the goal tiles in g
-func Goals(g GridSolver, maxColors gs.TileColor) <-chan gs.TileSet {
+func Goals(g GridSolver, maxColors int) <-chan gs.TileSet {
 
 	var finalSolutionsWg sync.WaitGroup
 	finalSolutionsCh := make(chan gs.TileSet, 5)
@@ -51,24 +51,24 @@ func Goals(g GridSolver, maxColors gs.TileColor) <-chan gs.TileSet {
 	var pairToSolutionsLock sync.Mutex
 	pairToSolutions := make(map[[2]gs.Tile][]goalSolution)
 	for k := range pairToPairingsSet {
-		for color := gs.ColorNone; color < maxColors; color++ {
+		for color := 0; color < maxColors; color++ {
 			k, color := k, color
 			pair := [2]gs.Tile{k[0], k[1]}
 			finalSolutionsWg.Add(1)
 			go func() {
-				for solution := range g.SolvePath(k[0], k[1], color) {
+				for solution := range g.SolvePath(k[0], k[1], gs.TileColor(color)) {
 
 					var solutionWithColor gs.TileSet
 					for _, tile := range solution.Slice() {
 						tileWithColor := tile
-						tileWithColor.Color = color
+						tileWithColor.Color = gs.TileColor(color)
 						solutionWithColor.Add(tileWithColor)
 					}
 
 					newGoalSolution := goalSolution{
 						start: k[0],
 						end:   k[1],
-						color: color,
+						color: gs.TileColor(color),
 						path:  solutionWithColor,
 					}
 

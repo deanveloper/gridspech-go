@@ -65,7 +65,7 @@ func testStringSlicesEq(t *testing.T, expected, actual []string) {
 	}
 }
 
-func testSolveGoalsAbstract(t *testing.T, level string, maxColors gs.TileColor, solutions []string) {
+func testSolveGoalsAbstract(t *testing.T, level string, maxColors int, solutions []string) {
 	t.Helper()
 
 	grid := solve.NewGridSolver(gs.MakeGridFromString(level))
