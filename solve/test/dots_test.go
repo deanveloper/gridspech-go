@@ -65,7 +65,7 @@ func TestDots_levelE8(t *testing.T) {
 [2   ] [1   ] [2   ] [1   ] [2   ]
 `
 	solutions := []string{
-		" x x \n x x \n     \nx   x\n xxx ",
+		" A A \n A A \n     \nA   A\n AAA ",
 	}
 	testSolveDotsAbstract(t, level, 2, solutions)
 
