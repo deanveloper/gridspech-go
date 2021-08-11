@@ -70,29 +70,3 @@ func TestDots_levelE8(t *testing.T) {
 	testSolveDotsAbstract(t, level, 2, solutions)
 
 }
-
-func BenchmarkDots_levelBasic2(b *testing.B) {
-	const level = `
-[    ] [    ] [    ] 
-[    ] [2   ] [    ] 
-[    ] [    ] [    ] 
-`
-	for x := 0; x < b.N; x++ {
-		grid := solve.NewGridSolver(gs.MakeGridFromString(level))
-		solve.Dots(grid, 2)
-	}
-}
-
-func BenchmarkDots_levelE8(b *testing.B) {
-	const level = `
-[1   ] [1   ] [2   ] [1   ] [1   ]
-[1   ] [1   ] [2   ] [1   ] [1   ]
-[1   ] [1   ] [    ] [1   ] [1   ]
-[    ] [2   ] [1   ] [2   ] [    ]
-[2   ] [1   ] [2   ] [1   ] [2   ]
-`
-	for x := 0; x < b.N; x++ {
-		grid := solve.NewGridSolver(gs.MakeGridFromString(level))
-		solve.Dots(grid, 2)
-	}
-}
