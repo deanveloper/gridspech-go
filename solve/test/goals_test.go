@@ -89,3 +89,18 @@ func TestGoals_levelB1(t *testing.T) {
 	}
 	testSolveGoalsAbstract(t, level, 2, solutions)
 }
+
+func TestGoals_levelB6(t *testing.T) {
+	t.Skip()
+	const level = `
+[g   ] [g   ] [    ] [    ] 
+[g   ] [    ] [    ] [    ] 
+[    ] [    ] [    ] [g   ] 
+[    ] [    ] [g   ] [g   ] 
+`
+
+	solutions := []string{
+		"  A \nAA A\n AA \n  A ",
+	}
+	testSolveGoalsAbstract(t, level, 2, solutions)
+}

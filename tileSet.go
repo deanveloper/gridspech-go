@@ -93,6 +93,20 @@ func (ts TileSet) Eq(other TileSet) bool {
 	return true
 }
 
+// Iter returns an iterator for this TileSet.
+func (ts TileSet) Iter() <-chan Tile {
+	iter := make(chan Tile, 5)
+
+	go func() {
+		for tile := range ts.set {
+			iter <- tile
+		}
+		close(iter)
+	}()
+
+	return iter
+}
+
 // Slice returns a slice representation of ts
 func (ts TileSet) Slice() []Tile {
 	slice := make([]Tile, 0, len(ts.set))

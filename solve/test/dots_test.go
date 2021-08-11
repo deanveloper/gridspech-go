@@ -1,7 +1,6 @@
 package solve_test
 
 import (
-	"fmt"
 	"testing"
 
 	gs "github.com/deanveloper/gridspech-go"
@@ -14,9 +13,8 @@ func testSolveDotsAbstract(t *testing.T, level string, maxColors int, solutions 
 	grid := solve.NewGridSolver(gs.MakeGridFromString(level))
 
 	actualSolutions := solve.Dots(grid, maxColors)
-	fmt.Println(actualSolutions)
 	var actualSolutionsStrs []string
-	for _, solution := range actualSolutions {
+	for solution := range actualSolutions {
 		solvedGrid := grid.Grid()
 		solvedGrid.ApplyTileSet(solution)
 
@@ -26,7 +24,7 @@ func testSolveDotsAbstract(t *testing.T, level string, maxColors int, solutions 
 	testStringSlicesEq(t, solutions, actualSolutionsStrs)
 }
 
-func TestDots_levelDebug(t *testing.T) {
+func TestDots_levelBasic1(t *testing.T) {
 	const level = `
 [    ] [    ] [    ] 
 [    ] [1   ] [    ] 
@@ -37,6 +35,23 @@ func TestDots_levelDebug(t *testing.T) {
 		"   \nA  \n   ",
 		"   \n  A\n   ",
 		"   \n   \n A ",
+	}
+	testSolveDotsAbstract(t, level, 2, solutions)
+}
+
+func TestDots_levelBasic2(t *testing.T) {
+	const level = `
+[    ] [    ] [    ] 
+[    ] [2   ] [    ] 
+[    ] [    ] [    ] 
+`
+	solutions := []string{
+		" A \nA  \n   ",
+		" A \n  A\n   ",
+		" A \n   \n A ",
+		"   \nA A\n   ",
+		"   \nA  \n A ",
+		"   \n  A\n A ",
 	}
 	testSolveDotsAbstract(t, level, 2, solutions)
 }
@@ -54,4 +69,30 @@ func TestDots_levelE8(t *testing.T) {
 	}
 	testSolveDotsAbstract(t, level, 2, solutions)
 
+}
+
+func BenchmarkDots_levelBasic2(b *testing.B) {
+	const level = `
+[    ] [    ] [    ] 
+[    ] [2   ] [    ] 
+[    ] [    ] [    ] 
+`
+	for x := 0; x < b.N; x++ {
+		grid := solve.NewGridSolver(gs.MakeGridFromString(level))
+		solve.Dots(grid, 2)
+	}
+}
+
+func BenchmarkDots_levelE8(b *testing.B) {
+	const level = `
+[1   ] [1   ] [2   ] [1   ] [1   ]
+[1   ] [1   ] [2   ] [1   ] [1   ]
+[1   ] [1   ] [    ] [1   ] [1   ]
+[    ] [2   ] [1   ] [2   ] [    ]
+[2   ] [1   ] [2   ] [1   ] [2   ]
+`
+	for x := 0; x < b.N; x++ {
+		grid := solve.NewGridSolver(gs.MakeGridFromString(level))
+		solve.Dots(grid, 2)
+	}
 }
