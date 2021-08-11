@@ -2,47 +2,47 @@ package gridspech
 
 import "strings"
 
-// TileSet represents a mathematical set of tiles. Tiles are compared using ==.
-type TileSet struct {
-	set map[Tile]struct{}
+// TileCoordSet represents a mathematical set of coordinates.
+type TileCoordSet struct {
+	set map[TileCoord]struct{}
 }
 
-// NewTileSet returns a TileSet containing only tiles.
-func NewTileSet(tiles ...Tile) TileSet {
-	var ts TileSet
+// NewTileCoordSet returns a TileCoordSet containing only tiles.
+func NewTileCoordSet(tiles ...TileCoord) TileCoordSet {
+	var cs TileCoordSet
 	for _, tile := range tiles {
-		ts.Add(tile)
+		cs.Add(tile)
 	}
-	return ts
+	return cs
 }
 
-// Init initializes the tileset.
-func (ts *TileSet) checkInit() {
+// Init initializes the tilecoordset.
+func (ts *TileCoordSet) checkInit() {
 	if ts.set == nil {
-		ts.set = make(map[Tile]struct{})
+		ts.set = make(map[TileCoord]struct{})
 	}
 }
 
 // Add adds t to the TileSet ts.
-func (ts *TileSet) Add(t Tile) {
+func (ts *TileCoordSet) Add(t TileCoord) {
 	ts.checkInit()
 	ts.set[t] = struct{}{}
 }
 
 // Has returns if ts contains t.
-func (ts TileSet) Has(t Tile) bool {
+func (ts TileCoordSet) Has(t TileCoord) bool {
 	_, ok := ts.set[t]
 	return ok
 }
 
 // Remove removes t from ts.
-func (ts *TileSet) Remove(t Tile) {
+func (ts *TileCoordSet) Remove(t TileCoord) {
 	ts.checkInit()
 	delete(ts.set, t)
 }
 
 // RemoveIf removes each value for which pred returns true.
-func (ts *TileSet) RemoveIf(pred func(t Tile) bool) {
+func (ts *TileCoordSet) RemoveIf(pred func(t TileCoord) bool) {
 	for tile := range ts.set {
 		if pred(tile) {
 			ts.Remove(tile)
@@ -51,7 +51,7 @@ func (ts *TileSet) RemoveIf(pred func(t Tile) bool) {
 }
 
 // RemoveAll removes all of the elements in o from ts (making ts the intersection of ts and o)
-func (ts *TileSet) RemoveAll(o TileSet) {
+func (ts *TileCoordSet) RemoveAll(o TileCoordSet) {
 	if ts.Len() < o.Len() {
 		for tile := range ts.set {
 			if o.Has(tile) {
@@ -68,12 +68,12 @@ func (ts *TileSet) RemoveAll(o TileSet) {
 }
 
 // Len returns the number of tiles in ts.
-func (ts TileSet) Len() int {
+func (ts TileCoordSet) Len() int {
 	return len(ts.set)
 }
 
 // Merge adds all tiles in other into ts.
-func (ts *TileSet) Merge(other TileSet) {
+func (ts *TileCoordSet) Merge(other TileCoordSet) {
 	ts.checkInit()
 	for tile := range other.set {
 		ts.set[tile] = struct{}{}
@@ -81,7 +81,7 @@ func (ts *TileSet) Merge(other TileSet) {
 }
 
 // Eq returns if ts contains exactly the same contents as other.
-func (ts TileSet) Eq(other TileSet) bool {
+func (ts TileCoordSet) Eq(other TileCoordSet) bool {
 	if ts.Len() != other.Len() {
 		return false
 	}
@@ -94,8 +94,8 @@ func (ts TileSet) Eq(other TileSet) bool {
 }
 
 // Iter returns an iterator for this TileSet.
-func (ts TileSet) Iter() <-chan Tile {
-	iter := make(chan Tile, 5)
+func (ts TileCoordSet) Iter() <-chan TileCoord {
+	iter := make(chan TileCoord, 5)
 
 	go func() {
 		for tile := range ts.set {
@@ -108,24 +108,24 @@ func (ts TileSet) Iter() <-chan Tile {
 }
 
 // Slice returns a slice representation of ts
-func (ts TileSet) Slice() []Tile {
-	slice := make([]Tile, 0, len(ts.set))
+func (ts TileCoordSet) Slice() []TileCoord {
+	slice := make([]TileCoord, 0, len(ts.set))
 	for tile := range ts.set {
 		slice = append(slice, tile)
 	}
 	return slice
 }
 
-func (ts TileSet) String() string {
+func (ts TileCoordSet) String() string {
 	slice := ts.Slice()
 
 	var maxX, maxY int
 	for _, tile := range slice {
-		if tile.Coord.X > maxX {
-			maxX = tile.Coord.X
+		if tile.X > maxX {
+			maxX = tile.X
 		}
-		if tile.Coord.Y > maxY {
-			maxY = tile.Coord.Y
+		if tile.Y > maxY {
+			maxY = tile.Y
 		}
 	}
 	maxX++
@@ -136,7 +136,7 @@ func (ts TileSet) String() string {
 		tilesAt[x] = make([]bool, maxY)
 	}
 	for _, v := range slice {
-		tilesAt[v.Coord.X][v.Coord.Y] = true
+		tilesAt[v.X][v.Y] = true
 	}
 
 	var sb strings.Builder
@@ -158,7 +158,7 @@ func (ts TileSet) String() string {
 }
 
 // MultiLineString returns a string representation of this tileset on multiple lines
-func (ts TileSet) MultiLineString() string {
+func (ts TileCoordSet) MultiLineString() string {
 	next := ts.String()
 	next = next[1 : len(next)-1]
 	next = strings.ReplaceAll(next, "|", "\n")

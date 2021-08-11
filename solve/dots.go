@@ -15,25 +15,23 @@ func Dots(g GridSolver, maxColors int) <-chan gs.TileSet {
 		return o.Type == gridspech.TypeDot1 || o.Type == gridspech.TypeDot2 || o.Type == gridspech.TypeDot3
 	}).Slice()
 
-	allSolutions := make(map[gs.Tile]<-chan gs.TileSet)
-	for _, tile := range dotTiles {
-		allSolutions[tile] = g.solveDots(tile, maxColors)
+	tilesToSolutions := make([]<-chan gs.TileSet, len(dotTiles))
+	for i, tile := range dotTiles {
+		tilesToSolutions[i] = g.solveDots(tile, maxColors)
 	}
 
 	// now merge them all together
 	for i := 0; i < len(dotTiles)-1; i++ {
-		prev, next := dotTiles[i], dotTiles[i+1]
-
-		mergedIter := mergeSolutions(allSolutions[prev], allSolutions[next])
+		mergedIter := mergeSolutionsIters(tilesToSolutions[i], tilesToSolutions[i+1])
 		uniqueIter := filterUnique(mergedIter)
 		validIter := filterValid(g, dotTiles[:i+2], uniqueIter)
-		allSolutions[next] = validIter
+		tilesToSolutions[i+1] = validIter
 	}
 
-	return allSolutions[dotTiles[len(dotTiles)-1]]
+	return tilesToSolutions[len(dotTiles)-1]
 }
 
-func mergeSolutions(sols1, sols2 <-chan gs.TileSet) <-chan gs.TileSet {
+func mergeSolutionsIters(sols1, sols2 <-chan gs.TileSet) <-chan gs.TileSet {
 	iter := make(chan gs.TileSet, 4)
 
 	go func() {
@@ -58,7 +56,7 @@ func mergeSolutions(sols1, sols2 <-chan gs.TileSet) <-chan gs.TileSet {
 	return iter
 }
 
-func filterValid(g GridSolver, dotTiles []gs.Tile, sols <-chan gs.TileSet) <-chan gs.TileSet {
+func filterValid(g GridSolver, tilesToValidate []gs.Tile, sols <-chan gs.TileSet) <-chan gs.TileSet {
 	filtered := make(chan gs.TileSet)
 
 	go func() {
@@ -68,7 +66,7 @@ func filterValid(g GridSolver, dotTiles []gs.Tile, sols <-chan gs.TileSet) <-cha
 			newBase.ApplyTileSet(solution)
 
 			allValid := true
-			for _, dotTile := range dotTiles {
+			for _, dotTile := range tilesToValidate {
 				if !newBase.ValidTile(dotTile) {
 					allValid = false
 					break

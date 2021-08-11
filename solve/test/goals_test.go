@@ -91,7 +91,6 @@ func TestGoals_levelB1(t *testing.T) {
 }
 
 func TestGoals_levelB6(t *testing.T) {
-	t.Skip()
 	const level = `
 [g   ] [g   ] [    ] [    ] 
 [g   ] [    ] [    ] [    ] 

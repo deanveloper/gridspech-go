@@ -91,92 +91,97 @@ func (g Grid) Height() int {
 	return len(g.Tiles[0])
 }
 
+// TileAt returns the tile at a specific coordinate.
+func (g Grid) TileAt(coord TileCoord) Tile {
+	return g.Tiles[coord.X][coord.Y]
+}
+
 // NorthOf returns the tile north of t in g.
 func (g Grid) NorthOf(t Tile) Tile {
 	// special behavior if we have an arrow
-	if t.ArrowNorth {
+	if t.Data.ArrowNorth {
 		nextTile := findTile(t, func(each Tile) (Tile, bool) {
-			if each.Y == g.Height()-1 {
-				return g.Tiles[each.X][0], true
+			if each.Coord.Y == g.Height()-1 {
+				return g.Tiles[each.Coord.X][0], true
 			}
-			if each.Type == TypeHole {
-				return g.Tiles[each.X][each.Y+1], true
+			if each.Data.Type == TypeHole {
+				return g.Tiles[each.Coord.X][each.Coord.Y+1], true
 			}
 			return Tile{}, false
 		})
 		return nextTile
 	}
 
-	if t.Y == g.Height()-1 || t.Type == TypeHole {
+	if t.Coord.Y == g.Height()-1 || t.Data.Type == TypeHole {
 		return Tile{}
 	}
-	return g.Tiles[t.X][t.Y+1]
+	return g.Tiles[t.Coord.X][t.Coord.Y+1]
 }
 
 // EastOf returns the tile east of t in g.
 func (g Grid) EastOf(t Tile) Tile {
 	// special behavior if we have an arrow
-	if t.ArrowEast {
+	if t.Data.ArrowEast {
 		nextTile := findTile(t, func(each Tile) (Tile, bool) {
-			if each.X == g.Width()-1 {
-				return g.Tiles[0][each.Y], true
+			if each.Coord.X == g.Width()-1 {
+				return g.Tiles[0][each.Coord.Y], true
 			}
-			if each.Type == TypeHole {
-				return g.Tiles[each.X+1][each.Y], true
+			if each.Data.Type == TypeHole {
+				return g.Tiles[each.Coord.X+1][each.Coord.Y], true
 			}
 			return Tile{}, false
 		})
 		return nextTile
 	}
 
-	if t.X == g.Width()-1 || t.Type == TypeHole {
+	if t.Coord.X == g.Width()-1 || t.Data.Type == TypeHole {
 		return Tile{}
 	}
-	return g.Tiles[t.X+1][t.Y]
+	return g.Tiles[t.Coord.X+1][t.Coord.Y]
 }
 
 // SouthOf returns the tile south of t in g.
 func (g Grid) SouthOf(t Tile) Tile {
 	// special behavior if we have an arrow
-	if t.ArrowSouth {
+	if t.Data.ArrowSouth {
 		nextTile := findTile(t, func(each Tile) (Tile, bool) {
-			if each.Y == 0 {
-				return g.Tiles[each.X][g.Height()-1], true
+			if each.Coord.Y == 0 {
+				return g.Tiles[each.Coord.X][g.Height()-1], true
 			}
-			if each.Type == TypeHole {
-				return g.Tiles[each.X][each.Y-1], true
+			if each.Data.Type == TypeHole {
+				return g.Tiles[each.Coord.X][each.Coord.Y-1], true
 			}
 			return Tile{}, false
 		})
 		return nextTile
 	}
 
-	if t.Y == 0 || t.Type == TypeHole {
+	if t.Coord.Y == 0 || t.Data.Type == TypeHole {
 		return Tile{}
 	}
-	return g.Tiles[t.X][t.Y-1]
+	return g.Tiles[t.Coord.X][t.Coord.Y-1]
 }
 
 // WestOf returns the tile west of t in g.
 func (g Grid) WestOf(t Tile) Tile {
 	// special behavior if we have an arrow
-	if t.ArrowWest {
+	if t.Data.ArrowWest {
 		nextTile := findTile(t, func(each Tile) (Tile, bool) {
-			if each.X == 0 {
-				return g.Tiles[g.Width()-1][each.Y], true
+			if each.Coord.X == 0 {
+				return g.Tiles[g.Width()-1][each.Coord.Y], true
 			}
-			if each.Type == TypeHole {
-				return g.Tiles[each.X-1][each.Y], true
+			if each.Data.Type == TypeHole {
+				return g.Tiles[each.Coord.X-1][each.Coord.Y], true
 			}
 			return Tile{}, false
 		})
 		return nextTile
 	}
 
-	if t.X == 0 || t.Type == TypeHole {
+	if t.Coord.X == 0 || t.Data.Type == TypeHole {
 		return Tile{}
 	}
-	return g.Tiles[t.X-1][t.Y]
+	return g.Tiles[t.Coord.X-1][t.Coord.Y]
 }
 
 func findTile(start Tile, iter func(each Tile) (Tile, bool)) Tile {
@@ -197,41 +202,32 @@ func findTile(start Tile, iter func(each Tile) (Tile, bool)) Tile {
 // Neighbors returns all tiles directly next to t.
 func (g Grid) Neighbors(t Tile) TileSet {
 	var ts TileSet
-	if neighbor := g.NorthOf(t); neighbor.Type != TypeHole {
+	if neighbor := g.NorthOf(t); neighbor.Data.Type != TypeHole {
 		ts.Add(neighbor)
 	}
-	if neighbor := g.EastOf(t); neighbor.Type != TypeHole {
+	if neighbor := g.EastOf(t); neighbor.Data.Type != TypeHole {
 		ts.Add(neighbor)
 	}
-	if neighbor := g.SouthOf(t); neighbor.Type != TypeHole {
+	if neighbor := g.SouthOf(t); neighbor.Data.Type != TypeHole {
 		ts.Add(neighbor)
 	}
-	if neighbor := g.WestOf(t); neighbor.Type != TypeHole {
+	if neighbor := g.WestOf(t); neighbor.Data.Type != TypeHole {
 		ts.Add(neighbor)
 	}
 	return ts
 }
 
 // TilesWith returns all non-hole tiles such that `pred` returns true.
-func (g Grid) TilesWith(pred func(o Tile) bool) TileSet {
-	var ts TileSet
+func (g Grid) TilesWith(pred func(o Tile) bool) TileCoordSet {
+	var ts TileCoordSet
 
 	for _, col := range g.Tiles {
 		for _, tile := range col {
-			if tile.Type != TypeHole && pred(tile) {
-				ts.Add(tile)
+			if tile.Data.Type != TypeHole && pred(tile) {
+				ts.Add(tile.Coord)
 			}
 		}
 	}
-
-	return ts
-}
-
-// Blob returns all tiles which can form a path to t such that all tiles in the path have the same Color.
-func (g Grid) Blob(t Tile) TileSet {
-	var ts TileSet
-
-	g.blobRecur(t, &ts)
 
 	return ts
 }
@@ -240,25 +236,36 @@ func (g Grid) Blob(t Tile) TileSet {
 // with the same coordinates to have the same data as the tiles in ts.
 func (g Grid) ApplyTileSet(ts TileSet) {
 	for _, tile := range ts.Slice() {
-		g.Tiles[tile.X][tile.Y] = tile
+		g.Tiles[tile.Coord.X][tile.Coord.Y] = tile
 	}
 }
 
-func (g Grid) blobRecur(t Tile, ts *TileSet) {
-	neighbors := g.NeighborsWith(t, func(other Tile) bool {
-		return other.Color == t.Color
+// Blob returns all tiles which can form a path to t such that all tiles in the path have the same Color.
+func (g Grid) Blob(coord TileCoord) TileSet {
+	var ts TileSet
+
+	g.blobRecur(coord, &ts)
+
+	return ts
+}
+
+func (g Grid) blobRecur(coord TileCoord, ts *TileSet) {
+	t := g.TileAt(coord)
+	neighbors := g.NeighborsWith(coord, func(o Tile) bool {
+		return o.Data.Color == t.Data.Color
 	})
 
 	for _, neighbor := range neighbors.Slice() {
 		if !ts.Has(neighbor) {
 			ts.Add(neighbor)
-			g.blobRecur(neighbor, ts)
+			g.blobRecur(neighbor.Coord, ts)
 		}
 	}
 }
 
 // NeighborsWith returns the set of neighbors such that `pred` returns true
-func (g Grid) NeighborsWith(t Tile, pred func(o Tile) bool) TileSet {
+func (g Grid) NeighborsWith(coord TileCoord, pred func(o Tile) bool) TileSet {
+	t := g.TileAt(coord)
 	neighbors := g.Neighbors(t)
 	for _, neighbor := range neighbors.Slice() {
 		if !pred(neighbor) {
@@ -266,13 +273,6 @@ func (g Grid) NeighborsWith(t Tile, pred func(o Tile) bool) TileSet {
 		}
 	}
 	return neighbors
-}
-
-// SetState sets the state of t in g.
-func (g Grid) SetState(t Tile, state TileColor) {
-	if !t.Sticky {
-		g.Tiles[t.X][t.Y].Color = state
-	}
 }
 
 // MakeGridFromString returns a Grid made from a string.
@@ -298,8 +298,8 @@ func MakeGridFromString(str string) Grid {
 			typeRune, colorRune, stickyRune, arrowsRune := substr[0], substr[1], substr[2], substr[3]
 
 			tile := tileFromRunes(typeRune, colorRune, stickyRune, arrowsRune)
-			tile.X = x
-			tile.Y = y
+			tile.Coord.X = x
+			tile.Coord.Y = y
 			grid.Tiles[x][y] = tile
 		}
 	}
@@ -311,47 +311,51 @@ func tileFromRunes(typ, color, sticky, arrows rune) Tile {
 	var tile Tile
 	switch typ {
 	case ' ':
-		tile.Type = TypeBlank
+		tile.Data.Type = TypeBlank
 	case 'g':
-		tile.Type = TypeGoal
+		tile.Data.Type = TypeGoal
 	case 'c':
-		tile.Type = TypeCrown
+		tile.Data.Type = TypeCrown
 	case '1':
-		tile.Type = TypeDot1
+		tile.Data.Type = TypeDot1
 	case '2':
-		tile.Type = TypeDot2
+		tile.Data.Type = TypeDot2
 	case '3':
-		tile.Type = TypeDot3
+		tile.Data.Type = TypeDot3
 	case '+':
-		tile.Type = TypePlus
+		tile.Data.Type = TypePlus
 	}
 
 	if color >= 'A' && color <= 'Z' {
-		tile.Color = TileColor(color - 'A' + 1)
+		tile.Data.Color = TileColor(color - 'A' + 1)
 	}
 	switch color {
 	case 'O', ' ':
-		tile.Color = 0
+		tile.Data.Color = 0
 	case 'A':
-		tile.Color = 1
+		tile.Data.Color = 1
 	case 'B':
-		tile.Color = 2
+		tile.Data.Color = 2
 	}
 
-	tile.Sticky = sticky == '/'
+	tile.Data.Sticky = sticky == '/'
 
-	tile.ArrowNorth, tile.ArrowEast, tile.ArrowSouth, tile.ArrowWest = decodeArrows(arrows)
+	tile.Data.ArrowNorth, tile.Data.ArrowEast, tile.Data.ArrowSouth, tile.Data.ArrowWest = decodeArrows(arrows)
 
 	return tile
 }
 
 func (t Tile) String() string {
-	if t.Type == TypeHole {
+	return t.Data.String()
+}
+
+func (td TileData) String() string {
+	if td.Type == TypeHole {
 		return "[----]"
 	}
 
 	var typeChar rune
-	switch t.Type {
+	switch td.Type {
 	case TypeBlank:
 		typeChar = ' '
 	case TypeGoal:
@@ -365,11 +369,11 @@ func (t Tile) String() string {
 	case TypeDot3:
 		typeChar = '3'
 	default:
-		panic(fmt.Sprint("invalid Type", t.Type))
+		panic(fmt.Sprint("invalid Type", td.Type))
 	}
 
 	var colorChar rune
-	switch t.Color {
+	switch td.Color {
 	case 0:
 		colorChar = ' '
 	case 1:
@@ -380,16 +384,19 @@ func (t Tile) String() string {
 		// special case for "unknown" color in solvers
 	case 100:
 		colorChar = ' '
+	default:
+		panic(fmt.Sprintf("invalid color %d", td.Color))
 	}
 
 	stickyChar := ' '
-	if t.Sticky {
+	if td.Sticky {
 		stickyChar = '/'
 	}
 
-	arrowsChar := encodeArrows(t.ArrowNorth, t.ArrowEast, t.ArrowSouth, t.ArrowWest)
+	arrowsChar := encodeArrows(td.ArrowNorth, td.ArrowEast, td.ArrowSouth, td.ArrowWest)
 
-	return fmt.Sprintf("[%c%c%c%c]", typeChar, colorChar, stickyChar, arrowsChar)
+	str := fmt.Sprintf("[%c%c%c%c]", typeChar, colorChar, stickyChar, arrowsChar)
+	return str
 }
 
 // String returns the string representation of g.

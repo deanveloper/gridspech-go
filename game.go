@@ -48,16 +48,26 @@ type Grid struct {
 	Tiles [][]Tile
 }
 
-// Tile represents a tile in the game of gridspech. The default value of a tile will have
-// `Type = Hole`.
-type Tile struct {
+// TileCoord is an X,Y coordinate in the grid.
+type TileCoord struct {
+	X, Y int
+}
+
+// TileData represents all of the properties which a tile can have.
+type TileData struct {
 	Color  TileColor
 	Type   TileType
 	Sticky bool
-	X, Y   int
 
 	ArrowNorth bool
 	ArrowEast  bool
 	ArrowSouth bool
 	ArrowWest  bool
+}
+
+// Tile represents a tile in the game of gridspech. The default value of a tile will have
+// `Type = Hole`.
+type Tile struct {
+	Coord TileCoord
+	Data  TileData
 }

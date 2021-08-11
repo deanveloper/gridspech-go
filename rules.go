@@ -4,8 +4,10 @@ import "fmt"
 
 // ValidTile returns if t is valid in g. If all tiles in g are valid,
 // the grid is completed.
-func (g Grid) ValidTile(t Tile) bool {
-	switch t.Type {
+func (g Grid) ValidTile(coord TileCoord) bool {
+	t := g.TileAt(coord)
+
+	switch t.Data.Type {
 	case TypeHole, TypeBlank:
 		return true
 	case TypeGoal:
@@ -14,20 +16,20 @@ func (g Grid) ValidTile(t Tile) bool {
 		return g.validCrown(t)
 	case TypeDot1:
 		return g.NeighborsWith(t, func(other Tile) bool {
-			return other.Color != ColorNone && other.Color != 100
+			return other.Data.Color != ColorNone && other.Data.Color != 100
 		}).Len() == 1
 	case TypeDot2:
 		return g.NeighborsWith(t, func(other Tile) bool {
-			return other.Color != ColorNone && other.Color != 100
+			return other.Data.Color != ColorNone && other.Data.Color != 100
 		}).Len() == 2
 	case TypeDot3:
 		return g.NeighborsWith(t, func(other Tile) bool {
-			return other.Color != ColorNone && other.Color != 100
+			return other.Data.Color != ColorNone && other.Data.Color != 100
 		}).Len() == 3
 	case TypePlus:
 		return g.validPlus(t)
 	default:
-		panic(fmt.Sprintf("invalid tile type %v", t.Type))
+		panic(fmt.Sprintf("invalid tile type %v", t.Data.Type))
 	}
 }
 
@@ -40,12 +42,12 @@ func (g Grid) validGoal(start Tile) bool {
 	blob := g.Blob(start)
 	var goals int
 	for _, t := range blob.Slice() {
-		if t.Type == TypeGoal {
+		if t.Data.Type == TypeGoal {
 			goals++
 
 			// requirement 2: The goals should have exactly 1 neighbor with the same state.
 			neighbors := g.NeighborsWith(t, func(o Tile) bool {
-				return t.Color == o.Color
+				return t.Data.Color == o.Data.Color
 			})
 			if len(neighbors.Slice()) != 1 {
 				return false
