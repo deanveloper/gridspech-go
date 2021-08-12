@@ -12,7 +12,7 @@ func testSolveDotsAbstract(t *testing.T, level string, maxColors int, solutions 
 
 	grid := solve.NewGridSolver(gs.MakeGridFromString(level, 2))
 
-	actualSolutions := solve.Dots(grid, maxColors)
+	actualSolutions := solve.Dots(grid)
 	var actualSolutionsStrs []string
 	for solution := range actualSolutions {
 		solvedGrid := grid.Grid()

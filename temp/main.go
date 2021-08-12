@@ -18,7 +18,7 @@ func testDotsLevel() {
 	grid := gridspech.MakeGridFromString(level, 2)
 
 	solver := solve.NewGridSolver(grid)
-	for solution := range solve.Dots(solver, 2) {
+	for solution := range solve.Dots(solver) {
 		newGrid := grid.Clone()
 		newGrid.ApplyTileSet(solution)
 		fmt.Println(newGrid)

@@ -8,7 +8,7 @@ import (
 )
 
 // Dots will return a slice of solutions for all of the dot tiles in g.
-func Dots(g GridSolver, maxColors int) <-chan gs.TileSet {
+func Dots(g GridSolver) <-chan gs.TileSet {
 
 	// get all dot-related tiles
 	dotTiles := g.RawGrid.TilesWith(func(o gs.Tile) bool {
@@ -17,7 +17,7 @@ func Dots(g GridSolver, maxColors int) <-chan gs.TileSet {
 
 	tilesToSolutions := make([]<-chan gs.TileSet, len(dotTiles))
 	for i, tile := range dotTiles {
-		tilesToSolutions[i] = g.solveDots(tile, maxColors)
+		tilesToSolutions[i] = g.solveDots(tile)
 	}
 
 	// now merge them all together
@@ -107,7 +107,7 @@ func filterUnique(in <-chan gs.TileSet) <-chan gs.TileSet {
 }
 
 // there are very few valid solutions for an individual tile, so this just returns a slice
-func (g GridSolver) solveDots(t gs.Tile, maxColors int) <-chan gs.TileSet {
+func (g GridSolver) solveDots(t gs.Tile) <-chan gs.TileSet {
 	var numDots int
 
 	switch t.Data.Type {
@@ -125,14 +125,13 @@ func (g GridSolver) solveDots(t gs.Tile, maxColors int) <-chan gs.TileSet {
 		return o.Data.Color != ColorUnknown && o.Data.Color != gs.ColorNone
 	})
 
-	return solveDotsRecur(g.Clone(), t, gs.NewTileCoordSet(), maxColors, numDots-enabledTiles.Len())
+	return solveDotsRecur(g.Clone(), t, gs.NewTileCoordSet(), numDots-enabledTiles.Len())
 }
 
 func solveDotsRecur(
 	g GridSolver,
 	t gs.Tile,
 	tilesBeingUsed gs.TileCoordSet,
-	maxColors int,
 	remainingDots int,
 ) <-chan gs.TileSet {
 	ch := make(chan gs.TileSet, 4)
@@ -156,9 +155,9 @@ func solveDotsRecur(
 
 		for tile := range unknownNeighbors.Iter() {
 			tilesBeingUsed.Add(tile.Coord)
-			for subSolution := range solveDotsRecur(g, t, tilesBeingUsed, maxColors, remainingDots-1) {
+			for subSolution := range solveDotsRecur(g, t, tilesBeingUsed, remainingDots-1) {
 				// c=1 to avoid ColorNone
-				for c := 1; c < maxColors; c++ {
+				for c := 1; c < g.RawGrid.MaxColors; c++ {
 
 					newTile := tile
 					newTile.Data.Color = gs.TileColor(c)
