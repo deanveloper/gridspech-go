@@ -100,6 +100,9 @@ func TestGoals_levelB6(t *testing.T) {
 
 	solutions := []string{
 		"  A \nAA A\n AA \n  A ",
+		" A  \n AA \nA AA\n A  ",
+		"A A \nA  A\n A  \n  AA",
+		"AA  \n  A \nA  A\n A A",
 	}
 	testSolveGoalsAbstract(t, level, 2, solutions)
 }

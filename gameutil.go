@@ -293,6 +293,7 @@ func MakeGridFromString(str string, maxColors int) Grid {
 	width := strings.Count(lines[0], "[")
 
 	grid.Tiles = make([][]Tile, width)
+	grid.MaxColors = maxColors
 
 	for x := 0; x < width; x++ {
 		grid.Tiles[x] = make([]Tile, height)
@@ -427,6 +428,7 @@ func (g Grid) String() string {
 func (g Grid) Clone() Grid {
 	var newGrid Grid
 	newGrid.Tiles = make([][]Tile, 0, len(g.Tiles))
+	newGrid.MaxColors = g.MaxColors
 
 	for _, col := range g.Tiles {
 		newCol := make([]Tile, len(col))

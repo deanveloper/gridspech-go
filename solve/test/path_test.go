@@ -76,7 +76,7 @@ func testSolvePathsAbstract(t *testing.T, level string, x1, y1, x2, y2 int, solu
 		expectedSolutions = append(expectedSolutions, tileSetFromString(grid.RawGrid, solutions[i]))
 	}
 
-	ch := grid.SolvePath(grid.RawGrid.Tiles[x1][y1], grid.RawGrid.Tiles[x2][y2], 1)
+	ch := grid.SolvePath(gs.TileCoord{X: x1, Y: y1}, gs.TileCoord{X: x2, Y: y2}, 1)
 	var actualSolutions []gs.TileSet
 	for ts := range ch {
 		actualSolutions = append(actualSolutions, ts)
@@ -153,4 +153,44 @@ func TestSolvePaths_levelA9(t *testing.T) {
 `
 	solutions := []string{"   xxxx|x xx  x|xxx    ", "   xxx |x xx xx|xxx    "}
 	testSolvePathsAbstract(t, level, 0, 1, 6, 1, solutions)
+}
+
+func TestSolvePaths_basicColorNonePath(t *testing.T) {
+	const level = `
+[ A/ ] [    ] [    ] [ A/ ]
+[g / ] [    ] [    ] [g   ]
+[ A/ ] [    ] [    ] [ A/ ]
+`
+	grid := gs.MakeGridFromString(level, 2)
+	gridSolver := solve.NewGridSolver(grid)
+	solutionsChan := gridSolver.SolvePath(gs.TileCoord{X: 0, Y: 1}, gs.TileCoord{X: 3, Y: 1}, gs.ColorNone)
+	var solutions []gs.TileSet
+	for solution := range solutionsChan {
+		solutions = append(solutions, solution)
+	}
+	if len(solutions) != 1 {
+		t.Fatalf("solutions length expected to be 1 but was %d", len(solutions))
+	}
+	expected := gs.NewTileSet(
+		gs.Tile{Coord: gs.TileCoord{X: 1, Y: 2}, Data: gs.TileData{Color: 1, Type: gs.TypeBlank}},
+		gs.Tile{Coord: gs.TileCoord{X: 2, Y: 2}, Data: gs.TileData{Color: 1, Type: gs.TypeBlank}},
+
+		gs.Tile{Coord: gs.TileCoord{X: 0, Y: 1}, Data: gs.TileData{Sticky: true, Type: gs.TypeGoal}},
+		gs.Tile{Coord: gs.TileCoord{X: 1, Y: 1}, Data: gs.TileData{Type: gs.TypeBlank}},
+		gs.Tile{Coord: gs.TileCoord{X: 2, Y: 1}, Data: gs.TileData{Type: gs.TypeBlank}},
+		gs.Tile{Coord: gs.TileCoord{X: 3, Y: 1}, Data: gs.TileData{Type: gs.TypeGoal}},
+
+		gs.Tile{Coord: gs.TileCoord{X: 1, Y: 0}, Data: gs.TileData{Color: 1, Type: gs.TypeBlank}},
+		gs.Tile{Coord: gs.TileCoord{X: 2, Y: 0}, Data: gs.TileData{Color: 1, Type: gs.TypeBlank}},
+	)
+
+	if !expected.Eq(solutions[0]) {
+		expectedGrid := grid.Clone()
+		actualGrid := grid.Clone()
+		expectedGrid.ApplyTileSet(expected)
+		actualGrid.ApplyTileSet(solutions[0])
+		t.Errorf("solutions not equal")
+		t.Errorf("expected:\n%v", expectedGrid)
+		t.Errorf("actual:\n%v", actualGrid)
+	}
 }

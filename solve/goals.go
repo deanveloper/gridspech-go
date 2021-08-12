@@ -33,12 +33,11 @@ func (g GridSolver) solveGoals(ch chan<- gs.TileSet) {
 	var wg sync.WaitGroup
 	for i1 := 0; i1 < len(goalTiles)-1; i1++ {
 		for i2 := i1 + 1; i2 < len(goalTiles); i2++ {
-			goalPair := [2]gs.Tile{goalTiles[i1], goalTiles[i2]}
 			goalPairCoords := [2]gs.TileCoord{goalTiles[i1].Coord, goalTiles[i2].Coord}
 			wg.Add(1)
 			go func() {
 				for c := 0; c < g.RawGrid.MaxColors; c++ {
-					for path := range g.SolvePath(goalPair[0], goalPair[1], gs.TileColor(c)) {
+					for path := range g.SolvePath(goalPairCoords[0], goalPairCoords[1], gs.TileColor(c)) {
 						pairsToSolutionMx.Lock()
 						pairsToSolutions[goalPairCoords] = append(pairsToSolutions[goalPairCoords], path)
 						pairsToSolutionMx.Unlock()
