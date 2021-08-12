@@ -7,35 +7,40 @@ import (
 )
 
 // Goals will return a channel of solutions for all the goal tiles in g
-func Goals(g GridSolver, maxColors int) <-chan gs.TileSet {
+func Goals(g GridSolver) <-chan gs.TileSet {
 
 	iter := make(chan gs.TileSet, 4)
 
 	go func() {
-		g.solveGoals(maxColors, iter)
+		g.solveGoals(iter)
 		close(iter)
 	}()
 
 	return iter
 }
 
-func (g GridSolver) solveGoals(maxColors int, ch chan<- gs.TileSet) {
+func (g GridSolver) solveGoals(ch chan<- gs.TileSet) {
 	goalTiles := g.RawGrid.TilesWith(func(o gs.Tile) bool {
 		return o.Data.Type == gs.TypeGoal
 	}).Slice()
+	goalTileCoords := make([]gs.TileCoord, len(goalTiles))
+	for i := range goalTiles {
+		goalTileCoords[i] = goalTiles[i].Coord
+	}
 
 	var pairsToSolutionMx sync.Mutex
-	pairsToSolutions := make(map[[2]gs.Tile][]gs.TileSet)
+	pairsToSolutions := make(map[[2]gs.TileCoord][]gs.TileSet)
 	var wg sync.WaitGroup
 	for i1 := 0; i1 < len(goalTiles)-1; i1++ {
 		for i2 := i1 + 1; i2 < len(goalTiles); i2++ {
 			goalPair := [2]gs.Tile{goalTiles[i1], goalTiles[i2]}
+			goalPairCoords := [2]gs.TileCoord{goalTiles[i1].Coord, goalTiles[i2].Coord}
 			wg.Add(1)
 			go func() {
-				for c := 0; c < maxColors; c++ {
+				for c := 0; c < g.RawGrid.MaxColors; c++ {
 					for path := range g.SolvePath(goalPair[0], goalPair[1], gs.TileColor(c)) {
 						pairsToSolutionMx.Lock()
-						pairsToSolutions[goalPair] = append(pairsToSolutions[goalPair], path)
+						pairsToSolutions[goalPairCoords] = append(pairsToSolutions[goalPairCoords], path)
 						pairsToSolutionMx.Unlock()
 					}
 				}
@@ -46,12 +51,12 @@ func (g GridSolver) solveGoals(maxColors int, ch chan<- gs.TileSet) {
 	wg.Wait()
 
 	// now we get solutions for each pairing
-	allGoalPairings := allTilePairingSets(goalTiles)
+	allGoalPairings := allTilePairingSets(goalTileCoords)
 	for _, pairing := range allGoalPairings {
 		pairingSolutions := pairsToSolutions[pairing[0]]
 		for pairIndex := 1; pairIndex < len(pairing); pairIndex++ {
 			pair := pairing[pairIndex]
-			var tilesToValidate []gs.Tile
+			var tilesToValidate []gs.TileCoord
 			for i := 0; i <= pairIndex; i++ {
 				tilesToValidate = append(tilesToValidate, pairing[i][0], pairing[i][1])
 			}
@@ -80,17 +85,17 @@ func mergeSolutionsSlices(sols1, sols2 []gs.TileSet) []gs.TileSet {
 	return result
 }
 
-func removeIfInvalid(g GridSolver, tilesToValidate []gs.Tile, in []gs.TileSet) []gs.TileSet {
+func removeIfInvalid(g GridSolver, tilesToValidate []gs.TileCoord, in []gs.TileSet) []gs.TileSet {
 	var validSolutions []gs.TileSet
 
-	base := g.Grid()
+	base := g.RawGrid
 	for _, solution := range in {
 		newBase := base.Clone()
 		newBase.ApplyTileSet(solution)
 
 		allValid := true
-		for _, tile := range tilesToValidate {
-			if !newBase.ValidTile(tile.Coord) {
+		for _, coord := range tilesToValidate {
+			if !newBase.ValidTile(coord) {
 				allValid = false
 				break
 			}
@@ -122,14 +127,14 @@ func removeIfNonUnique(in []gs.TileSet) []gs.TileSet {
 	return filtered
 }
 
-func allTilePairingSets(tiles []gs.Tile) [][][2]gs.Tile {
+func allTilePairingSets(tiles []gs.TileCoord) [][][2]gs.TileCoord {
 
 	pairingSets := AllPairingSets(len(tiles))
-	tilePairingSets := make([][][2]gs.Tile, len(pairingSets))
+	tilePairingSets := make([][][2]gs.TileCoord, len(pairingSets))
 	for i, pairing := range pairingSets {
-		tilePairings := make([][2]gs.Tile, len(pairing))
+		tilePairings := make([][2]gs.TileCoord, len(pairing))
 		for p, pair := range pairing {
-			tilePairings[p] = [2]gs.Tile{tiles[pair[0]], tiles[pair[1]]}
+			tilePairings[p] = [2]gs.TileCoord{tiles[pair[0]], tiles[pair[1]]}
 		}
 		tilePairingSets[i] = tilePairings
 	}

@@ -69,7 +69,7 @@ func testUnorderedTilesetSliceEq(t *testing.T, expected, actual []gs.TileSet) {
 func testSolvePathsAbstract(t *testing.T, level string, x1, y1, x2, y2 int, solutions []string) {
 	t.Helper()
 
-	grid := solve.NewGridSolver(gs.MakeGridFromString(level))
+	grid := solve.NewGridSolver(gs.MakeGridFromString(level, 2))
 
 	var expectedSolutions []gs.TileSet
 	for i := range solutions {

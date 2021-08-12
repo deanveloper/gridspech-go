@@ -61,37 +61,10 @@ func (g GridSolver) SolvePath(start, end gs.Tile, color gs.TileColor) <-chan gs.
 	}()
 	onGridIter := tileCoordSetsOnGrid(tileCoordSetIter, g.RawGrid)
 	withColorIter := tileSetsWithColor(onGridIter, color)
+	if color == gs.ColorNone {
+		return decorateUnknownNeighbors(g, withColorIter, g.RawGrid.MaxColors)
+	}
 	return withColorIter
-}
-
-func tileCoordSetsOnGrid(coordSets <-chan gs.TileCoordSet, g gs.Grid) <-chan gs.TileSet {
-	ch := make(chan gs.TileSet)
-	go func() {
-		for coordSet := range coordSets {
-			tileSet := coordSet.ToTileSet(func(t gs.TileCoord) gs.Tile {
-				return *g.TileAtCoord(t)
-			})
-			ch <- tileSet
-		}
-		close(ch)
-	}()
-	return ch
-}
-func tileSetsWithColor(tileSets <-chan gs.TileSet, color gs.TileColor) <-chan gs.TileSet {
-	ch := make(chan gs.TileSet)
-	go func() {
-		for tileSet := range tileSets {
-			var tileSetWithColor gs.TileSet
-			for tile := range tileSet.Iter() {
-				tileWithColor := tile
-				tileWithColor.Data.Color = color
-				tileSetWithColor.Add(tileWithColor)
-			}
-			ch <- tileSetWithColor
-		}
-		close(ch)
-	}()
-	return ch
 }
 
 // we do not iterate in any particular order since it does not matter.
@@ -154,4 +127,61 @@ func (g GridSolver) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path g
 		// RECURSION
 		g.dfsDirectPaths(color, next, end, nextPath, ch)
 	}
+}
+
+func tileCoordSetsOnGrid(coordSets <-chan gs.TileCoordSet, g gs.Grid) <-chan gs.TileSet {
+	ch := make(chan gs.TileSet)
+	go func() {
+		for coordSet := range coordSets {
+			tileSet := coordSet.ToTileSet(func(t gs.TileCoord) gs.Tile {
+				return *g.TileAtCoord(t)
+			})
+			ch <- tileSet
+		}
+		close(ch)
+	}()
+	return ch
+}
+func tileSetsWithColor(tileSets <-chan gs.TileSet, color gs.TileColor) <-chan gs.TileSet {
+	ch := make(chan gs.TileSet)
+	go func() {
+		for tileSet := range tileSets {
+			var tileSetWithColor gs.TileSet
+			for tile := range tileSet.Iter() {
+				tileWithColor := tile
+				tileWithColor.Data.Color = color
+				tileSetWithColor.Add(tileWithColor)
+			}
+			ch <- tileSetWithColor
+		}
+		close(ch)
+	}()
+	return ch
+}
+func decorateUnknownNeighbors(g GridSolver, tileSets <-chan gs.TileSet, maxColors int) <-chan gs.TileSet {
+	iter := make(chan gs.TileSet)
+	go func() {
+		defer close(iter)
+		for tileSet := range tileSets {
+
+			var unknownNeighbors []gs.Tile
+			for tile := range tileSet.Iter() {
+				neighboringUnknowns := g.RawGrid.NeighborsWith(tile.Coord, func(o gs.Tile) bool {
+					return o.Data.Color == ColorUnknown
+				})
+				unknownNeighbors = append(unknownNeighbors, neighboringUnknowns.Slice()...)
+			}
+
+			for permutation := range Permutation(maxColors-1, len(unknownNeighbors)) {
+				var pathWithDecoration gs.TileSet
+				pathWithDecoration.Merge(tileSet)
+				for i, unknown := range unknownNeighbors {
+					unknown.Data.Color = gs.TileColor(permutation[i] + 1)
+					pathWithDecoration.Add(unknown)
+				}
+				iter <- pathWithDecoration
+			}
+		}
+	}()
+	return iter
 }

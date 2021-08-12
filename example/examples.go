@@ -68,7 +68,7 @@ func main() {
 
 	for _, level := range levels {
 		levelStr := levelMap[level]
-		solution := FindSolution(gridspech.MakeGridFromString(levelStr))
+		solution := FindSolution(gridspech.MakeGridFromString(levelStr, 2))
 		fmt.Println("solution for level " + level + ":")
 		fmt.Println(solution)
 	}
@@ -76,7 +76,7 @@ func main() {
 
 // FindSolution returns a new grid as a solution to `grid`
 func FindSolution(grid gridspech.Grid) gridspech.Grid {
-	ch := solve.Goals(solve.NewGridSolver(grid), 2)
+	ch := solve.Goals(solve.NewGridSolver(grid))
 	newGrid := grid.Clone()
 	firstSolution := <-ch
 	newGrid.ApplyTileSet(firstSolution)

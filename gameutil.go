@@ -284,7 +284,7 @@ func (g Grid) NeighborsWith(coord TileCoord, pred func(o Tile) bool) TileSet {
 // See Grid.String() and Tile.String() for the format.
 //
 // May panic if the format is invalid.
-func MakeGridFromString(str string) Grid {
+func MakeGridFromString(str string, maxColors int) Grid {
 	var grid Grid
 
 	lines := strings.Split(strings.Trim(str, "\n"), "\n")

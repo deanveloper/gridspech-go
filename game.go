@@ -45,7 +45,8 @@ type TileType byte
 
 // Grid represents a single level of gridspech.
 type Grid struct {
-	Tiles [][]Tile
+	Tiles     [][]Tile
+	MaxColors int
 }
 
 // TileCoord is an X,Y coordinate in the grid.

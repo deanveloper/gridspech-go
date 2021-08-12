@@ -63,16 +63,15 @@ func testStringSlicesEq(t *testing.T, expected, actual []string) {
 func testSolveGoalsAbstract(t *testing.T, level string, maxColors int, solutions []string) {
 	t.Helper()
 
-	grid := solve.NewGridSolver(gs.MakeGridFromString(level))
+	grid := solve.NewGridSolver(gs.MakeGridFromString(level, 2))
 
-	ch := solve.Goals(grid, maxColors)
+	ch := solve.Goals(grid)
 	var actualSolutions []string
 	for solution := range ch {
-		solvedGrid := grid.Clone()
-		solvedGrid.RawGrid.ApplyTileSet(solution)
-		solvedGrid.FillUnknowns(maxColors)
+		solvedGrid := grid.Grid()
+		solvedGrid.ApplyTileSet(solution)
 
-		actualSolutions = append(actualSolutions, gridToSolutionString(t, solvedGrid.Grid()))
+		actualSolutions = append(actualSolutions, gridToSolutionString(t, solvedGrid))
 	}
 
 	testStringSlicesEq(t, solutions, actualSolutions)

@@ -15,7 +15,7 @@ func testDotsLevel() {
 [    ] [2   ] [1   ] [2   ] [    ]
 [2   ] [1   ] [2   ] [1   ] [2   ]
 `
-	grid := gridspech.MakeGridFromString(level)
+	grid := gridspech.MakeGridFromString(level, 2)
 
 	solver := solve.NewGridSolver(grid)
 	for solution := range solve.Dots(solver, 2) {
@@ -38,8 +38,8 @@ func pathTest() {
 [    ] [    ] [ A/ ] [    ] [    ] [    ]
 [    ] [    ] [gA/ ] [    ] [    ] [    ]
 `
-	grid := gridspech.MakeGridFromString(levelAaa)
-	ch := solve.Goals(solve.NewGridSolver(grid), 2)
+	grid := gridspech.MakeGridFromString(levelAaa, 2)
+	ch := solve.Goals(solve.NewGridSolver(grid))
 	for solvedGrid := range ch {
 		fmt.Println(solvedGrid.MultiLineString())
 		fmt.Println("=============")
