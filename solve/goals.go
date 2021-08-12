@@ -26,7 +26,6 @@ func (g GridSolver) solveGoals(maxColors int, ch chan<- gs.TileSet) {
 
 	var pairsToSolutionMx sync.Mutex
 	pairsToSolutions := make(map[[2]gs.Tile][]gs.TileSet)
-	// now we can safely write to the map values.
 	var wg sync.WaitGroup
 	for i1 := 0; i1 < len(goalTiles)-1; i1++ {
 		for i2 := i1 + 1; i2 < len(goalTiles); i2++ {
