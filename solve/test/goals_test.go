@@ -15,10 +15,10 @@ func gridToSolutionString(t *testing.T, g gs.Grid) string {
 	for x, col := range g.Tiles {
 		for y, tile := range col {
 			index := x + (g.Width()+1)*(g.Height()-y-1)
-			if tile.Color == gs.ColorNone {
+			if tile.Data.Color == gs.ColorNone {
 				byteArray[index] = ' '
 			} else {
-				byteArray[index] = byte(g.Tiles[x][y].Color) + 'A' - 1
+				byteArray[index] = byte(g.TileAt(x, y).Data.Color) + 'A' - 1
 			}
 
 			if x == g.Width()-1 {
@@ -68,10 +68,11 @@ func testSolveGoalsAbstract(t *testing.T, level string, maxColors int, solutions
 	ch := solve.Goals(grid, maxColors)
 	var actualSolutions []string
 	for solution := range ch {
-		solvedGrid := grid.Grid()
-		solvedGrid.ApplyTileSet(solution)
+		solvedGrid := grid.Clone()
+		solvedGrid.RawGrid.ApplyTileSet(solution)
+		solvedGrid.FillUnknowns(maxColors)
 
-		actualSolutions = append(actualSolutions, gridToSolutionString(t, solvedGrid))
+		actualSolutions = append(actualSolutions, gridToSolutionString(t, solvedGrid.Grid()))
 	}
 
 	testStringSlicesEq(t, solutions, actualSolutions)

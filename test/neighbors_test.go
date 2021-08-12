@@ -11,28 +11,24 @@ func TestDirections(t *testing.T) {
 	grid := MakeValidGrid()
 	tiles := grid.Tiles
 	cases := []struct {
-		Actual, Expected gs.Tile
+		Actual, Expected gs.TileData
 	}{
 		// test edges
-		{grid.NorthOf(tiles[0][7]), gs.Tile{}},
-		{grid.WestOf(tiles[0][7]), gs.Tile{}},
-		{grid.EastOf(tiles[4][0]), gs.Tile{}},
-		{grid.SouthOf(tiles[4][0]), gs.Tile{}},
+		{grid.NorthOf(tiles[0][7]).Data, gs.TileData{}},
+		{grid.WestOf(tiles[0][7]).Data, gs.TileData{}},
+		{grid.EastOf(tiles[4][0]).Data, gs.TileData{}},
+		{grid.SouthOf(tiles[4][0]).Data, gs.TileData{}},
 		// test next to hole
-		{grid.SouthOf(tiles[1][7]), gs.Tile{}},
+		{grid.SouthOf(tiles[1][7]).Data, gs.TileData{}},
 
 		// test general cases
-		{grid.NorthOf(tiles[1][1]), gs.Tile{Type: gs.TypeBlank}},
-		{grid.WestOf(tiles[1][1]), gs.Tile{Type: gs.TypeBlank, Color: 2}},
-		{grid.EastOf(tiles[1][1]), gs.Tile{Type: gs.TypeBlank}},
-		{grid.SouthOf(tiles[1][1]), gs.Tile{Type: gs.TypeCrown, Color: 2}},
+		{grid.NorthOf(tiles[1][1]).Data, gs.TileData{Type: gs.TypeBlank}},
+		{grid.WestOf(tiles[1][1]).Data, gs.TileData{Type: gs.TypeBlank, Color: 2}},
+		{grid.EastOf(tiles[1][1]).Data, gs.TileData{Type: gs.TypeBlank}},
+		{grid.SouthOf(tiles[1][1]).Data, gs.TileData{Type: gs.TypeCrown, Color: 2}},
 	}
 
 	for _, testCase := range cases {
-		// discard X/Y so we can use ==
-		testCase.Actual.X = 0
-		testCase.Actual.Y = 0
-
 		if testCase.Expected != testCase.Actual {
 			t.Errorf("\nexpected: %#v\ngot:      %#v", testCase.Expected, testCase.Actual)
 		}
@@ -74,8 +70,8 @@ func TestNeighborsWith(t *testing.T) {
 	grid := MakeValidGrid()
 	tiles := grid.Tiles
 
-	noColor := func(t gs.Tile) bool { return t.Color == 0 }
-	goalsOnly := func(t gs.Tile) bool { return t.Type == gs.TypeGoal }
+	noColor := func(t gs.Tile) bool { return t.Data.Color == 0 }
+	goalsOnly := func(t gs.Tile) bool { return t.Data.Type == gs.TypeGoal }
 
 	cases := []struct {
 		Tile     gs.Tile
@@ -89,7 +85,7 @@ func TestNeighborsWith(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		actual := grid.NeighborsWith(testCase.Tile, testCase.Func)
+		actual := grid.NeighborsWith(testCase.Tile.Coord, testCase.Func)
 		if !actual.Eq(testCase.Expected) {
 			t.Errorf("\nexpected: %#v\ngot:      %#v", testCase.Expected, actual)
 		}

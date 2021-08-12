@@ -20,7 +20,9 @@ func tileSetFromString(grid gs.Grid, str string) gs.TileSet {
 				break
 			}
 			x = x + 1 + index
-			ts.Add(grid.Tiles[x][y])
+			tileWithColor := *grid.TileAt(x, y)
+			tileWithColor.Data.Color = 1
+			ts.Add(tileWithColor)
 		}
 	}
 	return ts

@@ -1,6 +1,8 @@
 package gridspech
 
-import "strings"
+import (
+	"strings"
+)
 
 // TileSet represents a mathematical set of tiles. Tiles are compared using ==.
 type TileSet struct {
@@ -114,6 +116,15 @@ func (ts TileSet) Slice() []Tile {
 		slice = append(slice, tile)
 	}
 	return slice
+}
+
+// ToTileCoordSet converts ts into a TileCoordSet
+func (ts TileSet) ToTileCoordSet() TileCoordSet {
+	var result TileCoordSet
+	for val := range ts.set {
+		result.Add(val.Coord)
+	}
+	return result
 }
 
 func (ts TileSet) String() string {

@@ -5,29 +5,29 @@ import "fmt"
 // ValidTile returns if t is valid in g. If all tiles in g are valid,
 // the grid is completed.
 func (g Grid) ValidTile(coord TileCoord) bool {
-	t := g.TileAt(coord)
+	t := g.TileAtCoord(coord)
 
 	switch t.Data.Type {
 	case TypeHole, TypeBlank:
 		return true
 	case TypeGoal:
-		return g.validGoal(t)
+		return g.validGoal(*t)
 	case TypeCrown:
-		return g.validCrown(t)
+		return g.validCrown(*t)
 	case TypeDot1:
-		return g.NeighborsWith(t, func(other Tile) bool {
+		return g.NeighborsWith(t.Coord, func(other Tile) bool {
 			return other.Data.Color != ColorNone && other.Data.Color != 100
 		}).Len() == 1
 	case TypeDot2:
-		return g.NeighborsWith(t, func(other Tile) bool {
+		return g.NeighborsWith(t.Coord, func(other Tile) bool {
 			return other.Data.Color != ColorNone && other.Data.Color != 100
 		}).Len() == 2
 	case TypeDot3:
-		return g.NeighborsWith(t, func(other Tile) bool {
+		return g.NeighborsWith(t.Coord, func(other Tile) bool {
 			return other.Data.Color != ColorNone && other.Data.Color != 100
 		}).Len() == 3
 	case TypePlus:
-		return g.validPlus(t)
+		return g.validPlus(*t)
 	default:
 		panic(fmt.Sprintf("invalid tile type %v", t.Data.Type))
 	}
@@ -39,14 +39,14 @@ func (g Grid) ValidTile(coord TileCoord) bool {
 //   2. The goals should have exactly 1 neighbor with the same state.
 //   3. All other tiles in the blob should have exactly 2 neighbors with the same state.
 func (g Grid) validGoal(start Tile) bool {
-	blob := g.Blob(start)
+	blob := g.Blob(start.Coord)
 	var goals int
 	for _, t := range blob.Slice() {
 		if t.Data.Type == TypeGoal {
 			goals++
 
 			// requirement 2: The goals should have exactly 1 neighbor with the same state.
-			neighbors := g.NeighborsWith(t, func(o Tile) bool {
+			neighbors := g.NeighborsWith(t.Coord, func(o Tile) bool {
 				return t.Data.Color == o.Data.Color
 			})
 			if len(neighbors.Slice()) != 1 {
@@ -55,10 +55,10 @@ func (g Grid) validGoal(start Tile) bool {
 		}
 
 		// requirement 3: All other tiles in the blob should have exactly 2 neighbors with the same state.
-		neighborsSameColor := g.NeighborsWith(t, func(o Tile) bool {
-			return t.Color == o.Color
+		neighborsSameColor := g.NeighborsWith(t.Coord, func(o Tile) bool {
+			return t.Data.Color == o.Data.Color
 		}).Slice()
-		if t.Type != TypeGoal && len(neighborsSameColor) != 2 {
+		if t.Data.Type != TypeGoal && len(neighborsSameColor) != 2 {
 			return false
 		}
 	}
@@ -71,28 +71,28 @@ func (g Grid) validGoal(start Tile) bool {
 //   1. No other crowns may be in this crown's blob.
 //   2. All tiles with the same state must have a crown in its blob.
 func (g Grid) validCrown(start Tile) bool {
-	blob := g.Blob(start)
+	blob := g.Blob(start.Coord)
 
 	// requirement 1: No other crowns may be in this crown's blob.
 	for _, tile := range blob.Slice() {
-		if tile.Type == TypeCrown && tile != start {
+		if tile.Data.Type == TypeCrown && tile != start {
 			return false
 		}
 	}
 
 	crownsWithSameState := g.TilesWith(func(t Tile) bool {
-		return t.Type == TypeCrown && t.Color == start.Color
+		return t.Data.Type == TypeCrown && t.Data.Color == start.Data.Color
 	})
 
 	// set of blobs of all crowns with same state
 	var crownsBlobSet TileSet
-	for _, crown := range crownsWithSameState.Slice() {
-		crownsBlobSet.Merge(g.Blob(crown))
+	for crown := range crownsWithSameState.Iter() {
+		crownsBlobSet.Merge(g.Blob(crown.Coord))
 	}
 
 	// set of all tiles with same state
 	stateSet := g.TilesWith(func(t Tile) bool {
-		return t.Type != TypeHole && t.Color == start.Color
+		return t.Data.Type != TypeHole && t.Data.Color == start.Data.Color
 	})
 
 	// requirement 2: All tiles with the same state must have a crown in its blob.
@@ -101,8 +101,8 @@ func (g Grid) validCrown(start Tile) bool {
 
 func (g Grid) validPlus(t Tile) bool {
 	var foundExactlyOne bool
-	for _, blobTile := range g.Blob(t).Slice() {
-		if blobTile.Type != TypeHole && blobTile.Type != TypeBlank {
+	for _, blobTile := range g.Blob(t.Coord).Slice() {
+		if blobTile.Data.Type != TypeHole && blobTile.Data.Type != TypeBlank {
 			if foundExactlyOne {
 				return false
 			}

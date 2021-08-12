@@ -1,7 +1,6 @@
 package solve
 
 import (
-	"fmt"
 	"sync"
 
 	gs "github.com/deanveloper/gridspech-go"
@@ -22,19 +21,11 @@ func Goals(g GridSolver, maxColors int) <-chan gs.TileSet {
 
 func (g GridSolver) solveGoals(maxColors int, ch chan<- gs.TileSet) {
 	goalTiles := g.RawGrid.TilesWith(func(o gs.Tile) bool {
-		return o.Type == gs.TypeGoal
+		return o.Data.Type == gs.TypeGoal
 	}).Slice()
 
+	var pairsToSolutionMx sync.Mutex
 	pairsToSolutions := make(map[[2]gs.Tile][]gs.TileSet)
-
-	// initialize map first so it doesn't resize while concurrently writing to its values.
-	for i1 := 0; i1 < len(goalTiles)-1; i1++ {
-		for i2 := i1 + 1; i2 < len(goalTiles); i2++ {
-			goalPair := [2]gs.Tile{goalTiles[i1], goalTiles[i2]}
-			pairsToSolutions[goalPair] = nil
-		}
-	}
-
 	// now we can safely write to the map values.
 	var wg sync.WaitGroup
 	for i1 := 0; i1 < len(goalTiles)-1; i1++ {
@@ -44,7 +35,9 @@ func (g GridSolver) solveGoals(maxColors int, ch chan<- gs.TileSet) {
 			go func() {
 				for c := 0; c < maxColors; c++ {
 					for path := range g.SolvePath(goalPair[0], goalPair[1], gs.TileColor(c)) {
+						pairsToSolutionMx.Lock()
 						pairsToSolutions[goalPair] = append(pairsToSolutions[goalPair], path)
+						pairsToSolutionMx.Unlock()
 					}
 				}
 				wg.Done()
@@ -98,8 +91,7 @@ func removeIfInvalid(g GridSolver, tilesToValidate []gs.Tile, in []gs.TileSet) [
 
 		allValid := true
 		for _, tile := range tilesToValidate {
-			if !newBase.ValidTile(tile) {
-				fmt.Printf("tile %d,%d invalid\n", tile.X, tile.Y)
+			if !newBase.ValidTile(tile.Coord) {
 				allValid = false
 				break
 			}

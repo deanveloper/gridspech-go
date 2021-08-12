@@ -91,9 +91,14 @@ func (g Grid) Height() int {
 	return len(g.Tiles[0])
 }
 
-// TileAt returns the tile at a specific coordinate.
-func (g Grid) TileAt(coord TileCoord) Tile {
-	return g.Tiles[coord.X][coord.Y]
+// TileAt returns a reference to the tile at the coordinate.
+func (g Grid) TileAt(x, y int) *Tile {
+	return &g.Tiles[x][y]
+}
+
+// TileAtCoord returns a reference to the tile at the coordinate.
+func (g Grid) TileAtCoord(coord TileCoord) *Tile {
+	return &g.Tiles[coord.X][coord.Y]
 }
 
 // NorthOf returns the tile north of t in g.
@@ -218,13 +223,13 @@ func (g Grid) Neighbors(t Tile) TileSet {
 }
 
 // TilesWith returns all non-hole tiles such that `pred` returns true.
-func (g Grid) TilesWith(pred func(o Tile) bool) TileCoordSet {
-	var ts TileCoordSet
+func (g Grid) TilesWith(pred func(o Tile) bool) TileSet {
+	var ts TileSet
 
 	for _, col := range g.Tiles {
 		for _, tile := range col {
 			if tile.Data.Type != TypeHole && pred(tile) {
-				ts.Add(tile.Coord)
+				ts.Add(tile)
 			}
 		}
 	}
@@ -250,7 +255,7 @@ func (g Grid) Blob(coord TileCoord) TileSet {
 }
 
 func (g Grid) blobRecur(coord TileCoord, ts *TileSet) {
-	t := g.TileAt(coord)
+	t := g.TileAtCoord(coord)
 	neighbors := g.NeighborsWith(coord, func(o Tile) bool {
 		return o.Data.Color == t.Data.Color
 	})
@@ -265,8 +270,8 @@ func (g Grid) blobRecur(coord TileCoord, ts *TileSet) {
 
 // NeighborsWith returns the set of neighbors such that `pred` returns true
 func (g Grid) NeighborsWith(coord TileCoord, pred func(o Tile) bool) TileSet {
-	t := g.TileAt(coord)
-	neighbors := g.Neighbors(t)
+	t := g.TileAtCoord(coord)
+	neighbors := g.Neighbors(*t)
 	for _, neighbor := range neighbors.Slice() {
 		if !pred(neighbor) {
 			neighbors.Remove(neighbor)

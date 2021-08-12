@@ -11,7 +11,7 @@ func TestTileSetAddRemove(t *testing.T) {
 	if ts.Len() != 0 {
 		t.Errorf("Length test failed. Expected %v, got %v", 0, ts.Len())
 	}
-	tile := gs.Tile{Color: 2}
+	tile := gs.Tile{Data: gs.TileData{Color: 2}}
 	ts.Add(tile)
 	if ts.Len() != 1 {
 		t.Errorf("Length test after adding the first time failed. Expected %v, got %v", 1, ts.Len())
@@ -33,17 +33,17 @@ func TestTileSetAddRemove(t *testing.T) {
 }
 
 func TestTileSetHas(t *testing.T) {
-	ts := gs.NewTileSet(gs.Tile{Color: 2}, gs.Tile{Color: 10}, gs.Tile{Color: 4, Type: gs.TypeCrown})
+	ts := gs.NewTileSet(gs.Tile{Data: gs.TileData{Color: 2}}, gs.Tile{Data: gs.TileData{Color: 10}}, gs.Tile{Data: gs.TileData{Color: 4, Type: gs.TypeCrown}})
 
 	cases := []struct {
 		Value    gs.Tile
 		Expected bool
 	}{
-		{gs.Tile{Color: 2}, true},
-		{gs.Tile{Color: 10}, true},
-		{gs.Tile{Color: 4, Type: gs.TypeCrown}, true},
+		{gs.Tile{Data: gs.TileData{Color: 2}}, true},
+		{gs.Tile{Data: gs.TileData{Color: 10}}, true},
+		{gs.Tile{Data: gs.TileData{Color: 4, Type: gs.TypeCrown}}, true},
 		{gs.Tile{}, false},
-		{gs.Tile{Type: gs.TypeCrown}, false},
+		{gs.Tile{Data: gs.TileData{Type: gs.TypeCrown}}, false},
 	}
 
 	for _, testCase := range cases {

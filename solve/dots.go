@@ -12,7 +12,7 @@ func Dots(g GridSolver, maxColors int) <-chan gs.TileSet {
 
 	// get all dot-related tiles
 	dotTiles := g.RawGrid.TilesWith(func(o gs.Tile) bool {
-		return o.Type == gridspech.TypeDot1 || o.Type == gridspech.TypeDot2 || o.Type == gridspech.TypeDot3
+		return o.Data.Type == gridspech.TypeDot1 || o.Data.Type == gridspech.TypeDot2 || o.Data.Type == gridspech.TypeDot3
 	}).Slice()
 
 	tilesToSolutions := make([]<-chan gs.TileSet, len(dotTiles))
@@ -67,7 +67,7 @@ func filterValid(g GridSolver, tilesToValidate []gs.Tile, sols <-chan gs.TileSet
 
 			allValid := true
 			for _, dotTile := range tilesToValidate {
-				if !newBase.ValidTile(dotTile) {
+				if !newBase.ValidTile(dotTile.Coord) {
 					allValid = false
 					break
 				}
@@ -110,7 +110,7 @@ func filterUnique(in <-chan gs.TileSet) <-chan gs.TileSet {
 func (g GridSolver) solveDots(t gs.Tile, maxColors int) <-chan gs.TileSet {
 	var numDots int
 
-	switch t.Type {
+	switch t.Data.Type {
 	case gs.TypeDot1:
 		numDots = 1
 	case gs.TypeDot2:
@@ -118,20 +118,20 @@ func (g GridSolver) solveDots(t gs.Tile, maxColors int) <-chan gs.TileSet {
 	case gs.TypeDot3:
 		numDots = 3
 	default:
-		panic(fmt.Sprint("invalid type", t.Type))
+		panic(fmt.Sprint("invalid type", t.Data.Type))
 	}
 
-	enabledTiles := g.RawGrid.NeighborsWith(t, func(o gs.Tile) bool {
-		return o.Color != ColorUnknown && o.Color != gs.ColorNone
+	enabledTiles := g.RawGrid.NeighborsWith(t.Coord, func(o gs.Tile) bool {
+		return o.Data.Color != ColorUnknown && o.Data.Color != gs.ColorNone
 	})
 
-	return solveDotsRecur(g.Clone(), t, gs.NewTileSet(), maxColors, numDots-enabledTiles.Len())
+	return solveDotsRecur(g.Clone(), t, gs.NewTileCoordSet(), maxColors, numDots-enabledTiles.Len())
 }
 
 func solveDotsRecur(
 	g GridSolver,
 	t gs.Tile,
-	tilesBeingUsed gs.TileSet,
+	tilesBeingUsed gs.TileCoordSet,
 	maxColors int,
 	remainingDots int,
 ) <-chan gs.TileSet {
@@ -147,21 +147,21 @@ func solveDotsRecur(
 		}
 
 		// if there are not enough unknown neighbors to fulfil this dot, then there are no solutions
-		unknownNeighbors := g.RawGrid.NeighborsWith(t, func(o gs.Tile) bool {
-			return o.Color == ColorUnknown && !tilesBeingUsed.Has(o)
+		unknownNeighbors := g.RawGrid.NeighborsWith(t.Coord, func(o gs.Tile) bool {
+			return o.Data.Color == ColorUnknown && !tilesBeingUsed.Has(o.Coord)
 		})
 		if remainingDots > unknownNeighbors.Len() {
 			return
 		}
 
 		for tile := range unknownNeighbors.Iter() {
-			tilesBeingUsed.Add(tile)
+			tilesBeingUsed.Add(tile.Coord)
 			for subSolution := range solveDotsRecur(g, t, tilesBeingUsed, maxColors, remainingDots-1) {
 				// c=1 to avoid ColorNone
 				for c := 1; c < maxColors; c++ {
 
 					newTile := tile
-					newTile.Color = gs.TileColor(c)
+					newTile.Data.Color = gs.TileColor(c)
 
 					var newSolution gs.TileSet
 					newSolution.Merge(subSolution)
@@ -169,10 +169,8 @@ func solveDotsRecur(
 					ch <- newSolution
 				}
 			}
-			tilesBeingUsed.Remove(tile)
-
+			tilesBeingUsed.Remove(tile.Coord)
 		}
-
 	}()
 
 	return ch

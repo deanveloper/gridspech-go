@@ -116,6 +116,15 @@ func (ts TileCoordSet) Slice() []TileCoord {
 	return slice
 }
 
+// ToTileSet converts ts into a TileSet
+func (ts TileCoordSet) ToTileSet(fn func(t TileCoord) Tile) TileSet {
+	var result TileSet
+	for val := range ts.set {
+		result.Add(fn(val))
+	}
+	return result
+}
+
 func (ts TileCoordSet) String() string {
 	slice := ts.Slice()
 
