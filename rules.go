@@ -5,15 +5,15 @@ import "fmt"
 // ValidTile returns if t is valid in g. If all tiles in g are valid,
 // the grid is completed.
 func (g Grid) ValidTile(coord TileCoord) bool {
-	t := g.TileAtCoord(coord)
+	t := *g.TileAtCoord(coord)
 
 	switch t.Data.Type {
 	case TypeHole, TypeBlank:
 		return true
 	case TypeGoal:
-		return g.validGoal(*t)
+		return g.validGoal(t)
 	case TypeCrown:
-		return g.validCrown(*t)
+		return g.validCrown(t)
 	case TypeDot1:
 		return g.NeighborsWith(t.Coord, func(other Tile) bool {
 			return other.Data.Color != ColorNone && other.Data.Color != 100
@@ -27,7 +27,7 @@ func (g Grid) ValidTile(coord TileCoord) bool {
 			return other.Data.Color != ColorNone && other.Data.Color != 100
 		}).Len() == 3
 	case TypePlus:
-		return g.validPlus(*t)
+		return g.validPlus(t)
 	default:
 		panic(fmt.Sprintf("invalid tile type %v", t.Data.Type))
 	}
