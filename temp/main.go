@@ -7,6 +7,20 @@ import (
 	"github.com/deanveloper/gridspech-go/solve"
 )
 
+func testB1() {
+
+	const level = `
+[    ] [    ] [    ] [    ] [    ] [    ] 
+[ A/ ] [    ] [    ] [    ] [  / ] [    ] 
+[gA/ ] [g   ] [----] [----] [g   ] [g   ] 
+`
+	grid := gridspech.MakeGridFromString(level, 2)
+	solver := solve.NewGridSolver(grid)
+	for solution := range solver.SolvePath(gridspech.TileCoord{X: 1, Y: 0}, gridspech.TileCoord{X: 4, Y: 0}, gridspech.ColorNone) {
+		fmt.Println(solution)
+	}
+}
+
 func testDotsLevel() {
 	const level = `
 [1   ] [1   ] [2   ] [1   ] [1   ]
@@ -16,7 +30,6 @@ func testDotsLevel() {
 [2   ] [1   ] [2   ] [1   ] [2   ]
 `
 	grid := gridspech.MakeGridFromString(level, 2)
-
 	solver := solve.NewGridSolver(grid)
 	for solution := range solve.Dots(solver) {
 		newGrid := grid.Clone()
@@ -47,5 +60,5 @@ func pathTest() {
 }
 
 func main() {
-	testDotsLevel()
+	testB1()
 }

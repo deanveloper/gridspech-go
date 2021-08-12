@@ -16,15 +16,15 @@ func (g Grid) ValidTile(coord TileCoord) bool {
 		return g.validCrown(t)
 	case TypeDot1:
 		return g.NeighborsWith(t.Coord, func(other Tile) bool {
-			return other.Data.Color != ColorNone && other.Data.Color != 100
+			return other.Data.Color != ColorNone
 		}).Len() == 1
 	case TypeDot2:
 		return g.NeighborsWith(t.Coord, func(other Tile) bool {
-			return other.Data.Color != ColorNone && other.Data.Color != 100
+			return other.Data.Color != ColorNone
 		}).Len() == 2
 	case TypeDot3:
 		return g.NeighborsWith(t.Coord, func(other Tile) bool {
-			return other.Data.Color != ColorNone && other.Data.Color != 100
+			return other.Data.Color != ColorNone
 		}).Len() == 3
 	case TypePlus:
 		return g.validPlus(t)

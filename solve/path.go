@@ -4,12 +4,10 @@ import (
 	gs "github.com/deanveloper/gridspech-go"
 )
 
-// ColorUnknown is a special color which represents a tile whose final color is not known.
-const ColorUnknown gs.TileColor = 100
-
 // GridSolver represents a gs.Grid, but with a special "unknown" tile color.
 type GridSolver struct {
-	RawGrid gs.Grid
+	Grid         gs.Grid
+	UnknownTiles gs.TileCoordSet
 }
 
 // NewGridSolver creates a GridSolver
@@ -18,28 +16,18 @@ func NewGridSolver(solving gs.Grid) GridSolver {
 	nonSticky := newSolving.TilesWith(func(o gs.Tile) bool {
 		return !o.Data.Sticky
 	})
+	var unknownTiles gs.TileCoordSet
 	for tile := range nonSticky.Iter() {
-		newSolving.TileAtCoord(tile.Coord).Data.Color = ColorUnknown
+		unknownTiles.Add(tile.Coord)
 	}
-	return GridSolver{RawGrid: newSolving}
+	return GridSolver{Grid: newSolving, UnknownTiles: unknownTiles}
 }
 
-// Grid returns the underlying gridspech.Grid, with unknown tiles replaced with gridspech.ColorNone
-func (g GridSolver) Grid() gs.Grid {
-	newSolving := g.RawGrid.Clone()
-	for x := range newSolving.Tiles {
-		for y := range newSolving.Tiles[x] {
-			if newSolving.TileAt(x, y).Data.Color == ColorUnknown {
-				newSolving.Tiles[x][y].Data.Color = gs.ColorNone
-			}
-		}
-	}
-	return newSolving
-}
-
-// Clone creates a copy of the underlying gridspech.Grid
+// Clone returns clone of g.
 func (g GridSolver) Clone() GridSolver {
-	return GridSolver{RawGrid: g.RawGrid.Clone()}
+	newUnknownTiles := gs.NewTileCoordSet()
+	newUnknownTiles.Merge(g.UnknownTiles)
+	return GridSolver{Grid: g.Grid.Clone(), UnknownTiles: newUnknownTiles}
 }
 
 // SolvePath returns an channel of direct paths from start to end.
@@ -51,18 +39,18 @@ func (g GridSolver) SolvePath(start, end gs.TileCoord, color gs.TileColor) <-cha
 	tileCoordSetIter := make(chan gs.TileCoordSet)
 	go func() {
 		defer close(tileCoordSetIter)
-		startTile, endTile := *g.RawGrid.TileAtCoord(start), *g.RawGrid.TileAtCoord(end)
-		if startTile.Data.Sticky && color != startTile.Data.Color {
+		startTile, endTile := *g.Grid.TileAtCoord(start), *g.Grid.TileAtCoord(end)
+		if !g.UnknownTiles.Has(start) && color != startTile.Data.Color {
 			return
 		}
-		if endTile.Data.Sticky && color != endTile.Data.Color {
+		if !g.UnknownTiles.Has(end) && color != endTile.Data.Color {
 			return
 		}
 		g.dfsDirectPaths(color, startTile, endTile, gs.NewTileCoordSet(start), tileCoordSetIter)
 	}()
 
-	onGridIter := tileCoordSetsOnGrid(tileCoordSetIter, g.RawGrid)
-	withColorIter := tileSetsWithColor(onGridIter, color)
+	onGridIter := decorateWithGridInfo(tileCoordSetIter, g.Grid)
+	withColorIter := decorateWithColor(onGridIter, color)
 	if color == gs.ColorNone {
 		return decorateUnknownNeighbors(g, withColorIter)
 	}
@@ -74,17 +62,19 @@ func (g GridSolver) SolvePath(start, end gs.TileCoord, color gs.TileColor) <-cha
 // a Goal tile.
 func (g GridSolver) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path gs.TileCoordSet, ch chan<- gs.TileCoordSet) {
 
-	// possible next tiles include untraversed tiles, and tiles of the same color
-	possibleNext := g.RawGrid.NeighborsWith(prev.Coord, func(o gs.Tile) bool {
-		return !path.Has(o.Coord) && (o.Data.Color == ColorUnknown || o.Data.Color == color)
+	// possible next tiles include unknown tiles, and tiles of the same color
+	possibleNext := g.Grid.NeighborsWith(prev.Coord, func(o gs.Tile) bool {
+		return !path.Has(o.Coord) && (g.UnknownTiles.Has(o.Coord) || o.Data.Color == color)
 	})
 
 	for _, next := range possibleNext.Slice() {
-		// prev's neighbors with same color, including `next`
-		prevNeighborsSameColor := g.RawGrid.NeighborsWith(prev.Coord, func(o gs.Tile) bool {
-			return o.Data.Color == color || path.Has(o.Coord) || o.Coord == next.Coord
+		// prev's neighbors we _know_ are same color (including those that are part of the path)
+		prevNeighborsSameColor := g.Grid.NeighborsWith(prev.Coord, func(o gs.Tile) bool {
+			knownSameColor := (o.Data.Color == color && !g.UnknownTiles.Has(o.Coord))
+			partOfPath := path.Has(o.Coord) || o.Coord == next.Coord
+			return knownSameColor || partOfPath
 		})
-		// make sure that we never have an invalid path, ever
+		// make sure that we never have an invalid path
 		if prevNeighborsSameColor.Len() > 2 {
 			continue
 		}
@@ -92,18 +82,17 @@ func (g GridSolver) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path g
 			continue
 		}
 
-		// we cannot traverse through a Goal tile that is not the end tile
-		if next.Data.Type == gs.TypeGoal && next != end {
+		if next.Data.Type == gs.TypeGoal && next.Coord != end.Coord {
 			continue
 		}
 
 		// we found a possible solution
 		if next == end {
 
-			// make sure the goal only has 1 neighbor of the same color
+			// make sure the goal only has 1 neighbor we know is the same color
 			if end.Data.Type == gs.TypeGoal {
-				endNeighbors := g.RawGrid.NeighborsWith(end.Coord, func(o gs.Tile) bool {
-					return o.Data.Color == color || path.Has(o.Coord)
+				endNeighbors := g.Grid.NeighborsWith(end.Coord, func(o gs.Tile) bool {
+					return (o.Data.Color == color && !g.UnknownTiles.Has(o.Coord)) || path.Has(o.Coord)
 				})
 				if endNeighbors.Len() > 1 {
 					continue
@@ -126,7 +115,7 @@ func (g GridSolver) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path g
 	}
 }
 
-func tileCoordSetsOnGrid(coordSets <-chan gs.TileCoordSet, g gs.Grid) <-chan gs.TileSet {
+func decorateWithGridInfo(coordSets <-chan gs.TileCoordSet, g gs.Grid) <-chan gs.TileSet {
 	ch := make(chan gs.TileSet)
 	go func() {
 		for coordSet := range coordSets {
@@ -139,7 +128,7 @@ func tileCoordSetsOnGrid(coordSets <-chan gs.TileCoordSet, g gs.Grid) <-chan gs.
 	}()
 	return ch
 }
-func tileSetsWithColor(tileSets <-chan gs.TileSet, color gs.TileColor) <-chan gs.TileSet {
+func decorateWithColor(tileSets <-chan gs.TileSet, color gs.TileColor) <-chan gs.TileSet {
 	ch := make(chan gs.TileSet)
 	go func() {
 		for tileSet := range tileSets {
@@ -163,13 +152,13 @@ func decorateUnknownNeighbors(g GridSolver, tileSets <-chan gs.TileSet) <-chan g
 
 			var unknownNeighbors []gs.Tile
 			for tile := range tileSet.Iter() {
-				neighboringUnknowns := g.RawGrid.NeighborsWith(tile.Coord, func(o gs.Tile) bool {
-					return o.Data.Color == ColorUnknown && !tileSet.ToTileCoordSet().Has(o.Coord)
+				neighboringUnknowns := g.Grid.NeighborsWith(tile.Coord, func(o gs.Tile) bool {
+					return g.UnknownTiles.Has(o.Coord) && !tileSet.ToTileCoordSet().Has(o.Coord)
 				})
 				unknownNeighbors = append(unknownNeighbors, neighboringUnknowns.Slice()...)
 			}
 
-			for permutation := range Permutation(g.RawGrid.MaxColors-1, len(unknownNeighbors)) {
+			for permutation := range Permutation(g.Grid.MaxColors-1, len(unknownNeighbors)) {
 				var pathWithDecoration gs.TileSet
 				pathWithDecoration.Merge(tileSet)
 				for i, unknown := range unknownNeighbors {

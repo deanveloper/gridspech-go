@@ -386,10 +386,6 @@ func (td TileData) String() string {
 		colorChar = 'A'
 	case 2:
 		colorChar = 'B'
-
-		// special case for "unknown" color in solvers
-	case 100:
-		colorChar = ' '
 	default:
 		panic(fmt.Sprintf("invalid color %d", td.Color))
 	}

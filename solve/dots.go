@@ -11,7 +11,7 @@ import (
 func Dots(g GridSolver) <-chan gs.TileSet {
 
 	// get all dot-related tiles
-	dotTiles := g.RawGrid.TilesWith(func(o gs.Tile) bool {
+	dotTiles := g.Grid.TilesWith(func(o gs.Tile) bool {
 		return o.Data.Type == gridspech.TypeDot1 || o.Data.Type == gridspech.TypeDot2 || o.Data.Type == gridspech.TypeDot3
 	}).Slice()
 
@@ -60,9 +60,8 @@ func filterValid(g GridSolver, tilesToValidate []gs.Tile, sols <-chan gs.TileSet
 	filtered := make(chan gs.TileSet)
 
 	go func() {
-		base := g.Grid()
 		for solution := range sols {
-			newBase := base.Clone()
+			newBase := g.Grid.Clone()
 			newBase.ApplyTileSet(solution)
 
 			allValid := true
@@ -121,11 +120,11 @@ func (g GridSolver) solveDots(t gs.Tile) <-chan gs.TileSet {
 		panic(fmt.Sprint("invalid type", t.Data.Type))
 	}
 
-	enabledTiles := g.RawGrid.NeighborsWith(t.Coord, func(o gs.Tile) bool {
-		return o.Data.Color != ColorUnknown && o.Data.Color != gs.ColorNone
+	enabledTiles := g.Grid.NeighborsWith(t.Coord, func(o gs.Tile) bool {
+		return o.Data.Color != gs.ColorNone
 	})
 
-	return solveDotsRecur(g.Clone(), t, gs.NewTileCoordSet(), numDots-enabledTiles.Len())
+	return solveDotsRecur(g, t, gs.NewTileCoordSet(), numDots-enabledTiles.Len())
 }
 
 func solveDotsRecur(
@@ -146,8 +145,8 @@ func solveDotsRecur(
 		}
 
 		// if there are not enough unknown neighbors to fulfil this dot, then there are no solutions
-		unknownNeighbors := g.RawGrid.NeighborsWith(t.Coord, func(o gs.Tile) bool {
-			return o.Data.Color == ColorUnknown && !tilesBeingUsed.Has(o.Coord)
+		unknownNeighbors := g.Grid.NeighborsWith(t.Coord, func(o gs.Tile) bool {
+			return g.UnknownTiles.Has(o.Coord) && !tilesBeingUsed.Has(o.Coord)
 		})
 		if remainingDots > unknownNeighbors.Len() {
 			return
@@ -157,7 +156,7 @@ func solveDotsRecur(
 			tilesBeingUsed.Add(tile.Coord)
 			for subSolution := range solveDotsRecur(g, t, tilesBeingUsed, remainingDots-1) {
 				// c=1 to avoid ColorNone
-				for c := 1; c < g.RawGrid.MaxColors; c++ {
+				for c := 1; c < g.Grid.MaxColors; c++ {
 
 					newTile := tile
 					newTile.Data.Color = gs.TileColor(c)

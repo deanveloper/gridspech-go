@@ -15,7 +15,7 @@ func testSolveDotsAbstract(t *testing.T, level string, maxColors int, solutions 
 	actualSolutions := solve.Dots(grid)
 	var actualSolutionsStrs []string
 	for solution := range actualSolutions {
-		solvedGrid := grid.Grid()
+		solvedGrid := grid.Grid.Clone()
 		solvedGrid.ApplyTileSet(solution)
 
 		actualSolutionsStrs = append(actualSolutionsStrs, gridToSolutionString(t, solvedGrid))

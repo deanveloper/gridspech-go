@@ -68,7 +68,7 @@ func testSolveGoalsAbstract(t *testing.T, level string, maxColors int, solutions
 	ch := solve.Goals(grid)
 	var actualSolutions []string
 	for solution := range ch {
-		solvedGrid := grid.Grid()
+		solvedGrid := grid.Grid.Clone()
 		solvedGrid.ApplyTileSet(solution)
 
 		actualSolutions = append(actualSolutions, gridToSolutionString(t, solvedGrid))

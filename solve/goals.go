@@ -20,7 +20,7 @@ func Goals(g GridSolver) <-chan gs.TileSet {
 }
 
 func (g GridSolver) solveGoals(ch chan<- gs.TileSet) {
-	goalTiles := g.RawGrid.TilesWith(func(o gs.Tile) bool {
+	goalTiles := g.Grid.TilesWith(func(o gs.Tile) bool {
 		return o.Data.Type == gs.TypeGoal
 	}).Slice()
 	goalTileCoords := make([]gs.TileCoord, len(goalTiles))
@@ -36,7 +36,7 @@ func (g GridSolver) solveGoals(ch chan<- gs.TileSet) {
 			goalPairCoords := [2]gs.TileCoord{goalTiles[i1].Coord, goalTiles[i2].Coord}
 			wg.Add(1)
 			go func() {
-				for c := 0; c < g.RawGrid.MaxColors; c++ {
+				for c := 0; c < g.Grid.MaxColors; c++ {
 					for path := range g.SolvePath(goalPairCoords[0], goalPairCoords[1], gs.TileColor(c)) {
 						pairsToSolutionMx.Lock()
 						pairsToSolutions[goalPairCoords] = append(pairsToSolutions[goalPairCoords], path)
@@ -87,7 +87,7 @@ func mergeSolutionsSlices(sols1, sols2 []gs.TileSet) []gs.TileSet {
 func removeIfInvalid(g GridSolver, tilesToValidate []gs.TileCoord, in []gs.TileSet) []gs.TileSet {
 	var validSolutions []gs.TileSet
 
-	base := g.RawGrid
+	base := g.Grid
 	for _, solution := range in {
 		newBase := base.Clone()
 		newBase.ApplyTileSet(solution)

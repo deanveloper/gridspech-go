@@ -73,7 +73,7 @@ func testSolvePathsAbstract(t *testing.T, level string, x1, y1, x2, y2 int, solu
 
 	var expectedSolutions []gs.TileSet
 	for i := range solutions {
-		expectedSolutions = append(expectedSolutions, tileSetFromString(grid.RawGrid, solutions[i]))
+		expectedSolutions = append(expectedSolutions, tileSetFromString(grid.Grid, solutions[i]))
 	}
 
 	ch := grid.SolvePath(gs.TileCoord{X: x1, Y: y1}, gs.TileCoord{X: x2, Y: y2}, 1)
