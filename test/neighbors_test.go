@@ -58,7 +58,7 @@ func TestNeighbors(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		actual := grid.Neighbors(testCase.Tile)
+		actual := grid.Neighbors(testCase.Tile.Coord)
 		if !actual.Eq(testCase.Expected) {
 			t.Errorf("\nexpected: %#v\ngot:      %#v", testCase.Expected, actual)
 		}

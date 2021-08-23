@@ -205,7 +205,8 @@ func findTile(start Tile, iter func(each Tile) (Tile, bool)) Tile {
 }
 
 // Neighbors returns all tiles directly next to t.
-func (g Grid) Neighbors(t Tile) TileSet {
+func (g Grid) Neighbors(coord TileCoord) TileSet {
+	t := *g.TileAtCoord(coord)
 	var ts TileSet
 	if neighbor := g.NorthOf(t); neighbor.Data.Type != TypeHole {
 		ts.Add(neighbor)
@@ -220,6 +221,17 @@ func (g Grid) Neighbors(t Tile) TileSet {
 		ts.Add(neighbor)
 	}
 	return ts
+}
+
+// NeighborsWith returns the set of neighbors such that `pred` returns true
+func (g Grid) NeighborsWith(coord TileCoord, pred func(o Tile) bool) TileSet {
+	neighbors := g.Neighbors(coord)
+	for _, neighbor := range neighbors.Slice() {
+		if !pred(neighbor) {
+			neighbors.Remove(neighbor)
+		}
+	}
+	return neighbors
 }
 
 // TilesWith returns all non-hole tiles such that `pred` returns true.
@@ -266,18 +278,6 @@ func (g Grid) blobRecur(coord TileCoord, ts *TileSet) {
 			g.blobRecur(neighbor.Coord, ts)
 		}
 	}
-}
-
-// NeighborsWith returns the set of neighbors such that `pred` returns true
-func (g Grid) NeighborsWith(coord TileCoord, pred func(o Tile) bool) TileSet {
-	t := g.TileAtCoord(coord)
-	neighbors := g.Neighbors(*t)
-	for _, neighbor := range neighbors.Slice() {
-		if !pred(neighbor) {
-			neighbors.Remove(neighbor)
-		}
-	}
-	return neighbors
 }
 
 // MakeGridFromString returns a Grid made from a string.

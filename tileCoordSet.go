@@ -42,7 +42,7 @@ func (ts *TileCoordSet) Remove(t TileCoord) {
 }
 
 // RemoveIf removes each value for which pred returns true.
-func (ts *TileCoordSet) RemoveIf(pred func(t TileCoord) bool) {
+func (ts *TileCoordSet) RemoveIf(pred func(coord TileCoord) bool) {
 	for tile := range ts.set {
 		if pred(tile) {
 			ts.Remove(tile)

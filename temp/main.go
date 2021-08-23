@@ -7,6 +7,102 @@ import (
 	"github.com/deanveloper/gridspech-go/solve"
 )
 
+func testNewC7() {
+	const level = `
+[    ] [    ] [    ] [    ] [    ] [    ] [----] 
+[g   ] [  / ] [    ] [  / ] [    ] [    ] [    ] 
+[    ] [cA/ ] [    ] [g   ] [    ] [cA/ ] [    ] 
+[    ] [    ] [    ] [    ] [ A/ ] [    ] [    ] 
+[----] [    ] [g   ] [g   ] [    ] [    ] [    ] 
+`
+	grid := gridspech.MakeGridFromString(level, 2)
+	solver := solve.NewGridSolver(grid)
+	goals := solve.Goals(solver)
+	for goalSolution := range goals {
+		gridClone := solver.Grid.Clone()
+		gridClone.ApplyTileSet(goalSolution)
+		fmt.Println(gridClone)
+		fmt.Println("")
+	}
+}
+
+func testE4() {
+	const level = `
+[2   ] [2   ] [2   ] [2   ] [2   ] 
+[2   ] [2   ] [2   ] [2   ] [2   ] 
+[2   ] [2   ] [    ] [g   ] [2   ] 
+[2   ] [2   ] [g   ] [2   ] [2   ] 
+[2   ] [2   ] [2   ] [2   ] [2   ] 
+`
+	grid := gridspech.MakeGridFromString(level, 2)
+	solver := solve.NewGridSolver(grid)
+	goals := solve.Goals(solver)
+	for goalSolution := range goals {
+		newSolver := solver.Clone()
+		newSolver.Grid.ApplyTileSet(goalSolution)
+		newSolver.UnknownTiles.RemoveAll(goalSolution.ToTileCoordSet())
+		dots := solve.Dots(newSolver)
+		for dotSolution := range dots {
+			finalGrid := newSolver.Grid.Clone()
+			fmt.Println(dotSolution.MultiLineString())
+			finalGrid.ApplyTileSet(dotSolution)
+			if finalGrid.Valid() {
+				fmt.Println(finalGrid)
+				fmt.Println("")
+			}
+		}
+	}
+}
+
+func testNewE7() {
+	const level = `
+[    ] [    ] [2   ] [    ] [    ] 
+[    ] [    ] [3   ] [    ] [g   ] 
+[    ] [    ] [gA/ ] [    ] [    ] 
+[    ] [    ] [3   ] [    ] [    ] 
+[    ] [    ] [2   ] [    ] [    ] 
+[1   ] [    ] [c   ] [    ] [    ] 
+`
+	grid := gridspech.MakeGridFromString(level, 2)
+	solver := solve.NewGridSolver(grid)
+	goals := solve.Goals(solver)
+	for goalSolution := range goals {
+		newSolver := solver.Clone()
+		newSolver.Grid.ApplyTileSet(goalSolution)
+		dots := solve.Dots(newSolver)
+		for dotSolution := range dots {
+			finalGrid := newSolver.Grid.Clone()
+			finalGrid.ApplyTileSet(dotSolution)
+			if finalGrid.Valid() {
+				fmt.Println(finalGrid)
+				fmt.Println()
+			}
+		}
+	}
+}
+
+func testNewE8() {
+	const level = `
+[2   ] [2   ] [2   ] [2   ] [2   ] [2   ] [2   ] 
+[2   ] [2   ] [3   ] [2   ] [2   ] [2   ] [2   ] 
+[2   ] [2   ] [2   ] [2   ] [2   ] [2   ] [2   ] 
+[2   ] [2   ] [2   ] [----] [2   ] [2   ] [2   ] 
+[2   ] [2   ] [2   ] [2   ] [2   ] [3   ] [2   ] 
+[2   ] [2   ] [2   ] [2   ] [2   ] [2   ] [2   ] 
+[2   ] [2   ] [2   ] [2   ] [2   ] [2   ] [2   ] 
+`
+
+	grid := gridspech.MakeGridFromString(level, 2)
+	solver := solve.NewGridSolver(grid)
+	dots := solve.Dots(solver)
+	for dotSolution := range dots {
+		gridClone := solver.Grid.Clone()
+		gridClone.ApplyTileSet(dotSolution)
+		fmt.Println(gridClone)
+		fmt.Println("")
+	}
+}
+
 func testB1() {
 
 	const level = `
@@ -60,5 +156,5 @@ func pathTest() {
 }
 
 func main() {
-	testB1()
+	testNewE8()
 }

@@ -21,18 +21,18 @@ func Dots(g GridSolver) <-chan gs.TileSet {
 	}
 
 	// now merge them all together
-	for i := 0; i < len(dotTiles)-1; i++ {
-		mergedIter := mergeSolutionsIters(tilesToSolutions[i], tilesToSolutions[i+1])
+	for i := 1; i < len(dotTiles); i++ {
+		mergedIter := mergeSolutionsIters(tilesToSolutions[i-1], tilesToSolutions[i])
 		uniqueIter := filterUnique(mergedIter)
-		validIter := filterValid(g, dotTiles[:i+2], uniqueIter)
-		tilesToSolutions[i+1] = validIter
+		validIter := filterValidSoFar(g, dotTiles[:i+1], dotTiles[i], uniqueIter)
+		tilesToSolutions[i] = validIter
 	}
 
 	return tilesToSolutions[len(dotTiles)-1]
 }
 
 func mergeSolutionsIters(sols1, sols2 <-chan gs.TileSet) <-chan gs.TileSet {
-	iter := make(chan gs.TileSet, 4)
+	iter := make(chan gs.TileSet, 200)
 
 	go func() {
 		// read sols2 into a slice
@@ -56,33 +56,8 @@ func mergeSolutionsIters(sols1, sols2 <-chan gs.TileSet) <-chan gs.TileSet {
 	return iter
 }
 
-func filterValid(g GridSolver, tilesToValidate []gs.Tile, sols <-chan gs.TileSet) <-chan gs.TileSet {
-	filtered := make(chan gs.TileSet)
-
-	go func() {
-		for solution := range sols {
-			newBase := g.Grid.Clone()
-			newBase.ApplyTileSet(solution)
-
-			allValid := true
-			for _, dotTile := range tilesToValidate {
-				if !newBase.ValidTile(dotTile.Coord) {
-					allValid = false
-					break
-				}
-			}
-			if allValid {
-				filtered <- solution
-			}
-		}
-		close(filtered)
-	}()
-
-	return filtered
-}
-
 func filterUnique(in <-chan gs.TileSet) <-chan gs.TileSet {
-	filtered := make(chan gs.TileSet, 4)
+	filtered := make(chan gs.TileSet, 200)
 
 	go func() {
 		var alreadySeen []gs.TileSet
@@ -100,6 +75,51 @@ func filterUnique(in <-chan gs.TileSet) <-chan gs.TileSet {
 			}
 		}
 		close(filtered)
+	}()
+
+	return filtered
+}
+
+func filterValidSoFar(
+	g GridSolver,
+	previousTiles []gs.Tile,
+	current gs.Tile,
+	sols <-chan gs.TileSet,
+) <-chan gs.TileSet {
+	filtered := make(chan gs.TileSet, 200)
+
+	go func() {
+		defer close(filtered)
+		for solution := range sols {
+			newBase := g.Grid.Clone()
+			newBase.ApplyTileSet(solution)
+
+			var nearbyPreviousTiles []gs.Tile
+			for _, dotTile := range previousTiles {
+				xDist := dotTile.Coord.X - current.Coord.X
+				yDist := dotTile.Coord.Y - current.Coord.Y
+				if xDist < 0 {
+					xDist = -xDist
+				}
+				if yDist < 0 {
+					yDist = -yDist
+				}
+				if xDist+yDist <= 2 {
+					nearbyPreviousTiles = append(nearbyPreviousTiles, dotTile)
+				}
+			}
+
+			allValid := true
+			for _, dotTile := range nearbyPreviousTiles {
+				if !newBase.ValidTile(dotTile.Coord) {
+					allValid = false
+					break
+				}
+			}
+			if allValid {
+				filtered <- solution
+			}
+		}
 	}()
 
 	return filtered

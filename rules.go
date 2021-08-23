@@ -2,6 +2,18 @@ package gridspech
 
 import "fmt"
 
+// Valid returns if all tiles in the grid are valid.
+func (g Grid) Valid() bool {
+	for x := 0; x < g.Width(); x++ {
+		for y := 0; y < g.Height(); y++ {
+			if !g.ValidTile(TileCoord{X: x, Y: y}) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 // ValidTile returns if t is valid in g. If all tiles in g are valid,
 // the grid is completed.
 func (g Grid) ValidTile(coord TileCoord) bool {
@@ -69,7 +81,7 @@ func (g Grid) validGoal(start Tile) bool {
 
 // crown tiles have the following requirements:
 //   1. No other crowns may be in this crown's blob.
-//   2. All tiles with the same state must have a crown in its blob.
+//   2. All tiles with the same color must have a crown in its blob.
 func (g Grid) validCrown(start Tile) bool {
 	blob := g.Blob(start.Coord)
 
@@ -84,18 +96,18 @@ func (g Grid) validCrown(start Tile) bool {
 		return t.Data.Type == TypeCrown && t.Data.Color == start.Data.Color
 	})
 
-	// set of blobs of all crowns with same state
+	// set of blobs of all crowns with same color
 	var crownsBlobSet TileSet
 	for crown := range crownsWithSameState.Iter() {
 		crownsBlobSet.Merge(g.Blob(crown.Coord))
 	}
 
-	// set of all tiles with same state
+	// set of all tiles with same color
 	stateSet := g.TilesWith(func(t Tile) bool {
 		return t.Data.Type != TypeHole && t.Data.Color == start.Data.Color
 	})
 
-	// requirement 2: All tiles with the same state must have a crown in its blob.
+	// requirement 2: All tiles with the same color must have a crown in its blob.
 	return crownsBlobSet.Eq(stateSet)
 }
 
