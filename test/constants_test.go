@@ -33,13 +33,13 @@ const invalidTestGrid = `
 // MakeValidGrid returns a grid which contains a tile of every single Type and Color,
 // and all tiles are valid.
 func MakeValidGrid() gs.Grid {
-	return gs.MakeGridFromStringNew(validTestGrid, 2)
+	return gs.MakeGridFromString(validTestGrid, 3)
 }
 
 // MakeInvalidGrid returns a grid which contains a tile of every single Type and Color,
 // and all non-blank and non-hole tiles are invalid.
 func MakeInvalidGrid() gs.Grid {
-	return gs.MakeGridFromStringNew(invalidTestGrid, 2)
+	return gs.MakeGridFromString(invalidTestGrid, 3)
 }
 
 // TestMakeGridFromString tests creating a grid from a string.

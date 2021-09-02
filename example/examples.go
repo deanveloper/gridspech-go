@@ -74,7 +74,7 @@ func main() {
 
 	for _, level := range levels {
 		levelStr := levelMap[level]
-		solution := FindSolution(gridspech.MakeGridFromStringNew(levelStr, 2))
+		solution := FindSolution(gridspech.MakeGridFromString(levelStr, 2))
 		fmt.Println("solution for level " + level + ":")
 		fmt.Println(solution)
 	}

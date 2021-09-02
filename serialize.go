@@ -1,25 +1,30 @@
 package gridspech
 
 import (
+	"fmt"
 	"strings"
 )
 
 func stringToTileData(s string) TileData {
 	var data TileData
-	value := int(s[0] - '0')
 	if strings.Contains(s, "_") {
 		data.Type = TypeHole
 	} else {
-		data.Color = TileColor(value)
+		data.Color = TileColor(s[0] - '0')
 		data.Sticky = strings.Contains(s, "/")
 		data.Type = TypeBlank
-		if strings.Contains(s, "e") {
-			data.Type = TypeGoal
-		}
-		if strings.Contains(s, "k") {
+		switch {
+		case strings.Contains(s, "k"):
 			data.Type = TypeCrown
-		}
-		if strings.Contains(s, "j1") {
+		case strings.Contains(s, "e"):
+			data.Type = TypeGoal
+		case strings.Contains(s, "m1"):
+			data.Type = TypeDot1
+		case strings.Contains(s, "m2"):
+			data.Type = TypeDot2
+		case strings.Contains(s, "m3"):
+			data.Type = TypeDot3
+		case strings.Contains(s, "j1"):
 			data.Type = TypePlus
 		}
 	}
@@ -41,7 +46,7 @@ func stripEmptyLines(lines []string) []string {
 }
 
 // MakeGridFromString takes a string and converts it into a Grid.
-func MakeGridFromStringNew(str string, maxColors int) Grid {
+func MakeGridFromString(str string, maxColors int) Grid {
 	var grid Grid
 
 	lines := strings.Split(str, "\n")
@@ -50,31 +55,26 @@ func MakeGridFromStringNew(str string, maxColors int) Grid {
 	height := len(lines)
 	width := len(strings.Fields(lines[0]))
 
-	grid.Tiles = make([][]Tile, height)
+	grid.Tiles = make([][]Tile, width)
+	for x := range grid.Tiles {
+		grid.Tiles[x] = make([]Tile, height)
+	}
 	grid.MaxColors = maxColors
 
 	for y := 0; y < height; y++ {
-		grid.Tiles[y] = make([]Tile, width)
 		row := strings.Fields(lines[y])
 
 		for x := 0; x < width; x++ {
 			cur := row[x]
 			data := stringToTileData(cur)
-			grid.Tiles[y][x] = Tile{
+			grid.Tiles[x][y] = Tile{
 				Data:  data,
 				Coord: TileCoord{X: x, Y: y},
 			}
 		}
 	}
 
-	var rotate = make([][]Tile, width)
-	for x := 0; x < width; x++ {
-		rotate[x] = make([]Tile, height)
-		for y := 0; y < height; y++ {
-			rotate[x][y] = grid.Tiles[height-1-y][x]
-		}
-	}
-	grid.Tiles = rotate
+	fmt.Println(grid)
 
 	return grid
 }
