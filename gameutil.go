@@ -280,144 +280,55 @@ func (g Grid) blobRecur(coord TileCoord, ts *TileSet) {
 	}
 }
 
-// MakeGridFromString returns a Grid made from a string.
-// See Grid.String() and Tile.String() for the format.
-//
-// May panic if the format is invalid.
-func MakeGridFromString(str string, maxColors int) Grid {
-	var grid Grid
-
-	lines := strings.Split(strings.Trim(str, "\n"), "\n")
-
-	height := len(lines)
-	width := strings.Count(lines[0], "[")
-
-	grid.Tiles = make([][]Tile, width)
-	grid.MaxColors = maxColors
-
-	for x := 0; x < width; x++ {
-		grid.Tiles[x] = make([]Tile, height)
-
-		for y := 0; y < height; y++ {
-			index := x * 7
-			substr := []rune(lines[height-y-1][index+1 : index+5])
-			typeRune, colorRune, stickyRune, arrowsRune := substr[0], substr[1], substr[2], substr[3]
-
-			tile := tileFromRunes(typeRune, colorRune, stickyRune, arrowsRune)
-			tile.Coord.X = x
-			tile.Coord.Y = y
-			grid.Tiles[x][y] = tile
-		}
-	}
-
-	return grid
-}
-
-func tileFromRunes(typ, color, sticky, arrows rune) Tile {
-	var tile Tile
-	switch typ {
-	case ' ':
-		tile.Data.Type = TypeBlank
-	case 'g':
-		tile.Data.Type = TypeGoal
-	case 'c':
-		tile.Data.Type = TypeCrown
-	case '1':
-		tile.Data.Type = TypeDot1
-	case '2':
-		tile.Data.Type = TypeDot2
-	case '3':
-		tile.Data.Type = TypeDot3
-	case '+':
-		tile.Data.Type = TypePlus
-	}
-
-	if color >= 'A' && color <= 'Z' {
-		tile.Data.Color = TileColor(color - 'A' + 1)
-	}
-	switch color {
-	case 'O', ' ':
-		tile.Data.Color = 0
-	case 'A':
-		tile.Data.Color = 1
-	case 'B':
-		tile.Data.Color = 2
-	}
-
-	tile.Data.Sticky = sticky == '/'
-
-	tile.Data.ArrowNorth, tile.Data.ArrowEast, tile.Data.ArrowSouth, tile.Data.ArrowWest = decodeArrows(arrows)
-
-	return tile
-}
-
 func (t Tile) String() string {
 	return t.Data.String()
 }
 
 func (td TileData) String() string {
 	if td.Type == TypeHole {
-		return "[----]"
+		return "_"
 	}
 
-	var typeChar rune
+	// format:
+	// `${t.value}${lock}${sym}${wrapl}${wrapu}${wrapd}${wrapr}`
+	var sb strings.Builder
+
+	sb.WriteByte(byte(td.Color) + '0')
+	if td.Sticky {
+		sb.WriteByte('/')
+	}
 	switch td.Type {
 	case TypeBlank:
-		typeChar = ' '
-	case TypeGoal:
-		typeChar = 'g'
+		break
 	case TypeCrown:
-		typeChar = 'c'
+		sb.WriteByte('k')
+	case TypeGoal:
+		sb.WriteByte('e')
 	case TypeDot1:
-		typeChar = '1'
+		sb.WriteString("m1")
 	case TypeDot2:
-		typeChar = '2'
+		sb.WriteString("m2")
 	case TypeDot3:
-		typeChar = '3'
+		sb.WriteString("m3")
+	case TypePlus:
+		sb.WriteString("j1")
 	default:
-		panic(fmt.Sprint("invalid Type", td.Type))
+		panic(fmt.Sprintf("invalid type %d", td.Type))
 	}
 
-	var colorChar rune
-	switch td.Color {
-	case 0:
-		colorChar = ' '
-	case 1:
-		colorChar = 'A'
-	case 2:
-		colorChar = 'B'
-	default:
-		panic(fmt.Sprintf("invalid color %d", td.Color))
+	if td.ArrowWest {
+		sb.WriteByte('<')
 	}
-
-	stickyChar := ' '
-	if td.Sticky {
-		stickyChar = '/'
+	if td.ArrowNorth {
+		sb.WriteByte('^')
 	}
-
-	arrowsChar := encodeArrows(td.ArrowNorth, td.ArrowEast, td.ArrowSouth, td.ArrowWest)
-
-	str := fmt.Sprintf("[%c%c%c%c]", typeChar, colorChar, stickyChar, arrowsChar)
-	return str
-}
-
-// String returns the string representation of g.
-func (g Grid) String() string {
-	byteSlice := make([]byte, (g.Width()*7)*g.Height()-1)
-	for x, col := range g.Tiles {
-		for y, tile := range col {
-			index := x*7 + (g.Height()-y-1)*g.Width()*7
-
-			copy(byteSlice[index:index+6], tile.String())
-			if x < g.Width()-1 {
-				byteSlice[index+6] = ' '
-			}
-			if x == g.Width()-1 && y != 0 {
-				byteSlice[index+6] = '\n'
-			}
-		}
+	if td.ArrowSouth {
+		sb.WriteByte('v')
 	}
-	return string(byteSlice)
+	if td.ArrowEast {
+		sb.WriteByte('>')
+	}
+	return sb.String()
 }
 
 // Clone returns a clone of the grid. Modifications to the new grid will not modify the original grid.

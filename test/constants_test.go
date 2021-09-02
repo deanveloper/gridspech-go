@@ -8,38 +8,38 @@ import (
 
 // has every TileType, and all are valid
 const validTestGrid = `
-[2A  ] [gA  ] [    ] [gA  ] [    ]
-[ A  ] [----] [    ] [ A  ] [    ]
-[ A  ] [ A/ ] [ A/ ] [ A  ] [    ]
-[    ] [    ] [    ] [    ] [    ]
-[    ] [    ] [    ] [cB  ] [    ]
-[    ] [    ] [    ] [+B  ] [    ]
-[ B  ] [2B  ] [    ] [    ] [    ]
-[1B  ] [cB  ] [    ] [    ] [    ]
+1m2  1e   0    1e   0
+1    _    0    1    0
+1    1/   1/   1    0
+0    0    0    0    0
+0    0    0    2k   0
+0    0    0    2j1  0
+2    2m2  0    0    0
+2m1  2k   0    0    0
 `
 
 // has every TileType, and all are invalid
 const invalidTestGrid = `
-[+B  ] [+B/ ] [+B  ] [gA  ] [ A  ]
-[    ] [----] [    ] [gA  ] [    ]
-[2   ] [    ] [    ] [    ] [    ]
-[1   ] [    ] [    ] [    ] [    ]
-[2   ] [ A  ] [    ] [    ] [ A  ]
-[    ] [    ] [    ] [ A  ] [+   ]
-[ B  ] [    ] [    ] [cA  ] [    ]
-[c   ] [ B  ] [    ] [    ] [ A  ]
+2j1   2/j1  2j1   1e    1
+0     _     0     1e    0
+0m2   0     0     0     0
+0m1   0     0     0     0
+0m2   1     0     0     1
+0     0     0     1     0j1
+2     0     0     1k    0
+0k    2     0     0     1
 `
 
 // MakeValidGrid returns a grid which contains a tile of every single Type and Color,
 // and all tiles are valid.
 func MakeValidGrid() gs.Grid {
-	return gs.MakeGridFromString(validTestGrid, 2)
+	return gs.MakeGridFromString(validTestGrid, 3)
 }
 
 // MakeInvalidGrid returns a grid which contains a tile of every single Type and Color,
 // and all non-blank and non-hole tiles are invalid.
 func MakeInvalidGrid() gs.Grid {
-	return gs.MakeGridFromString(invalidTestGrid, 2)
+	return gs.MakeGridFromString(invalidTestGrid, 3)
 }
 
 // TestMakeGridFromString tests creating a grid from a string.

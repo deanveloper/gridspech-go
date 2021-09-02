@@ -26,10 +26,10 @@ func testSolveDotsAbstract(t *testing.T, level string, maxColors int, solutions 
 
 func TestDots_levelBasic1(t *testing.T) {
 	const level = `
-[    ] [    ] [    ] 
-[    ] [1   ] [    ] 
-[    ] [    ] [    ] 
-`
+	0    0    0  
+	0    0m1  0  
+	0    0    0  
+	`
 	solutions := []string{
 		" A \n   \n   ",
 		"   \nA  \n   ",
@@ -41,10 +41,10 @@ func TestDots_levelBasic1(t *testing.T) {
 
 func TestDots_levelBasic2(t *testing.T) {
 	const level = `
-[    ] [    ] [    ] 
-[    ] [2   ] [    ] 
-[    ] [    ] [    ] 
-`
+	0    0    0  
+	0    0m2  0  
+	0    0    0  
+	`
 	solutions := []string{
 		" A \nA  \n   ",
 		" A \n  A\n   ",
@@ -58,12 +58,12 @@ func TestDots_levelBasic2(t *testing.T) {
 
 func TestDots_levelE8(t *testing.T) {
 	const level = `
-[1   ] [1   ] [2   ] [1   ] [1   ]
-[1   ] [1   ] [2   ] [1   ] [1   ]
-[1   ] [1   ] [    ] [1   ] [1   ]
-[    ] [2   ] [1   ] [2   ] [    ]
-[2   ] [1   ] [2   ] [1   ] [2   ]
-`
+	0m1  0m1  0m2  0m1  0m1
+	0m1  0m1  0m2  0m1  0m1
+	0m1  0m1  0    0m1  0m1
+	0    0m2  0m1  0m2  0
+	0m2  0m1  0m2  0m1  0m2
+	`
 	solutions := []string{
 		" A A \n A A \n     \nA   A\n AAA ",
 	}

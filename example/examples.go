@@ -1,4 +1,4 @@
-package main
+package example
 
 import (
 	"fmt"
@@ -10,45 +10,52 @@ import (
 
 // Examples of all A levels in gridspech
 const (
-	LevelA1 = `[gA/] [   ] [   ] [g  ]`
+	LevelA1 = `1/e  0    0    0e`
 	LevelA2 = `
-[gA/]       [   ] [g  ]
-[   ] [   ] [   ]      
-`
+	1/e  _    0    0e 
+	0    0    0    _  
+	`
 	LevelA3 = `
-	[   ] [   ] [   ]      
-[gA/] [   ] [  /] [   ] [g  ]
-	[   ] [   ] [   ]      `
+	_    0    0    0    _  
+	1/e  0    0/   0    0e 
+	_    0    0    0    _  
+	`
 	LevelA4 = `
-[gA/] [   ] [g  ]
-[   ] [   ] [ A/]`
+	1/e  0    0e 
+	0    0    1/ 
+	`
 	LevelA5 = `
-[   ] [ A/] [   ] [   ]
-[   ] [   ] [ A/] [   ]
-[gA/] [   ] [  /] [g  ]`
+	0    1/   0    0  
+	0    0    1/   0  
+	1/e  0    0/   0e 
+	`
 	LevelA6 = `
-[   ] [   ] [   ] [   ] [ A/] [   ] [   ] [   ]
-[   ] [   ] [ A/] [   ] [ A/] [   ] [ A/] [   ]
-[gA/] [   ] [   ] [   ] [ A/] [   ] [   ] [g  ]`
+	0    0    0    0    1/   0    0    0  
+	0    0    1/   0    1/   0    1/   0  
+	1/e  0    0    0    1/   0    0    0e 
+	`
 	LevelA7 = `
-      [   ] [ A/] [   ]       
-      [   ] [ A/] [   ]       
-[gA/] [   ] [   ] [   ] [g  ] 
-      [   ] [   ] [   ]       `
+	_    0    1/   0    _  
+	_    0    1/   0    _  
+	1/e  0    0    0    0e 
+	_    0    0    0    _  
+	`
 	LevelA8 = `
-[   ] [   ] [ A/] [   ] [   ] 
-[   ] [ A/] [   ] [ A/] [   ] 
-[gA/] [   ] [   ] [   ] [gA/] 
-[   ] [ A/] [   ] [ A/] [   ] 
-[   ] [   ] [ A/] [   ] [   ]`
+	0    0    1/   0    0  
+	0    1/   0    1/   0  
+	1/e  0    0    0    1/e
+	0    1/   0    1/   0  
+	0    0    1/   0    0  
+	`
 	LevelA9 = `
-[   ] [ A/] [   ] [   ] [ A/] [   ] [   ]
-[gA/] [   ] [   ] [ A/] [   ] [   ] [g  ]
-[   ] [   ] [ A/] [   ] [ A/] [   ] [   ]
-`
+	0    1/   0    0    1/   0    0  
+	1/e  0    0    1/   0    0    0e 
+	0    0    1/   0    1/   0    0  
+	`
 )
 
-func main() {
+// FindSolutionsForALevels finds the solution to all A levels in gridspech
+func FindSolutionsForALevels() {
 	levelMap := map[string]string{
 		"A1": LevelA1,
 		"A2": LevelA2,
