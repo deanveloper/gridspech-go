@@ -1,7 +1,6 @@
 package gridspech
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -73,8 +72,6 @@ func MakeGridFromString(str string, maxColors int) Grid {
 			}
 		}
 	}
-
-	fmt.Println(grid)
 
 	return grid
 }
