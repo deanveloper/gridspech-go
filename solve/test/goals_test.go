@@ -63,7 +63,7 @@ func testStringSlicesEq(t *testing.T, expected, actual []string) {
 func testSolveGoalsAbstract(t *testing.T, level string, maxColors int, solutions []string) {
 	t.Helper()
 
-	grid := solve.NewGridSolver(gs.MakeGridFromString(level, 2))
+	grid := solve.NewGridSolver(gs.MakeGridFromStringNew(level, 2))
 
 	ch := solve.Goals(grid)
 	var actualSolutions []string
@@ -79,10 +79,10 @@ func testSolveGoalsAbstract(t *testing.T, level string, maxColors int, solutions
 
 func TestGoals_levelB1(t *testing.T) {
 	const level = `
-[    ] [    ] [    ] [    ] [    ] [    ] 
-[ A/ ] [    ] [    ] [    ] [  / ] [    ] 
-[gA/ ] [g   ] [----] [----] [g   ] [g   ] 
-`
+	1/e  0e   _    _    0e   0e 
+	1/   0    0    0    0/   0  
+	0    0    0    0    0    0  
+	`
 
 	solutions := []string{
 		"AAAAAA\nA    A\nA    A",
@@ -92,11 +92,11 @@ func TestGoals_levelB1(t *testing.T) {
 
 func TestGoals_levelB6(t *testing.T) {
 	const level = `
-[g   ] [g   ] [    ] [    ] 
-[g   ] [    ] [    ] [    ] 
-[    ] [    ] [    ] [g   ] 
-[    ] [    ] [g   ] [g   ] 
-`
+	0   0   0e  0e
+	0   0   0   0e
+	0e  0   0   0 
+	0e  0e  0   0 
+	`
 
 	solutions := []string{
 		"  A \nAA A\n AA \n  A ",

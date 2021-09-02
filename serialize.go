@@ -1,36 +1,33 @@
 package gridspech
 
 import (
-	"regexp"
 	"strings"
 )
 
-func unmarshalTile(s string, x, y int) Tile {
-	var tile Tile
+func stringToTileData(s string) TileData {
+	var data TileData
 	value := int(s[0] - '0')
 	if strings.Contains(s, "_") {
-		tile.Data.Type = TypeHole
+		data.Type = TypeHole
 	} else {
-		tile.Data.Color = TileColor(value)
-		tile.Data.Sticky = strings.Contains(s, "/")
-		tile.Data.Type = TypeBlank
+		data.Color = TileColor(value)
+		data.Sticky = strings.Contains(s, "/")
+		data.Type = TypeBlank
 		if strings.Contains(s, "e") {
-			tile.Data.Type = TypeGoal
+			data.Type = TypeGoal
 		}
 		if strings.Contains(s, "k") {
-			tile.Data.Type = TypeCrown
+			data.Type = TypeCrown
 		}
 		if strings.Contains(s, "j1") {
-			tile.Data.Type = TypePlus
+			data.Type = TypePlus
 		}
 	}
-	tile.Coord.X = x
-	tile.Coord.Y = y
-	return tile
+	return data
 }
 
 func emptyLine(s string) bool {
-	return !regexp.MustCompile(".*[_0-9].*").Match([]byte(s))
+	return !strings.ContainsAny(s, "_0123456789")
 }
 
 func stripEmptyLines(lines []string) []string {
@@ -43,8 +40,8 @@ func stripEmptyLines(lines []string) []string {
 	return lines
 }
 
-// UnmarshalGrid takes a string and converts it into a Grid.
-func UnmarshalGrid(str string, maxColors int) Grid {
+// MakeGridFromString takes a string and converts it into a Grid.
+func MakeGridFromStringNew(str string, maxColors int) Grid {
 	var grid Grid
 
 	lines := strings.Split(str, "\n")
@@ -59,12 +56,14 @@ func UnmarshalGrid(str string, maxColors int) Grid {
 	for y := 0; y < height; y++ {
 		grid.Tiles[y] = make([]Tile, width)
 		row := strings.Fields(lines[y])
-		println(lines[y])
 
 		for x := 0; x < width; x++ {
 			cur := row[x]
-			tile := unmarshalTile(cur, x, y)
-			grid.Tiles[y][x] = tile
+			data := stringToTileData(cur)
+			grid.Tiles[y][x] = Tile{
+				Data:  data,
+				Coord: TileCoord{X: x, Y: y},
+			}
 		}
 	}
 
@@ -78,4 +77,40 @@ func UnmarshalGrid(str string, maxColors int) Grid {
 	grid.Tiles = rotate
 
 	return grid
+}
+
+func (g Grid) String() string {
+	var longest int
+
+	tileStrs := make([][]string, g.Width())
+	for i := range tileStrs {
+		tileStrs[i] = make([]string, g.Height())
+	}
+
+	for y := 0; y < g.Height(); y++ {
+		for x := 0; x < g.Width(); x++ {
+			str := g.TileAt(x, y).Data.String()
+			tileStrs[x][y] = str
+			if len(str) > longest {
+				longest = len(str)
+			}
+		}
+	}
+
+	var sb strings.Builder
+	for y := 0; y < g.Height(); y++ {
+		if y > 0 {
+			sb.WriteByte('\n')
+		}
+		for x := 0; x < g.Width(); x++ {
+			tileStr := tileStrs[x][y]
+			padded := tileStr + strings.Repeat(" ", longest-len(tileStr))
+
+			if x > 0 {
+				sb.WriteString("  ")
+			}
+			sb.WriteString(padded)
+		}
+	}
+	return sb.String()
 }

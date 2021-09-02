@@ -69,7 +69,7 @@ func testUnorderedTilesetSliceEq(t *testing.T, expected, actual []gs.TileSet) {
 func testSolvePathsAbstract(t *testing.T, level string, x1, y1, x2, y2 int, solutions []string) {
 	t.Helper()
 
-	grid := solve.NewGridSolver(gs.MakeGridFromString(level, 2))
+	grid := solve.NewGridSolver(gs.MakeGridFromStringNew(level, 2))
 
 	var expectedSolutions []gs.TileSet
 	for i := range solutions {
@@ -86,7 +86,7 @@ func testSolvePathsAbstract(t *testing.T, level string, x1, y1, x2, y2 int, solu
 }
 
 func TestSolvePaths_levelA1(t *testing.T) {
-	const level = `[gA/ ] [    ] [    ] [g   ]`
+	const level = `1/e  0    0    0e`
 
 	solutions := []string{"xxxx"}
 	testSolvePathsAbstract(t, level, 0, 0, 3, 0, solutions)
@@ -94,48 +94,48 @@ func TestSolvePaths_levelA1(t *testing.T) {
 
 func TestSolvePaths_levelA2(t *testing.T) {
 	const level = `
-[gA/ ] [----] [    ] [g   ]
-[    ] [    ] [    ] [----]
-`
+	1/e  _    0    0e 
+	0    0    0    _ 
+	`
 	solutions := []string{"x xx|xxx "}
 	testSolvePathsAbstract(t, level, 0, 1, 3, 1, solutions)
 }
 
 func TestSolvePaths_levelA3(t *testing.T) {
 	const level = `
-[----] [    ] [    ] [    ] [----]
-[gA/ ] [    ] [  / ] [    ] [g   ]
-[----] [    ] [    ] [    ] [----]
-`
+	_    0    0    0    _  
+	1/e  0    0/   0    0e 
+	_    0    0    0    _  
+	`
 	solutions := []string{" xxx |xx xx|     ", "     |xx xx| xxx "}
 	testSolvePathsAbstract(t, level, 0, 1, 4, 1, solutions)
 }
 
 func TestSolvePaths_levelA4(t *testing.T) {
 	const level = `
-[gA/ ] [    ] [g   ]
-[    ] [    ] [ A/ ]
-`
+	1/e  0    0e 
+	0    0    1/ 
+	`
 	solutions := []string{"x x|xxx"}
 	testSolvePathsAbstract(t, level, 0, 1, 2, 1, solutions)
 }
 
 func TestSolvePaths_levelA5(t *testing.T) {
 	const level = `
-[    ] [ A/ ] [    ] [    ]
-[    ] [    ] [ A/ ] [    ]
-[gA/ ] [    ] [  / ] [g   ]
-`
+	0    1/   0    0  
+	0    0    1/   0  
+	1/e  0    0/   0e 
+	`
 	solutions := []string{"xxx |x xx|x  x"}
 	testSolvePathsAbstract(t, level, 0, 0, 3, 0, solutions)
 }
 
 func TestSolvePaths_levelA6(t *testing.T) {
 	const level = `
-[    ] [    ] [    ] [    ] [ A/ ] [    ] [    ] [    ]
-[    ] [    ] [ A/ ] [    ] [ A/ ] [    ] [ A/ ] [    ]
-[gA/ ] [    ] [    ] [    ] [ A/ ] [    ] [    ] [g   ]
-`
+	0    0    0    0    1/   0    0    0  
+	0    0    1/   0    1/   0    1/   0  
+	1/e  0    0    0    1/   0    0    0e 
+	`
 	solutions := []string{
 		"xxx xxx |x x x x |x xxx xx",
 		"    xxx |xxx x x |x xxx xx",
@@ -147,21 +147,21 @@ func TestSolvePaths_levelA6(t *testing.T) {
 
 func TestSolvePaths_levelA9(t *testing.T) {
 	const level = `
-[    ] [ A/ ] [    ] [    ] [ A/ ] [    ] [    ]
-[gA/ ] [    ] [    ] [ A/ ] [    ] [    ] [g   ]
-[    ] [    ] [ A/ ] [    ] [ A/ ] [    ] [    ]
-`
+	0    1/   0    0    1/   0    0  
+	1/e  0    0    1/   0    0    0e 
+	0    0    1/   0    1/   0    0  
+	`
 	solutions := []string{"   xxxx|x xx  x|xxx    ", "   xxx |x xx xx|xxx    "}
 	testSolvePathsAbstract(t, level, 0, 1, 6, 1, solutions)
 }
 
 func TestSolvePaths_basicColorNonePath(t *testing.T) {
 	const level = `
-[ A/ ] [    ] [    ] [ A/ ]
-[g / ] [    ] [    ] [g   ]
-[ A/ ] [    ] [    ] [ A/ ]
-`
-	grid := gs.MakeGridFromString(level, 2)
+	1/   0    0    1/ 
+	0/e  0    0    0e 
+	1/   0    0    1/ 
+	`
+	grid := gs.MakeGridFromStringNew(level, 2)
 	gridSolver := solve.NewGridSolver(grid)
 	solutionsChan := gridSolver.SolvePath(gs.TileCoord{X: 0, Y: 1}, gs.TileCoord{X: 3, Y: 1}, gs.ColorNone)
 	var solutions []gs.TileSet
