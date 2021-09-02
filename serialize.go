@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func deserializeTile(s string, x, y int) Tile {
+func unmarshalTile(s string, x, y int) Tile {
 	var tile Tile
 	value := int(s[0] - '0')
 	if strings.Contains(s, "_") {
@@ -43,7 +43,8 @@ func stripEmptyLines(lines []string) []string {
 	return lines
 }
 
-func DeserializeGrid(str string, maxColors int) Grid {
+// UnmarshalGrid takes a string and converts it into a Grid.
+func UnmarshalGrid(str string, maxColors int) Grid {
 	var grid Grid
 
 	lines := strings.Split(str, "\n")
@@ -62,7 +63,7 @@ func DeserializeGrid(str string, maxColors int) Grid {
 
 		for x := 0; x < width; x++ {
 			cur := row[x]
-			tile := deserializeTile(cur, x, y)
+			tile := unmarshalTile(cur, x, y)
 			grid.Tiles[y][x] = tile
 		}
 	}
@@ -75,8 +76,6 @@ func DeserializeGrid(str string, maxColors int) Grid {
 		}
 	}
 	grid.Tiles = rotate
-
-	println(grid.String())
 
 	return grid
 }
