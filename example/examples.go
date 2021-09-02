@@ -1,4 +1,4 @@
-package main
+package example
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ const (
 	LevelA1 = `1/e  0    0    0e`
 	LevelA2 = `
 	1/e  _    0    0e 
-	0    0    0    _ 
+	0    0    0    _  
 	`
 	LevelA3 = `
 	_    0    0    0    _  
@@ -54,7 +54,8 @@ const (
 	`
 )
 
-func main() {
+// FindSolutionsForALevels finds the solution to all A levels in gridspech
+func FindSolutionsForALevels() {
 	levelMap := map[string]string{
 		"A1": LevelA1,
 		"A2": LevelA2,

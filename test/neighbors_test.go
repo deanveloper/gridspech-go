@@ -60,7 +60,7 @@ func TestNeighbors(t *testing.T) {
 	for _, testCase := range cases {
 		actual := grid.Neighbors(testCase.Tile.Coord)
 		if !actual.Eq(testCase.Expected) {
-			t.Errorf("\nexpected: %#v\ngot:      %#v", testCase.Expected, actual)
+			t.Errorf("\nexpected:\n%v\ngot:\n%v", testCase.Expected.MultiLineString(), actual.MultiLineString())
 		}
 	}
 }
@@ -74,20 +74,23 @@ func TestNeighborsWith(t *testing.T) {
 	goalsOnly := func(t gs.Tile) bool { return t.Data.Type == gs.TypeGoal }
 
 	cases := []struct {
+		Name     string
 		Tile     gs.Tile
 		Func     func(t gs.Tile) bool
 		Expected gs.TileSet
 	}{
-		{tiles[0][0], noColor, gs.NewTileSet()},
-		{tiles[1][4], noColor, gs.NewTileSet(tiles[0][4], tiles[1][3], tiles[2][4])},
-		{tiles[0][0], goalsOnly, gs.NewTileSet()},
-		{tiles[2][7], goalsOnly, gs.NewTileSet(tiles[1][7], tiles[3][7])},
+		{"0,0 color", tiles[0][0], noColor, gs.NewTileSet()},
+		{"1,4 color", tiles[1][4], noColor, gs.NewTileSet(tiles[0][4], tiles[1][3], tiles[2][4])},
+		{"0,0 goals", tiles[0][0], goalsOnly, gs.NewTileSet()},
+		{"2,7 goals", tiles[2][7], goalsOnly, gs.NewTileSet(tiles[1][7], tiles[3][7])},
 	}
 
 	for _, testCase := range cases {
-		actual := grid.NeighborsWith(testCase.Tile.Coord, testCase.Func)
-		if !actual.Eq(testCase.Expected) {
-			t.Errorf("\nexpected: %#v\ngot:      %#v", testCase.Expected, actual)
-		}
+		t.Run(testCase.Name, func(t *testing.T) {
+			actual := grid.NeighborsWith(testCase.Tile.Coord, testCase.Func)
+			if !actual.Eq(testCase.Expected) {
+				t.Errorf("\nexpected:\n%v\ngot:\n%v", testCase.Expected.MultiLineString(), actual.MultiLineString())
+			}
+		})
 	}
 }

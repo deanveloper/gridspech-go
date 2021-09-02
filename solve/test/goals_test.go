@@ -79,9 +79,9 @@ func testSolveGoalsAbstract(t *testing.T, level string, maxColors int, solutions
 
 func TestGoals_levelB1(t *testing.T) {
 	const level = `
-	1/e  0e   _    _    0e   0e 
-	1/   0    0    0    0/   0  
-	0    0    0    0    0    0  
+	0    0    0    0    0    0
+	1/   0    0    0    0/   0
+	1/e  0e   _    _    0e   0e
 	`
 
 	solutions := []string{
@@ -92,10 +92,10 @@ func TestGoals_levelB1(t *testing.T) {
 
 func TestGoals_levelB6(t *testing.T) {
 	const level = `
-	0   0   0e  0e
+	0e  0e  0   0
+	0e  0   0   0
 	0   0   0   0e
-	0e  0   0   0 
-	0e  0e  0   0 
+	0   0   0e  0e
 	`
 
 	solutions := []string{

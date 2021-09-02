@@ -62,7 +62,7 @@ func MakeGridFromString(str string, maxColors int) Grid {
 	grid.MaxColors = maxColors
 
 	for y := 0; y < height; y++ {
-		row := strings.Fields(lines[y])
+		row := strings.Fields(lines[height-y-1])
 
 		for x := 0; x < width; x++ {
 			cur := row[x]
@@ -98,8 +98,8 @@ func (g Grid) String() string {
 	}
 
 	var sb strings.Builder
-	for y := 0; y < g.Height(); y++ {
-		if y > 0 {
+	for y := g.Height() - 1; y >= 0; y-- {
+		if y < g.Height()-1 {
 			sb.WriteByte('\n')
 		}
 		for x := 0; x < g.Width(); x++ {

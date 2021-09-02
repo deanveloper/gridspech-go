@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	gs "github.com/deanveloper/gridspech-go"
+	"github.com/deanveloper/gridspech-go/example"
 	"github.com/deanveloper/gridspech-go/solve"
 )
 
@@ -86,56 +87,38 @@ func testSolvePathsAbstract(t *testing.T, level string, x1, y1, x2, y2 int, solu
 }
 
 func TestSolvePaths_levelA1(t *testing.T) {
-	const level = `1/e  0    0    0e`
+	const level = example.LevelA1
 
 	solutions := []string{"xxxx"}
 	testSolvePathsAbstract(t, level, 0, 0, 3, 0, solutions)
 }
 
 func TestSolvePaths_levelA2(t *testing.T) {
-	const level = `
-	1/e  _    0    0e 
-	0    0    0    _ 
-	`
+	const level = example.LevelA2
 	solutions := []string{"x xx|xxx "}
 	testSolvePathsAbstract(t, level, 0, 1, 3, 1, solutions)
 }
 
 func TestSolvePaths_levelA3(t *testing.T) {
-	const level = `
-	_    0    0    0    _  
-	1/e  0    0/   0    0e 
-	_    0    0    0    _  
-	`
+	const level = example.LevelA3
 	solutions := []string{" xxx |xx xx|     ", "     |xx xx| xxx "}
 	testSolvePathsAbstract(t, level, 0, 1, 4, 1, solutions)
 }
 
 func TestSolvePaths_levelA4(t *testing.T) {
-	const level = `
-	1/e  0    0e 
-	0    0    1/ 
-	`
+	const level = example.LevelA4
 	solutions := []string{"x x|xxx"}
 	testSolvePathsAbstract(t, level, 0, 1, 2, 1, solutions)
 }
 
 func TestSolvePaths_levelA5(t *testing.T) {
-	const level = `
-	0    1/   0    0  
-	0    0    1/   0  
-	1/e  0    0/   0e 
-	`
+	const level = example.LevelA5
 	solutions := []string{"xxx |x xx|x  x"}
 	testSolvePathsAbstract(t, level, 0, 0, 3, 0, solutions)
 }
 
 func TestSolvePaths_levelA6(t *testing.T) {
-	const level = `
-	0    0    0    0    1/   0    0    0  
-	0    0    1/   0    1/   0    1/   0  
-	1/e  0    0    0    1/   0    0    0e 
-	`
+	const level = example.LevelA6
 	solutions := []string{
 		"xxx xxx |x x x x |x xxx xx",
 		"    xxx |xxx x x |x xxx xx",
@@ -146,11 +129,7 @@ func TestSolvePaths_levelA6(t *testing.T) {
 }
 
 func TestSolvePaths_levelA9(t *testing.T) {
-	const level = `
-	0    1/   0    0    1/   0    0  
-	1/e  0    0    1/   0    0    0e 
-	0    0    1/   0    1/   0    0  
-	`
+	const level = example.LevelA9
 	solutions := []string{"   xxxx|x xx  x|xxx    ", "   xxx |x xx xx|xxx    "}
 	testSolvePathsAbstract(t, level, 0, 1, 6, 1, solutions)
 }

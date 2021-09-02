@@ -58,11 +58,11 @@ func TestDots_levelBasic2(t *testing.T) {
 
 func TestDots_levelE8(t *testing.T) {
 	const level = `
-	0m2  0m1  0m2  0m1  0m2
-	0    0m2  0m1  0m2  0  
+	0m1  0m1  0m2  0m1  0m1
+	0m1  0m1  0m2  0m1  0m1
 	0m1  0m1  0    0m1  0m1
-	0m1  0m1  0m2  0m1  0m1
-	0m1  0m1  0m2  0m1  0m1
+	0    0m2  0m1  0m2  0
+	0m2  0m1  0m2  0m1  0m2
 	`
 	solutions := []string{
 		" A A \n A A \n     \nA   A\n AAA ",
