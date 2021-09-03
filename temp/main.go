@@ -18,7 +18,7 @@ func standardSerialization() {
 	`
 
 	grid := gridspech.MakeGridFromString(lv, 2)
-	ch := solve.Ends(solve.NewGridSolver(grid))
+	ch := solve.NewGridSolver(grid).SolveEnds()
 	for solvedGrid := range ch {
 		fmt.Println(solvedGrid.MultiLineString())
 		fmt.Println("=============")
