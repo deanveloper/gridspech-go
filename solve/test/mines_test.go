@@ -7,12 +7,12 @@ import (
 	"github.com/deanveloper/gridspech-go/solve"
 )
 
-func testSolveDotsAbstract(t *testing.T, level string, maxColors int, solutions []string) {
+func testSolveMinesAbstract(t *testing.T, level string, maxColors int, solutions []string) {
 	t.Helper()
 
 	grid := solve.NewGridSolver(gs.MakeGridFromString(level, 2))
 
-	actualSolutions := solve.Dots(grid)
+	actualSolutions := grid.SolveMines()
 	var actualSolutionsStrs []string
 	for solution := range actualSolutions {
 		solvedGrid := grid.Grid.Clone()
@@ -24,7 +24,7 @@ func testSolveDotsAbstract(t *testing.T, level string, maxColors int, solutions 
 	testStringSlicesEq(t, solutions, actualSolutionsStrs)
 }
 
-func TestDots_levelBasic1(t *testing.T) {
+func TestSolveMines_levelBasic1(t *testing.T) {
 	const level = `
 	0    0    0  
 	0    0m1  0  
@@ -36,10 +36,10 @@ func TestDots_levelBasic1(t *testing.T) {
 		"   \n  A\n   ",
 		"   \n   \n A ",
 	}
-	testSolveDotsAbstract(t, level, 2, solutions)
+	testSolveMinesAbstract(t, level, 2, solutions)
 }
 
-func TestDots_levelBasic2(t *testing.T) {
+func TestSolveMines_levelBasic2(t *testing.T) {
 	const level = `
 	0    0    0  
 	0    0m2  0  
@@ -53,10 +53,10 @@ func TestDots_levelBasic2(t *testing.T) {
 		"   \nA  \n A ",
 		"   \n  A\n A ",
 	}
-	testSolveDotsAbstract(t, level, 2, solutions)
+	testSolveMinesAbstract(t, level, 2, solutions)
 }
 
-func TestDots_levelE8(t *testing.T) {
+func TestSolveMines_levelE8(t *testing.T) {
 	const level = `
 	0m1  0m1  0m2  0m1  0m1
 	0m1  0m1  0m2  0m1  0m1
@@ -67,6 +67,6 @@ func TestDots_levelE8(t *testing.T) {
 	solutions := []string{
 		" A A \n A A \n     \nA   A\n AAA ",
 	}
-	testSolveDotsAbstract(t, level, 2, solutions)
+	testSolveMinesAbstract(t, level, 2, solutions)
 
 }

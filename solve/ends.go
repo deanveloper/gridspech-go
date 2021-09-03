@@ -6,22 +6,22 @@ import (
 	gs "github.com/deanveloper/gridspech-go"
 )
 
-// Goals will return a channel of solutions for all the goal tiles in g
-func Goals(g GridSolver) <-chan gs.TileSet {
+// SolveEnds will return a channel of solutions for all the end tiles in g.
+func (g GridSolver) SolveEnds() <-chan gs.TileSet {
 
 	iter := make(chan gs.TileSet, 4)
 
 	go func() {
-		g.solveGoals(iter)
+		g.solveEnds(iter)
 		close(iter)
 	}()
 
 	return iter
 }
 
-func (g GridSolver) solveGoals(ch chan<- gs.TileSet) {
+func (g GridSolver) solveEnds(ch chan<- gs.TileSet) {
 	goalTiles := g.Grid.TilesWith(func(o gs.Tile) bool {
-		return o.Data.Type == gs.TypeGoal
+		return o.Data.Type == gs.TypeEnd
 	}).Slice()
 	goalTileCoords := make([]gs.TileCoord, len(goalTiles))
 	for i := range goalTiles {

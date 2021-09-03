@@ -33,7 +33,7 @@ func TestTileSetAddRemove(t *testing.T) {
 }
 
 func TestTileSetHas(t *testing.T) {
-	ts := gs.NewTileSet(gs.Tile{Data: gs.TileData{Color: 2}}, gs.Tile{Data: gs.TileData{Color: 10}}, gs.Tile{Data: gs.TileData{Color: 4, Type: gs.TypeCrown}})
+	ts := gs.NewTileSet(gs.Tile{Data: gs.TileData{Color: 2}}, gs.Tile{Data: gs.TileData{Color: 10}}, gs.Tile{Data: gs.TileData{Color: 4, Type: gs.TypeKing}})
 
 	cases := []struct {
 		Value    gs.Tile
@@ -41,9 +41,9 @@ func TestTileSetHas(t *testing.T) {
 	}{
 		{gs.Tile{Data: gs.TileData{Color: 2}}, true},
 		{gs.Tile{Data: gs.TileData{Color: 10}}, true},
-		{gs.Tile{Data: gs.TileData{Color: 4, Type: gs.TypeCrown}}, true},
+		{gs.Tile{Data: gs.TileData{Color: 4, Type: gs.TypeKing}}, true},
 		{gs.Tile{}, false},
-		{gs.Tile{Data: gs.TileData{Type: gs.TypeCrown}}, false},
+		{gs.Tile{Data: gs.TileData{Type: gs.TypeKing}}, false},
 	}
 
 	for _, testCase := range cases {

@@ -25,7 +25,7 @@ func TestDirections(t *testing.T) {
 		{grid.NorthOf(tiles[1][1]).Data, gs.TileData{Type: gs.TypeBlank}},
 		{grid.WestOf(tiles[1][1]).Data, gs.TileData{Type: gs.TypeBlank, Color: 2}},
 		{grid.EastOf(tiles[1][1]).Data, gs.TileData{Type: gs.TypeBlank}},
-		{grid.SouthOf(tiles[1][1]).Data, gs.TileData{Type: gs.TypeCrown, Color: 2}},
+		{grid.SouthOf(tiles[1][1]).Data, gs.TileData{Type: gs.TypeKing, Color: 2}},
 	}
 
 	for _, testCase := range cases {
@@ -71,7 +71,7 @@ func TestNeighborsWith(t *testing.T) {
 	tiles := grid.Tiles
 
 	noColor := func(t gs.Tile) bool { return t.Data.Color == 0 }
-	goalsOnly := func(t gs.Tile) bool { return t.Data.Type == gs.TypeGoal }
+	goalsOnly := func(t gs.Tile) bool { return t.Data.Type == gs.TypeEnd }
 
 	cases := []struct {
 		Name     string

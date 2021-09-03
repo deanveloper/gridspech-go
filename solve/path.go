@@ -52,11 +52,11 @@ func (g GridSolver) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path g
 		if prevNeighborsSameColor.Len() > 2 {
 			continue
 		}
-		if prev.Data.Type == gs.TypeGoal && prevNeighborsSameColor.Len() > 1 {
+		if prev.Data.Type == gs.TypeEnd && prevNeighborsSameColor.Len() > 1 {
 			continue
 		}
 
-		if next.Data.Type == gs.TypeGoal && next.Coord != end.Coord {
+		if next.Data.Type == gs.TypeEnd && next.Coord != end.Coord {
 			continue
 		}
 
@@ -64,7 +64,7 @@ func (g GridSolver) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path g
 		if next == end {
 
 			// make sure the goal only has 1 neighbor we know is the same color
-			if end.Data.Type == gs.TypeGoal {
+			if end.Data.Type == gs.TypeEnd {
 				endNeighbors := g.Grid.NeighborsWith(end.Coord, func(o gs.Tile) bool {
 					return (o.Data.Color == color && !g.UnknownTiles.Has(o.Coord)) || path.Has(o.Coord)
 				})

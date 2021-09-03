@@ -300,17 +300,17 @@ func (td TileData) String() string {
 	switch td.Type {
 	case TypeBlank:
 		break
-	case TypeCrown:
+	case TypeKing:
 		sb.WriteByte('k')
-	case TypeGoal:
+	case TypeEnd:
 		sb.WriteByte('e')
-	case TypeDot1:
+	case TypeMine1:
 		sb.WriteString("m1")
-	case TypeDot2:
+	case TypeMine2:
 		sb.WriteString("m2")
-	case TypeDot3:
+	case TypeMine3:
 		sb.WriteString("m3")
-	case TypePlus:
+	case TypeJoin1:
 		sb.WriteString("j1")
 	default:
 		panic(fmt.Sprintf("invalid type %d", td.Type))

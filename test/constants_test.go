@@ -49,14 +49,14 @@ func TestMakeGridFromString(t *testing.T) {
 	cases := []struct {
 		Actual, Expected gs.TileData
 	}{
-		{tiles[0][0].Data, gs.TileData{Type: gs.TypeDot1, Color: 2}},
+		{tiles[0][0].Data, gs.TileData{Type: gs.TypeMine1, Color: 2}},
 		{tiles[0][1].Data, gs.TileData{Type: gs.TypeBlank, Color: 2}},
-		{tiles[1][0].Data, gs.TileData{Type: gs.TypeCrown, Color: 2}},
-		{tiles[1][1].Data, gs.TileData{Type: gs.TypeDot2, Color: 2}},
-		{tiles[1][7].Data, gs.TileData{Type: gs.TypeGoal, Color: 1}},
+		{tiles[1][0].Data, gs.TileData{Type: gs.TypeKing, Color: 2}},
+		{tiles[1][1].Data, gs.TileData{Type: gs.TypeMine2, Color: 2}},
+		{tiles[1][7].Data, gs.TileData{Type: gs.TypeEnd, Color: 1}},
 		{tiles[1][6].Data, gs.TileData{Type: gs.TypeHole}},
 		{tiles[1][5].Data, gs.TileData{Type: gs.TypeBlank, Color: 1, Sticky: true}},
-		{tiles[3][2].Data, gs.TileData{Type: gs.TypePlus, Color: 2}},
+		{tiles[3][2].Data, gs.TileData{Type: gs.TypeJoin1, Color: 2}},
 	}
 
 	for _, testCase := range cases {
