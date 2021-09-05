@@ -7,7 +7,7 @@ import (
 	"github.com/deanveloper/gridspech-go/solve"
 )
 
-func testSolveShapesAbstract(t *testing.T, level string, start gs.TileCoord, color gs.TileColor, expectedSolutionsStrings []string) {
+func testShapesIterAbstract(t *testing.T, level string, start gs.TileCoord, color gs.TileColor, expectedSolutionsStrings []string) {
 	t.Helper()
 
 	solver := solve.NewGridSolver(gs.MakeGridFromString(level, 2))
@@ -19,7 +19,7 @@ func testSolveShapesAbstract(t *testing.T, level string, start gs.TileCoord, col
 		expectedSolutions = append(expectedSolutions, tileSetFromString(solver.Grid, solutionString))
 	}
 
-	solutionsCh, prune := solver.SolveShapes(start, color)
+	solutionsCh, prune := solver.ShapesIter(start, color)
 	for solution := range solutionsCh {
 		actualSolutions = append(actualSolutions, solution)
 		prune <- false
@@ -28,7 +28,7 @@ func testSolveShapesAbstract(t *testing.T, level string, start gs.TileCoord, col
 	testUnorderedTilesetSliceEq(t, expectedSolutions, actualSolutions)
 }
 
-func TestSolveShapes_small(t *testing.T) {
+func TestShapesIter_small(t *testing.T) {
 	const level = `
 	0  0
 	0  0
@@ -39,10 +39,10 @@ func TestSolveShapes_small(t *testing.T) {
 		"  |xx", " x|xx", "xx|xx", "x |xx",
 	}
 
-	testSolveShapesAbstract(t, level, gs.TileCoord{X: 1, Y: 0}, 1, solutions)
+	testShapesIterAbstract(t, level, gs.TileCoord{X: 1, Y: 0}, 1, solutions)
 }
 
-func TestSolveShapes_large(t *testing.T) {
+func TestShapesIter_large(t *testing.T) {
 	const level = `
 	0  0  0  
 	0  0  0  
@@ -55,10 +55,10 @@ func TestSolveShapes_large(t *testing.T) {
 		"xxx|x x",
 	}
 
-	testSolveShapesAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
+	testShapesIterAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
 }
 
-func TestSolveShapes_withHole(t *testing.T) {
+func TestShapesIter_withHole(t *testing.T) {
 	const level = `
 	_  0  0  
 	0  0  0  
@@ -70,10 +70,10 @@ func TestSolveShapes_withHole(t *testing.T) {
 		"   |xxx", "  x|xxx", " xx|xxx", " x |xxx",
 	}
 
-	testSolveShapesAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
+	testShapesIterAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
 }
 
-func TestSolveShapes_noDuplicates(t *testing.T) {
+func TestShapesIter_noDuplicates(t *testing.T) {
 	const level = `
 	0  0  0  
 	0  0  0  
@@ -83,7 +83,7 @@ func TestSolveShapes_noDuplicates(t *testing.T) {
 
 	var solutions []gs.TileSet
 
-	solutionsCh, pruneCh := solver.SolveShapes(gs.TileCoord{X: 1, Y: 1}, 1)
+	solutionsCh, pruneCh := solver.ShapesIter(gs.TileCoord{X: 1, Y: 1}, 1)
 	for sol := range solutionsCh {
 		for _, oldSol := range solutions {
 			if sol.Eq(oldSol) {
@@ -96,7 +96,7 @@ func TestSolveShapes_noDuplicates(t *testing.T) {
 	}
 }
 
-func TestSolveShapes_noTraverseKnownDifferent(t *testing.T) {
+func TestShapesIter_noTraverseKnownDifferent(t *testing.T) {
 	const level = `
 	0   0   0  
 	0   0/  0/  
@@ -105,15 +105,15 @@ func TestSolveShapes_noTraverseKnownDifferent(t *testing.T) {
 
 	solutions := []string{"  x", " xx"}
 
-	testSolveShapesAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
+	testShapesIterAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
 }
 
-func TestSolveShapes_traverseKnownSame(t *testing.T) {
+func TestShapesIter_traverseKnownSame(t *testing.T) {
 	const level = `
 	0   1/  0   
 	`
 
 	solutions := []string{"  x", " xx", "xxx"}
 
-	testSolveShapesAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
+	testShapesIterAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
 }

@@ -37,7 +37,7 @@ func (g GridSolver) solveGoals(ch chan<- gs.TileSet) {
 			wg.Add(1)
 			go func() {
 				for c := 0; c < g.Grid.MaxColors; c++ {
-					for path := range g.SolvePath(goalPairCoords[0], goalPairCoords[1], gs.TileColor(c)) {
+					for path := range g.PathsIter(goalPairCoords[0], goalPairCoords[1], gs.TileColor(c)) {
 						pairsToSolutionMx.Lock()
 						pairsToSolutions[goalPairCoords] = append(pairsToSolutions[goalPairCoords], path)
 						pairsToSolutionMx.Unlock()

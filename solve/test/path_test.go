@@ -67,7 +67,7 @@ func testUnorderedTilesetSliceEq(t *testing.T, expected, actual []gs.TileSet) {
 	}
 }
 
-func testSolvePathsAbstract(t *testing.T, level string, x1, y1, x2, y2 int, solutions []string) {
+func testPathsIterAbstract(t *testing.T, level string, x1, y1, x2, y2 int, solutions []string) {
 	t.Helper()
 
 	grid := solve.NewGridSolver(gs.MakeGridFromString(level, 2))
@@ -77,7 +77,7 @@ func testSolvePathsAbstract(t *testing.T, level string, x1, y1, x2, y2 int, solu
 		expectedSolutions = append(expectedSolutions, tileSetFromString(grid.Grid, solutions[i]))
 	}
 
-	ch := grid.SolvePath(gs.TileCoord{X: x1, Y: y1}, gs.TileCoord{X: x2, Y: y2}, 1)
+	ch := grid.PathsIter(gs.TileCoord{X: x1, Y: y1}, gs.TileCoord{X: x2, Y: y2}, 1)
 	var actualSolutions []gs.TileSet
 	for ts := range ch {
 		actualSolutions = append(actualSolutions, ts)
@@ -86,38 +86,38 @@ func testSolvePathsAbstract(t *testing.T, level string, x1, y1, x2, y2 int, solu
 	testUnorderedTilesetSliceEq(t, expectedSolutions, actualSolutions)
 }
 
-func TestSolvePaths_levelA1(t *testing.T) {
+func TestPathsIter_levelA1(t *testing.T) {
 	const level = example.LevelA1
 
 	solutions := []string{"xxxx"}
-	testSolvePathsAbstract(t, level, 0, 0, 3, 0, solutions)
+	testPathsIterAbstract(t, level, 0, 0, 3, 0, solutions)
 }
 
-func TestSolvePaths_levelA2(t *testing.T) {
+func TestPathsIter_levelA2(t *testing.T) {
 	const level = example.LevelA2
 	solutions := []string{"x xx|xxx "}
-	testSolvePathsAbstract(t, level, 0, 1, 3, 1, solutions)
+	testPathsIterAbstract(t, level, 0, 1, 3, 1, solutions)
 }
 
-func TestSolvePaths_levelA3(t *testing.T) {
+func TestPathsIter_levelA3(t *testing.T) {
 	const level = example.LevelA3
 	solutions := []string{" xxx |xx xx|     ", "     |xx xx| xxx "}
-	testSolvePathsAbstract(t, level, 0, 1, 4, 1, solutions)
+	testPathsIterAbstract(t, level, 0, 1, 4, 1, solutions)
 }
 
-func TestSolvePaths_levelA4(t *testing.T) {
+func TestPathsIter_levelA4(t *testing.T) {
 	const level = example.LevelA4
 	solutions := []string{"x x|xxx"}
-	testSolvePathsAbstract(t, level, 0, 1, 2, 1, solutions)
+	testPathsIterAbstract(t, level, 0, 1, 2, 1, solutions)
 }
 
-func TestSolvePaths_levelA5(t *testing.T) {
+func TestPathsIter_levelA5(t *testing.T) {
 	const level = example.LevelA5
 	solutions := []string{"xxx |x xx|x  x"}
-	testSolvePathsAbstract(t, level, 0, 0, 3, 0, solutions)
+	testPathsIterAbstract(t, level, 0, 0, 3, 0, solutions)
 }
 
-func TestSolvePaths_levelA6(t *testing.T) {
+func TestPathsIter_levelA6(t *testing.T) {
 	const level = example.LevelA6
 	solutions := []string{
 		"xxx xxx |x x x x |x xxx xx",
@@ -125,16 +125,16 @@ func TestSolvePaths_levelA6(t *testing.T) {
 		"xxx xxx |x x x xx|x xxx  x",
 		"    xxx |xxx x xx|x xxx  x",
 	}
-	testSolvePathsAbstract(t, level, 0, 0, 7, 0, solutions)
+	testPathsIterAbstract(t, level, 0, 0, 7, 0, solutions)
 }
 
-func TestSolvePaths_levelA9(t *testing.T) {
+func TestPathsIter_levelA9(t *testing.T) {
 	const level = example.LevelA9
 	solutions := []string{"   xxxx|x xx  x|xxx    ", "   xxx |x xx xx|xxx    "}
-	testSolvePathsAbstract(t, level, 0, 1, 6, 1, solutions)
+	testPathsIterAbstract(t, level, 0, 1, 6, 1, solutions)
 }
 
-func TestSolvePaths_basicColorNonePath(t *testing.T) {
+func TestPathsIter_basicColorNonePath(t *testing.T) {
 	const level = `
 	1/   0    0    1/ 
 	0/e  0    0    0e 
@@ -142,7 +142,7 @@ func TestSolvePaths_basicColorNonePath(t *testing.T) {
 	`
 	grid := gs.MakeGridFromString(level, 2)
 	gridSolver := solve.NewGridSolver(grid)
-	solutionsChan := gridSolver.SolvePath(gs.TileCoord{X: 0, Y: 1}, gs.TileCoord{X: 3, Y: 1}, gs.ColorNone)
+	solutionsChan := gridSolver.PathsIter(gs.TileCoord{X: 0, Y: 1}, gs.TileCoord{X: 3, Y: 1}, gs.ColorNone)
 	var solutions []gs.TileSet
 	for solution := range solutionsChan {
 		solutions = append(solutions, solution)

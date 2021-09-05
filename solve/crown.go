@@ -11,19 +11,15 @@ func Crowns(g GridSolver) <-chan gs.TileSet {
 	return nil
 }
 
-// crowns are very tough to solve, so we basically just have to "abort" if any tiles which are not crowns become invalid.
-func (g GridSolver) solveCrown() {
-}
-
-// SolveShapes returns an iterator of all shapes which contain `start`, and be made out `color`, as well
+// ShapesIter returns an iterator of all shapes which contain `start`, and be made out `color`, as well
 // as a communication channel to say whether this branch should be traversed or not.
 // The two channels will be closed after
-func (g GridSolver) SolveShapes(start gs.TileCoord, color gs.TileColor) (<-chan gs.TileSet, chan<- bool) {
+func (g GridSolver) ShapesIter(start gs.TileCoord, color gs.TileColor) (<-chan gs.TileSet, chan<- bool) {
 	solutionsChan := make(chan gs.TileSet)
 	pruneChan := make(chan bool)
 
 	go func() {
-		bfsShapes(g, start, color, solutionsChan, pruneChan)
+		g.bfsShapes(start, color, solutionsChan, pruneChan)
 		close(solutionsChan)
 		close(pruneChan)
 	}()
@@ -31,7 +27,7 @@ func (g GridSolver) SolveShapes(start gs.TileCoord, color gs.TileColor) (<-chan 
 	return solutionsChan, pruneChan
 }
 
-func bfsShapes(g GridSolver, start gs.TileCoord, color gs.TileColor, solutions chan<- gs.TileSet, pruneChan <-chan bool) {
+func (g GridSolver) bfsShapes(start gs.TileCoord, color gs.TileColor, solutions chan<- gs.TileSet, pruneChan <-chan bool) {
 	var blobQueue []gs.TileCoordSet
 	blobQueue = append(blobQueue, gs.NewTileCoordSet(start))
 
@@ -58,19 +54,15 @@ func bfsShapes(g GridSolver, start gs.TileCoord, color gs.TileColor, solutions c
 			continue
 		}
 
-		var allNeighbors gs.TileCoordSet
-		for _, tile := range curShape.Slice() {
-			newNeighbors := g.Grid.NeighborsWith(tile, func(o gs.Tile) bool {
-				return !curShape.Has(o.Coord) && (g.UnknownTiles.Has(o.Coord) || o.Data.Color == color)
-			})
-			allNeighbors.Merge(newNeighbors.ToTileCoordSet())
-		}
+		nextNeighbors := g.aroundShape(curShape, func(o gs.Tile) bool {
+			return g.UnknownTiles.Has(o.Coord) || o.Data.Color == color
+		})
 
 	neighborLoop:
-		for _, newNeighbor := range allNeighbors.Slice() {
+		for _, nextNeighbor := range nextNeighbors.Slice() {
 			var newShape gs.TileCoordSet
 			newShape.Merge(curShape)
-			newShape.Add(newNeighbor)
+			newShape.Add(nextNeighbor)
 
 			// check if newShape has already been done
 			for _, dupe := range dupeChecker {
@@ -84,4 +76,17 @@ func bfsShapes(g GridSolver, start gs.TileCoord, color gs.TileColor, solutions c
 			fmt.Println(dupeChecker)
 		}
 	}
+}
+
+func (g GridSolver) aroundShape(shape gs.TileCoordSet, filter func(o gs.Tile) bool) gs.TileCoordSet {
+
+	var allNeighbors gs.TileCoordSet
+	for _, tile := range shape.Slice() {
+		newNeighbors := g.Grid.NeighborsWith(tile, func(o gs.Tile) bool {
+			return !shape.Has(o.Coord) && filter(o)
+		})
+		allNeighbors.Merge(newNeighbors.ToTileCoordSet())
+	}
+
+	return allNeighbors
 }
