@@ -57,9 +57,14 @@ func (g GridSolver) ShapesIter(start gs.TileCoord, color gs.TileColor) (<-chan g
 
 func (g GridSolver) bfsShapes(start gs.TileCoord, color gs.TileColor, solutions chan<- gs.TileSet, pruneChan <-chan bool) {
 
+	initialBlob := g.Grid.BlobWith(start, func(o gs.Tile) bool {
+		return o.Data.Color == color && !g.UnknownTiles.Has(o.Coord)
+	}).ToTileCoordSet()
+	initialBlob.Add(start)
+
 	var blobPQ blobHeap
 	heap.Init(&blobPQ)
-	heap.Push(&blobPQ, g.Grid.Blob(start).ToTileCoordSet())
+	heap.Push(&blobPQ, initialBlob)
 
 	var dupeChecker []gs.TileCoordSet
 	blobSize := 1
@@ -119,7 +124,6 @@ func (g GridSolver) bfsShapes(start gs.TileCoord, color gs.TileColor, solutions 
 }
 
 func (g GridSolver) aroundShape(shape gs.TileCoordSet, filter func(o gs.Tile) bool) gs.TileCoordSet {
-
 	var allNeighbors gs.TileCoordSet
 	for _, tile := range shape.Slice() {
 		newNeighbors := g.Grid.NeighborsWith(tile, func(o gs.Tile) bool {
