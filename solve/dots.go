@@ -7,8 +7,8 @@ import (
 	gs "github.com/deanveloper/gridspech-go"
 )
 
-// Dots will return a slice of solutions for all of the dot tiles in g.
-func Dots(g GridSolver) <-chan gs.TileSet {
+// SolveDots will return a slice of solutions for all of the dot tiles in g.
+func (g GridSolver) SolveDots() <-chan gs.TileSet {
 
 	// get all dot-related tiles
 	dotTiles := g.Grid.TilesWith(func(o gs.Tile) bool {

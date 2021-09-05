@@ -1,13 +1,41 @@
 package solve
 
 import (
-	"fmt"
+	"container/heap"
 
 	gs "github.com/deanveloper/gridspech-go"
 )
 
-// Crowns will return a channel of solutions for all the crown tiles in g.
-func Crowns(g GridSolver) <-chan gs.TileSet {
+type blobHeap []gs.TileCoordSet
+
+var _ heap.Interface = &blobHeap{}
+
+func (e *blobHeap) Push(v interface{}) {
+	*e = append(*e, v.(gs.TileCoordSet))
+}
+
+func (e *blobHeap) Pop() interface{} {
+	elem := (*e)[len(*e)-1]
+	*e = (*e)[:len(*e)-1]
+	return elem
+}
+
+func (e blobHeap) Swap(i, j int) {
+	e[i], e[j] = e[j], e[i]
+}
+
+func (e blobHeap) Less(i, j int) bool {
+	return e[i].Len() < e[j].Len()
+}
+
+func (e blobHeap) Len() int {
+	return len(e)
+}
+
+// SolveCrowns will return a channel of solutions for all the crown tiles in g.
+//
+// For performance reasons, SolveCrowns _must_ be run after all other tiles have been solved.
+func (g GridSolver) SolveCrowns() <-chan gs.TileSet {
 	return nil
 }
 
@@ -28,16 +56,17 @@ func (g GridSolver) ShapesIter(start gs.TileCoord, color gs.TileColor) (<-chan g
 }
 
 func (g GridSolver) bfsShapes(start gs.TileCoord, color gs.TileColor, solutions chan<- gs.TileSet, pruneChan <-chan bool) {
-	var blobQueue []gs.TileCoordSet
-	blobQueue = append(blobQueue, gs.NewTileCoordSet(start))
+
+	var blobPQ blobHeap
+	heap.Init(&blobPQ)
+	heap.Push(&blobPQ, g.Grid.Blob(start).ToTileCoordSet())
 
 	var dupeChecker []gs.TileCoordSet
 	blobSize := 1
 
-	for len(blobQueue) > 0 {
+	for blobPQ.Len() > 0 {
 
-		curShape := blobQueue[0]
-		blobQueue = blobQueue[1:]
+		curShape := heap.Pop(&blobPQ).(gs.TileCoordSet)
 
 		if curShape.Len() > blobSize {
 			dupeChecker = nil
@@ -64,6 +93,18 @@ func (g GridSolver) bfsShapes(start gs.TileCoord, color gs.TileColor, solutions 
 			newShape.Merge(curShape)
 			newShape.Add(nextNeighbor)
 
+			// special behavior: if nextNeighbor has any neighbors which we know are the same color,
+			// add the blob of each of those neighbors to newShape
+			transitiveNeighbors := g.Grid.NeighborsWith(nextNeighbor, func(o gs.Tile) bool {
+				return o.Data.Color == color && !g.UnknownTiles.Has(o.Coord)
+			})
+			for _, transitiveNeighbor := range transitiveNeighbors.Slice() {
+				neighborBlob := g.Grid.BlobWith(transitiveNeighbor.Coord, func(o gs.Tile) bool {
+					return !g.UnknownTiles.Has(o.Coord)
+				})
+				newShape.Merge(neighborBlob.ToTileCoordSet())
+			}
+
 			// check if newShape has already been done
 			for _, dupe := range dupeChecker {
 				if dupe.Eq(newShape) {
@@ -71,9 +112,8 @@ func (g GridSolver) bfsShapes(start gs.TileCoord, color gs.TileColor, solutions 
 				}
 			}
 
-			blobQueue = append(blobQueue, newShape)
+			heap.Push(&blobPQ, newShape)
 			dupeChecker = append(dupeChecker, newShape)
-			fmt.Println(dupeChecker)
 		}
 	}
 }

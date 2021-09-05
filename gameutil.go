@@ -261,21 +261,30 @@ func (g Grid) ApplyTileSet(ts TileSet) {
 func (g Grid) Blob(coord TileCoord) TileSet {
 	var ts TileSet
 
-	g.blobRecur(coord, &ts)
+	g.blobRecur(coord, &ts, func(o Tile) bool { return true })
 
 	return ts
 }
 
-func (g Grid) blobRecur(coord TileCoord, ts *TileSet) {
+// BlobWith is similar to Blob, but with a filter function to exclude certain tiles.
+func (g Grid) BlobWith(coord TileCoord, filter func(o Tile) bool) TileSet {
+	var ts TileSet
+
+	g.blobRecur(coord, &ts, filter)
+
+	return ts
+}
+
+func (g Grid) blobRecur(coord TileCoord, ts *TileSet, filter func(o Tile) bool) {
 	t := g.TileAtCoord(coord)
 	neighbors := g.NeighborsWith(coord, func(o Tile) bool {
-		return o.Data.Color == t.Data.Color
+		return o.Data.Color == t.Data.Color && filter(o)
 	})
 
 	for _, neighbor := range neighbors.Slice() {
 		if !ts.Has(neighbor) {
 			ts.Add(neighbor)
-			g.blobRecur(neighbor.Coord, ts)
+			g.blobRecur(neighbor.Coord, ts, filter)
 		}
 	}
 }

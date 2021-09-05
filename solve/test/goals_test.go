@@ -65,7 +65,7 @@ func testSolveGoalsAbstract(t *testing.T, level string, maxColors int, solutions
 
 	grid := solve.NewGridSolver(gs.MakeGridFromString(level, 2))
 
-	ch := solve.Goals(grid)
+	ch := grid.SolveGoals()
 	var actualSolutions []string
 	for solution := range ch {
 		solvedGrid := grid.Grid.Clone()

@@ -6,8 +6,8 @@ import (
 	gs "github.com/deanveloper/gridspech-go"
 )
 
-// Goals will return a channel of solutions for all the goal tiles in g
-func Goals(g GridSolver) <-chan gs.TileSet {
+// SolveGoals will return a channel of solutions for all the goal tiles in g
+func (g GridSolver) SolveGoals() <-chan gs.TileSet {
 
 	iter := make(chan gs.TileSet, 4)
 
