@@ -95,3 +95,25 @@ func TestSolveShapes_noDuplicates(t *testing.T) {
 		pruneCh <- false
 	}
 }
+
+func TestSolveShapes_noTraverseKnownDifferent(t *testing.T) {
+	const level = `
+	0   0   0  
+	0   0/  0/  
+	0/  0   0  
+	`
+
+	solutions := []string{"  x", " xx"}
+
+	testSolveShapesAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
+}
+
+func TestSolveShapes_traverseKnownSame(t *testing.T) {
+	const level = `
+	0   1/  0   
+	`
+
+	solutions := []string{"  x", " xx", "xxx"}
+
+	testSolveShapesAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
+}
