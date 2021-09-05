@@ -83,7 +83,7 @@ func FindSolutionsForALevels() {
 
 // FindSolution returns a new grid as a solution to `grid`
 func FindSolution(grid gridspech.Grid) gridspech.Grid {
-	ch := solve.NewGridSolver(grid).SolveEnds()
+	ch := solve.Goals(solve.NewGridSolver(grid))
 	newGrid := grid.Clone()
 	firstSolution := <-ch
 	newGrid.ApplyTileSet(firstSolution)

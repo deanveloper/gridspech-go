@@ -60,12 +60,12 @@ func testStringSlicesEq(t *testing.T, expected, actual []string) {
 	}
 }
 
-func testSolveEndsAbstract(t *testing.T, level string, maxColors int, solutions []string) {
+func testSolveGoalsAbstract(t *testing.T, level string, maxColors int, solutions []string) {
 	t.Helper()
 
 	grid := solve.NewGridSolver(gs.MakeGridFromString(level, 2))
 
-	ch := grid.SolveEnds()
+	ch := solve.Goals(grid)
 	var actualSolutions []string
 	for solution := range ch {
 		solvedGrid := grid.Grid.Clone()
@@ -77,7 +77,7 @@ func testSolveEndsAbstract(t *testing.T, level string, maxColors int, solutions 
 	testStringSlicesEq(t, solutions, actualSolutions)
 }
 
-func TestSolveEnds_levelB1(t *testing.T) {
+func TestGoals_levelB1(t *testing.T) {
 	const level = `
 	0    0    0    0    0    0
 	1/   0    0    0    0/   0
@@ -87,10 +87,10 @@ func TestSolveEnds_levelB1(t *testing.T) {
 	solutions := []string{
 		"AAAAAA\nA    A\nA    A",
 	}
-	testSolveEndsAbstract(t, level, 2, solutions)
+	testSolveGoalsAbstract(t, level, 2, solutions)
 }
 
-func TestSolveEnds_levelB6(t *testing.T) {
+func TestGoals_levelB6(t *testing.T) {
 	const level = `
 	0e  0e  0   0
 	0e  0   0   0
@@ -104,5 +104,5 @@ func TestSolveEnds_levelB6(t *testing.T) {
 		"A A \nA  A\n A  \n  AA",
 		"AA  \n  A \nA  A\n A A",
 	}
-	testSolveEndsAbstract(t, level, 2, solutions)
+	testSolveGoalsAbstract(t, level, 2, solutions)
 }

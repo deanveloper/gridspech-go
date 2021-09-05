@@ -10,17 +10,17 @@ func _() {
 	var x [1]struct{}
 	_ = x[TypeHole-0]
 	_ = x[TypeBlank-1]
-	_ = x[TypeEnd-2]
-	_ = x[TypeKing-3]
-	_ = x[TypeMine1-4]
-	_ = x[TypeMine2-5]
-	_ = x[TypeMine3-6]
-	_ = x[TypeJoin1-7]
+	_ = x[TypeGoal-2]
+	_ = x[TypeCrown-3]
+	_ = x[TypeDot1-4]
+	_ = x[TypeDot2-5]
+	_ = x[TypeDot3-6]
+	_ = x[TypePlus-7]
 }
 
-const _TileType_name = "_BlankEndKingMine1Mine2Mine3Join1"
+const _TileType_name = "_BlankGoalCrownDot1Dot2Dot3Plus"
 
-var _TileType_index = [...]uint8{0, 1, 6, 9, 13, 18, 23, 28, 33}
+var _TileType_index = [...]uint8{0, 1, 6, 10, 15, 19, 23, 27, 31}
 
 func (i TileType) String() string {
 	if i >= TileType(len(_TileType_index)-1) {

@@ -22,23 +22,23 @@ func (g Grid) ValidTile(coord TileCoord) bool {
 	switch t.Data.Type {
 	case TypeHole, TypeBlank:
 		return true
-	case TypeEnd:
+	case TypeGoal:
 		return g.validGoal(t)
-	case TypeKing:
+	case TypeCrown:
 		return g.validCrown(t)
-	case TypeMine1:
+	case TypeDot1:
 		return g.NeighborsWith(t.Coord, func(other Tile) bool {
 			return other.Data.Color != ColorNone
 		}).Len() == 1
-	case TypeMine2:
+	case TypeDot2:
 		return g.NeighborsWith(t.Coord, func(other Tile) bool {
 			return other.Data.Color != ColorNone
 		}).Len() == 2
-	case TypeMine3:
+	case TypeDot3:
 		return g.NeighborsWith(t.Coord, func(other Tile) bool {
 			return other.Data.Color != ColorNone
 		}).Len() == 3
-	case TypeJoin1:
+	case TypePlus:
 		return g.validPlus(t)
 	default:
 		panic(fmt.Sprintf("invalid tile type %v", t.Data.Type))
@@ -54,7 +54,7 @@ func (g Grid) validGoal(start Tile) bool {
 	blob := g.Blob(start.Coord)
 	var goals int
 	for _, t := range blob.Slice() {
-		if t.Data.Type == TypeEnd {
+		if t.Data.Type == TypeGoal {
 			goals++
 
 			// requirement 2: The goals should have exactly 1 neighbor with the same state.
@@ -70,7 +70,7 @@ func (g Grid) validGoal(start Tile) bool {
 		neighborsSameColor := g.NeighborsWith(t.Coord, func(o Tile) bool {
 			return t.Data.Color == o.Data.Color
 		}).Slice()
-		if t.Data.Type != TypeEnd && len(neighborsSameColor) != 2 {
+		if t.Data.Type != TypeGoal && len(neighborsSameColor) != 2 {
 			return false
 		}
 	}
@@ -87,13 +87,13 @@ func (g Grid) validCrown(start Tile) bool {
 
 	// requirement 1: No other crowns may be in this crown's blob.
 	for _, tile := range blob.Slice() {
-		if tile.Data.Type == TypeKing && tile != start {
+		if tile.Data.Type == TypeCrown && tile != start {
 			return false
 		}
 	}
 
 	crownsWithSameState := g.TilesWith(func(t Tile) bool {
-		return t.Data.Type == TypeKing && t.Data.Color == start.Data.Color
+		return t.Data.Type == TypeCrown && t.Data.Color == start.Data.Color
 	})
 
 	// set of blobs of all crowns with same color

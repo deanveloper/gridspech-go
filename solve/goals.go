@@ -6,34 +6,34 @@ import (
 	gs "github.com/deanveloper/gridspech-go"
 )
 
-// SolveEnds will return a channel of solutions for all the end tiles in g.
-func (g GridSolver) SolveEnds() <-chan gs.TileSet {
+// Goals will return a channel of solutions for all the goal tiles in g
+func Goals(g GridSolver) <-chan gs.TileSet {
 
 	iter := make(chan gs.TileSet, 4)
 
 	go func() {
-		g.solveEnds(iter)
+		g.solveGoals(iter)
 		close(iter)
 	}()
 
 	return iter
 }
 
-func (g GridSolver) solveEnds(ch chan<- gs.TileSet) {
-	endTiles := g.Grid.TilesWith(func(o gs.Tile) bool {
-		return o.Data.Type == gs.TypeEnd
+func (g GridSolver) solveGoals(ch chan<- gs.TileSet) {
+	goalTiles := g.Grid.TilesWith(func(o gs.Tile) bool {
+		return o.Data.Type == gs.TypeGoal
 	}).Slice()
-	endTileCoords := make([]gs.TileCoord, len(endTiles))
-	for i := range endTiles {
-		endTileCoords[i] = endTiles[i].Coord
+	goalTileCoords := make([]gs.TileCoord, len(goalTiles))
+	for i := range goalTiles {
+		goalTileCoords[i] = goalTiles[i].Coord
 	}
 
 	var pairsToSolutionMx sync.Mutex
 	pairsToSolutions := make(map[[2]gs.TileCoord][]gs.TileSet)
 	var wg sync.WaitGroup
-	for i1 := 0; i1 < len(endTiles)-1; i1++ {
-		for i2 := i1 + 1; i2 < len(endTiles); i2++ {
-			goalPairCoords := [2]gs.TileCoord{endTiles[i1].Coord, endTiles[i2].Coord}
+	for i1 := 0; i1 < len(goalTiles)-1; i1++ {
+		for i2 := i1 + 1; i2 < len(goalTiles); i2++ {
+			goalPairCoords := [2]gs.TileCoord{goalTiles[i1].Coord, goalTiles[i2].Coord}
 			wg.Add(1)
 			go func() {
 				for c := 0; c < g.Grid.MaxColors; c++ {
@@ -50,7 +50,7 @@ func (g GridSolver) solveEnds(ch chan<- gs.TileSet) {
 	wg.Wait()
 
 	// now we get solutions for each pairing
-	allGoalPairings := allTilePairingSets(endTileCoords)
+	allGoalPairings := allTilePairingSets(goalTileCoords)
 	for _, pairing := range allGoalPairings {
 		pairingSolutions := pairsToSolutions[pairing[0]]
 		for pairIndex := 1; pairIndex < len(pairing); pairIndex++ {

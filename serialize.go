@@ -14,17 +14,17 @@ func stringToTileData(s string) TileData {
 		data.Type = TypeBlank
 		switch {
 		case strings.Contains(s, "k"):
-			data.Type = TypeKing
+			data.Type = TypeCrown
 		case strings.Contains(s, "e"):
-			data.Type = TypeEnd
+			data.Type = TypeGoal
 		case strings.Contains(s, "m1"):
-			data.Type = TypeMine1
+			data.Type = TypeDot1
 		case strings.Contains(s, "m2"):
-			data.Type = TypeMine2
+			data.Type = TypeDot2
 		case strings.Contains(s, "m3"):
-			data.Type = TypeMine3
+			data.Type = TypeDot3
 		case strings.Contains(s, "j1"):
-			data.Type = TypeJoin1
+			data.Type = TypePlus
 		}
 	}
 	return data

@@ -154,10 +154,10 @@ func TestSolvePaths_basicColorNonePath(t *testing.T) {
 		gs.Tile{Coord: gs.TileCoord{X: 1, Y: 2}, Data: gs.TileData{Color: 1, Type: gs.TypeBlank}},
 		gs.Tile{Coord: gs.TileCoord{X: 2, Y: 2}, Data: gs.TileData{Color: 1, Type: gs.TypeBlank}},
 
-		gs.Tile{Coord: gs.TileCoord{X: 0, Y: 1}, Data: gs.TileData{Sticky: true, Type: gs.TypeEnd}},
+		gs.Tile{Coord: gs.TileCoord{X: 0, Y: 1}, Data: gs.TileData{Sticky: true, Type: gs.TypeGoal}},
 		gs.Tile{Coord: gs.TileCoord{X: 1, Y: 1}, Data: gs.TileData{Type: gs.TypeBlank}},
 		gs.Tile{Coord: gs.TileCoord{X: 2, Y: 1}, Data: gs.TileData{Type: gs.TypeBlank}},
-		gs.Tile{Coord: gs.TileCoord{X: 3, Y: 1}, Data: gs.TileData{Type: gs.TypeEnd}},
+		gs.Tile{Coord: gs.TileCoord{X: 3, Y: 1}, Data: gs.TileData{Type: gs.TypeGoal}},
 
 		gs.Tile{Coord: gs.TileCoord{X: 1, Y: 0}, Data: gs.TileData{Color: 1, Type: gs.TypeBlank}},
 		gs.Tile{Coord: gs.TileCoord{X: 2, Y: 0}, Data: gs.TileData{Color: 1, Type: gs.TypeBlank}},

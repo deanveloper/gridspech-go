@@ -2,20 +2,13 @@ package solve
 
 import gs "github.com/deanveloper/gridspech-go"
 
-// Kings will return a channel of solutions for all the king tiles in g.
-func Kings(g GridSolver) <-chan gs.TileSet {
-
+// Crowns will return a channel of solutions for all the crown tiles in g.
+func Crowns(g GridSolver) <-chan gs.TileSet {
 	return nil
 }
 
 // crowns are very tough to solve, so we basically just have to "abort" if any tiles which are not crowns become invalid.
-func (g GridSolver) solveKings() <-chan gs.TileSet {
-	kingTiles := g.Grid.TilesWith(func(o gs.Tile) bool {
-		return o.Data.Type == gs.TypeKing
-	}).Slice()
-
-	_ = kingTiles
-	return nil
+func (g GridSolver) solveCrown() {
 }
 
 // SolveShapes returns an iterator of all shapes which contain `start`, and be made out `color`, as well

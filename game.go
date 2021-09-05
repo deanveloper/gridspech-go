@@ -9,25 +9,25 @@ const (
 	// TypeBlank is a tile which does not have any icons.
 	TypeBlank // Blank
 
-	// TypeEnd is a tile which must have a direct path to another end.
-	TypeEnd // End
+	// TypeGoal is a tile which must have a direct path to another goal.
+	TypeGoal // Goal
 
-	// TypeKing tiles must touch all tiles of their state.
+	// TypeCrown tiles must touch all tiles of their state.
 	// If there are multiple crowns on the same state, they must not not touch each other, and
 	// together they must touch all tiles of their state.
-	TypeKing // King
+	TypeCrown // Crown
 
-	// TypeMine1 must be touching exactly 1 tiles with Color >= 1.
-	TypeMine1 // Mine1
+	// TypeDot1 must be touching exactly 1 tiles with Color >= 1.
+	TypeDot1 // Dot1
 
-	// TypeMine2 must be touching exactly 2 tiles with Color >= 1.
-	TypeMine2 // Mine2
+	// TypeDot2 must be touching exactly 2 tiles with Color >= 1.
+	TypeDot2 // Dot2
 
-	// TypeMine3 must be touching exactly 3 tiles with Color >= 1.
-	TypeMine3 // Mine3
+	// TypeDot3 must be touching exactly 3 tiles with Color >= 1.
+	TypeDot3 // Dot3
 
-	// TypeJoin1 must touch exactly 1 tile with a non-blank type.
-	TypeJoin1 // Join1
+	// TypePlus must touch exactly 1 tile with a non-blank type.
+	TypePlus // Plus
 )
 
 // Constants for TileColor
