@@ -1,6 +1,8 @@
 package solve
 
 import (
+	"fmt"
+
 	gs "github.com/deanveloper/gridspech-go"
 )
 
@@ -30,19 +32,23 @@ func (g GridSolver) SolveShapes(start gs.TileCoord, color gs.TileColor) (<-chan 
 }
 
 func bfsShapes(g GridSolver, start gs.TileCoord, color gs.TileColor, solutions chan<- gs.TileSet, pruneChan <-chan bool) {
-	type shape struct {
-		fullSet, newTiles gs.TileCoordSet
-	}
+	var blobQueue []gs.TileCoordSet
+	blobQueue = append(blobQueue, gs.NewTileCoordSet(start))
 
-	var blobQueue []shape
-	blobQueue = append(blobQueue, shape{gs.NewTileCoordSet(start), gs.NewTileCoordSet(start)})
+	var dupeChecker []gs.TileCoordSet
+	blobSize := 1
 
 	for len(blobQueue) > 0 {
 
 		curShape := blobQueue[0]
 		blobQueue = blobQueue[1:]
 
-		tileSet := curShape.fullSet.ToTileSet(func(t gs.TileCoord) gs.Tile {
+		if curShape.Len() > blobSize {
+			dupeChecker = nil
+			blobSize = curShape.Len()
+		}
+
+		tileSet := curShape.ToTileSet(func(t gs.TileCoord) gs.Tile {
 			tileCopy := *g.Grid.TileAtCoord(t)
 			tileCopy.Data.Color = color
 			return tileCopy
@@ -52,28 +58,30 @@ func bfsShapes(g GridSolver, start gs.TileCoord, color gs.TileColor, solutions c
 			continue
 		}
 
-		var allNewNeighbors gs.TileCoordSet
-		for _, newTile := range curShape.newTiles.Slice() {
-			newTileNeighbors := g.Grid.NeighborsWith(newTile, func(o gs.Tile) bool {
-				return !curShape.fullSet.Has(o.Coord) && (g.UnknownTiles.Has(o.Coord) || o.Data.Color == color)
+		var allNeighbors gs.TileCoordSet
+		for _, tile := range curShape.Slice() {
+			newNeighbors := g.Grid.NeighborsWith(tile, func(o gs.Tile) bool {
+				return !curShape.Has(o.Coord) && (g.UnknownTiles.Has(o.Coord) || o.Data.Color == color)
 			})
-			allNewNeighbors.Merge(newTileNeighbors.ToTileCoordSet())
+			allNeighbors.Merge(newNeighbors.ToTileCoordSet())
 		}
-		allNewNeighborsSlice := allNewNeighbors.Slice()
-		for perm := range Permutation(2, len(allNewNeighborsSlice)) {
-			var newNeighbors gs.TileCoordSet
-			for i := range perm {
-				if perm[i] == 1 {
-					newNeighbors.Add(allNewNeighborsSlice[i])
+
+	neighborLoop:
+		for _, newNeighbor := range allNeighbors.Slice() {
+			var newShape gs.TileCoordSet
+			newShape.Merge(curShape)
+			newShape.Add(newNeighbor)
+
+			// check if newShape has already been done
+			for _, dupe := range dupeChecker {
+				if dupe.Eq(newShape) {
+					continue neighborLoop
 				}
 			}
-			if newNeighbors.Len() == 0 {
-				continue
-			}
-			var newShape gs.TileCoordSet
-			newShape.Merge(curShape.fullSet)
-			newShape.Merge(newNeighbors)
-			blobQueue = append(blobQueue, shape{fullSet: newShape, newTiles: newNeighbors})
+
+			blobQueue = append(blobQueue, newShape)
+			dupeChecker = append(dupeChecker, newShape)
+			fmt.Println(dupeChecker)
 		}
 	}
 }
