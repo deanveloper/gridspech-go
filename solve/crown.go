@@ -1,6 +1,8 @@
 package solve
 
-import gs "github.com/deanveloper/gridspech-go"
+import (
+	gs "github.com/deanveloper/gridspech-go"
+)
 
 // Crowns will return a channel of solutions for all the crown tiles in g.
 func Crowns(g GridSolver) <-chan gs.TileSet {
@@ -28,44 +30,50 @@ func (g GridSolver) SolveShapes(start gs.TileCoord, color gs.TileColor) (<-chan 
 }
 
 func bfsShapes(g GridSolver, start gs.TileCoord, color gs.TileColor, solutions chan<- gs.TileSet, pruneChan <-chan bool) {
-	var queue []gs.TileCoord
-	queue = append(queue, start)
-	remainingInLayer := 1
+	type shape struct {
+		fullSet, newTiles gs.TileCoordSet
+	}
 
-	var dupeChecker []gs.TileCoordSet
+	var blobQueue []shape
+	blobQueue = append(blobQueue, shape{gs.NewTileCoordSet(start), gs.NewTileCoordSet(start)})
 
-	var currentSet gs.TileCoordSet
-	for len(queue) > 0 {
-		current := queue[0]
-		queue = queue[1:]
-		remainingInLayer--
+	for len(blobQueue) > 0 {
 
-		neighbors := g.Grid.NeighborsWith(current, func(o gs.Tile) bool {
-			return (o.Data.Color == color || g.UnknownTiles.Has(o.Coord)) && !currentSet.Has(o.Coord)
+		curShape := blobQueue[0]
+		blobQueue = blobQueue[1:]
+
+		tileSet := curShape.fullSet.ToTileSet(func(t gs.TileCoord) gs.Tile {
+			tileCopy := *g.Grid.TileAtCoord(t)
+			tileCopy.Data.Color = color
+			return tileCopy
 		})
-
-	nextLoop:
-		for _, next := range neighbors.Slice() {
-			currentSet.Add(next.Coord)
-			for _, prevSet := range dupeChecker {
-				if prevSet.Eq(currentSet) {
-					currentSet.Remove(next.Coord)
-					continue nextLoop
-				}
-			}
-			var newSet gs.TileCoordSet
-			newSet.Merge(currentSet)
-			dupeChecker = append(dupeChecker, newSet)
-			tileSet := newSet.ToTileSet(func(t gs.TileCoord) gs.Tile { return *g.Grid.TileAtCoord(t) })
-			solutions <- tileSet
-			if !<-pruneChan {
-				queue = append(queue, next.Coord)
-			}
+		solutions <- tileSet
+		if <-pruneChan {
+			continue
 		}
 
-		if remainingInLayer == 0 {
-			dupeChecker = nil
-			remainingInLayer = len(queue)
+		var allNewNeighbors gs.TileCoordSet
+		for _, newTile := range curShape.newTiles.Slice() {
+			newTileNeighbors := g.Grid.NeighborsWith(newTile, func(o gs.Tile) bool {
+				return !curShape.fullSet.Has(o.Coord) && (g.UnknownTiles.Has(o.Coord) || o.Data.Color == color)
+			})
+			allNewNeighbors.Merge(newTileNeighbors.ToTileCoordSet())
+		}
+		allNewNeighborsSlice := allNewNeighbors.Slice()
+		for perm := range Permutation(2, len(allNewNeighborsSlice)) {
+			var newNeighbors gs.TileCoordSet
+			for i := range perm {
+				if perm[i] == 1 {
+					newNeighbors.Add(allNewNeighborsSlice[i])
+				}
+			}
+			if newNeighbors.Len() == 0 {
+				continue
+			}
+			var newShape gs.TileCoordSet
+			newShape.Merge(curShape.fullSet)
+			newShape.Merge(newNeighbors)
+			blobQueue = append(blobQueue, shape{fullSet: newShape, newTiles: newNeighbors})
 		}
 	}
 }

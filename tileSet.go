@@ -142,20 +142,20 @@ func (ts TileSet) String() string {
 	maxX++
 	maxY++
 
-	tilesAt := make([][]bool, maxX)
+	tilesAt := make([][]Tile, maxX)
 	for x := range tilesAt {
-		tilesAt[x] = make([]bool, maxY)
+		tilesAt[x] = make([]Tile, maxY)
 	}
 	for _, v := range slice {
-		tilesAt[v.Coord.X][v.Coord.Y] = true
+		tilesAt[v.Coord.X][v.Coord.Y] = v
 	}
 
 	var sb strings.Builder
 	sb.WriteByte('{')
 	for y := maxY - 1; y >= 0; y-- {
 		for x := 0; x < maxX; x++ {
-			if tilesAt[x][y] {
-				sb.WriteByte('x')
+			if tile := tilesAt[x][y]; tile.Data.Type != TypeHole {
+				sb.WriteByte(byte(tile.Data.Color) + '0')
 			} else {
 				sb.WriteByte(' ')
 			}
