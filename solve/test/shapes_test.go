@@ -75,14 +75,15 @@ func TestSolveShapes_withHole(t *testing.T) {
 
 func TestSolveShapes_noDuplicates(t *testing.T) {
 	const level = `
-	_  0  0  
+	0  0  0  
+	0  0  0  
 	0  0  0  
 	`
 	solver := solve.NewGridSolver(gs.MakeGridFromString(level, 2))
 
 	var solutions []gs.TileSet
 
-	solutionsCh, pruneCh := solver.SolveShapes(gs.TileCoord{X: 2, Y: 0}, 1)
+	solutionsCh, pruneCh := solver.SolveShapes(gs.TileCoord{X: 1, Y: 1}, 1)
 	for sol := range solutionsCh {
 		for _, oldSol := range solutions {
 			if sol.Eq(oldSol) {
