@@ -27,6 +27,7 @@ func testSolveShapesAbstract(t *testing.T, level string, start gs.TileCoord, col
 
 	testUnorderedTilesetSliceEq(t, expectedSolutions, actualSolutions)
 }
+
 func TestSolveShapes_small(t *testing.T) {
 	const level = `
 	0  0
@@ -55,4 +56,41 @@ func TestSolveShapes_large(t *testing.T) {
 	}
 
 	testSolveShapesAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
+}
+
+func TestSolveShapes_withHole(t *testing.T) {
+	const level = `
+	_  0  0  
+	0  0  0  
+	`
+
+	solutions := []string{
+		"   |  x", "  x|  x", " xx|  x",
+		"   | xx", "  x| xx", " xx| xx", " x | xx",
+		"   |xxx", "  x|xxx", " xx|xxx", " x |xxx",
+	}
+
+	testSolveShapesAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
+}
+
+func TestSolveShapes_noDuplicates(t *testing.T) {
+	const level = `
+	_  0  0  
+	0  0  0  
+	`
+	solver := solve.NewGridSolver(gs.MakeGridFromString(level, 2))
+
+	var solutions []gs.TileSet
+
+	solutionsCh, pruneCh := solver.SolveShapes(gs.TileCoord{X: 2, Y: 0}, 1)
+	for sol := range solutionsCh {
+		for _, oldSol := range solutions {
+			if sol.Eq(oldSol) {
+				t.Errorf("Duplicate found: %v", oldSol)
+				break
+			}
+		}
+		solutions = append(solutions, sol)
+		pruneCh <- false
+	}
 }
