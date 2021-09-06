@@ -10,9 +10,9 @@ import (
 //   2. never make a path that would cause start or end to become invalid Goal tiles.
 //   3. have the same Color as start.
 func (g GridSolver) PathsIter(start, end gs.TileCoord, color gs.TileColor) <-chan gs.TileSet {
-	tileCoordSetIter := make(chan gs.TileCoordSet)
+	pathIter := make(chan gs.TileSet)
 	go func() {
-		defer close(tileCoordSetIter)
+		defer close(pathIter)
 		startTile, endTile := *g.Grid.TileAtCoord(start), *g.Grid.TileAtCoord(end)
 		if !g.UnknownTiles.Has(start) && color != startTile.Data.Color {
 			return
@@ -20,23 +20,19 @@ func (g GridSolver) PathsIter(start, end gs.TileCoord, color gs.TileColor) <-cha
 		if !g.UnknownTiles.Has(end) && color != endTile.Data.Color {
 			return
 		}
-		g.dfsDirectPaths(color, startTile, endTile, gs.NewTileCoordSet(start), tileCoordSetIter)
+		g.dfsDirectPaths(color, startTile, endTile, gs.NewTileCoordSet(start), pathIter)
 	}()
 
-	onGridIter := decorateWithGridInfo(tileCoordSetIter, g.Grid)
-	withColorIter := decorateWithColor(onGridIter, color)
-	if color == gs.ColorNone {
-		return decorateUnknownNeighbors(g, withColorIter)
-	}
-	return withColorIter
+	withBorderIter := decorateSetBorders(g, color, pathIter)
+	return withBorderIter
 }
 
 // we do not iterate in any particular order since it does not matter.
 // this function will only create direct paths, aka ones which would satisfy
 // a Goal tile.
-func (g GridSolver) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path gs.TileCoordSet, ch chan<- gs.TileCoordSet) {
+func (g GridSolver) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path gs.TileCoordSet, ch chan<- gs.TileSet) {
 
-	// possible next tiles include unknown tiles, and tiles of the same color
+	// possible next tiles include unknown tiles, and tiles of the target color
 	possibleNext := g.Grid.NeighborsWith(prev.Coord, func(o gs.Tile) bool {
 		return !path.Has(o.Coord) && (g.UnknownTiles.Has(o.Coord) || o.Data.Color == color)
 	})
@@ -73,9 +69,13 @@ func (g GridSolver) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path g
 				}
 			}
 
-			var finalPath gs.TileCoordSet
-			finalPath.Merge(path)
-			finalPath.Add(next.Coord)
+			finalPath := path.ToTileSet(func(t gs.TileCoord) gs.Tile {
+				tileCopy := *g.Grid.TileAtCoord(t)
+				tileCopy.Data.Color = color
+				return tileCopy
+			})
+			next.Data.Color = color
+			finalPath.Add(next)
 			ch <- finalPath
 			continue
 		}
@@ -89,36 +89,7 @@ func (g GridSolver) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path g
 	}
 }
 
-func decorateWithGridInfo(coordSets <-chan gs.TileCoordSet, g gs.Grid) <-chan gs.TileSet {
-	ch := make(chan gs.TileSet)
-	go func() {
-		for coordSet := range coordSets {
-			tileSet := coordSet.ToTileSet(func(t gs.TileCoord) gs.Tile {
-				return *g.TileAtCoord(t)
-			})
-			ch <- tileSet
-		}
-		close(ch)
-	}()
-	return ch
-}
-func decorateWithColor(tileSets <-chan gs.TileSet, color gs.TileColor) <-chan gs.TileSet {
-	ch := make(chan gs.TileSet)
-	go func() {
-		for tileSet := range tileSets {
-			var tileSetWithColor gs.TileSet
-			for tile := range tileSet.Iter() {
-				tileWithColor := tile
-				tileWithColor.Data.Color = color
-				tileSetWithColor.Add(tileWithColor)
-			}
-			ch <- tileSetWithColor
-		}
-		close(ch)
-	}()
-	return ch
-}
-func decorateUnknownNeighbors(g GridSolver, tileSets <-chan gs.TileSet) <-chan gs.TileSet {
+func decorateSetBorders(g GridSolver, shapeColor gs.TileColor, tileSets <-chan gs.TileSet) <-chan gs.TileSet {
 	iter := make(chan gs.TileSet)
 	go func() {
 		defer close(iter)
@@ -127,7 +98,9 @@ func decorateUnknownNeighbors(g GridSolver, tileSets <-chan gs.TileSet) <-chan g
 			var unknownNeighbors []gs.Tile
 			for tile := range tileSet.Iter() {
 				neighboringUnknowns := g.Grid.NeighborsWith(tile.Coord, func(o gs.Tile) bool {
-					return g.UnknownTiles.Has(o.Coord) && !tileSet.ToTileCoordSet().Has(o.Coord)
+					return g.UnknownTiles.Has(o.Coord) &&
+						!tileSet.ToTileCoordSet().Has(o.Coord) &&
+						o.Data.Color == shapeColor
 				})
 				unknownNeighbors = append(unknownNeighbors, neighboringUnknowns.Slice()...)
 			}
