@@ -35,8 +35,8 @@ func TestShapesIter_small(t *testing.T) {
 	`
 
 	solutions := []string{
-		"  | x", " x| x", "xx| x",
-		"  |xx", " x|xx", "xx|xx", "x |xx",
+		"  | 1", " 1| 1", "11| 1",
+		"  |11", " 1|11", "11|11", "1 |11",
 	}
 
 	testShapesIterAbstract(t, level, gs.TileCoord{X: 1, Y: 0}, 1, solutions)
@@ -49,10 +49,10 @@ func TestShapesIter_large(t *testing.T) {
 	`
 
 	solutions := []string{
-		"   |  x", "  x|  x", " xx|  x", "xxx|  x",
-		"   | xx", "  x| xx", " xx| xx", "xxx| xx", "xx | xx", " x | xx",
-		"   |xxx", "  x|xxx", " xx|xxx", "xxx|xxx", "xx |xxx", " x |xxx", "x  |xxx", "x x|xxx",
-		"xxx|x x",
+		"   |  1", "  1|  1", " 11|  1", "111|  1",
+		"   | 11", "  1| 11", " 11| 11", "111| 11", "11 | 11", " 1 | 11",
+		"   |111", "  1|111", " 11|111", "111|111", "11 |111", " 1 |111", "1  |111", "1 1|111",
+		"111|1 1",
 	}
 
 	testShapesIterAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
@@ -65,9 +65,9 @@ func TestShapesIter_withHole(t *testing.T) {
 	`
 
 	solutions := []string{
-		"   |  x", "  x|  x", " xx|  x",
-		"   | xx", "  x| xx", " xx| xx", " x | xx",
-		"   |xxx", "  x|xxx", " xx|xxx", " x |xxx",
+		"   |  1", "  1|  1", " 11|  1",
+		"   | 11", "  1| 11", " 11| 11", " 1 | 11",
+		"   |111", "  1|111", " 11|111", " 1 |111",
 	}
 
 	testShapesIterAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
@@ -103,7 +103,7 @@ func TestShapesIter_noTraverseKnownDifferent(t *testing.T) {
 	0/  0   0  
 	`
 
-	solutions := []string{"  x", " xx"}
+	solutions := []string{"  1", " 11"}
 
 	testShapesIterAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
 }
@@ -113,7 +113,11 @@ func TestShapesIter_traverseKnownSame(t *testing.T) {
 	0   1/  0   
 	`
 
-	solutions := []string{"  x", " xx", "xxx"}
+	solutions := []string{"  1", " 11", "111"}
 
 	testShapesIterAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
+}
+
+func TestShapesIter_decoratedBorder(t *testing.T) {
+
 }

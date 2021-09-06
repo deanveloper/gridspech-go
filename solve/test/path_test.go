@@ -16,13 +16,13 @@ func tileSetFromString(grid gs.Grid, str string) gs.TileSet {
 		y := len(lines) - i - 1
 		x := -1
 		for {
-			index := strings.IndexByte(line[x+1:], 'x')
+			index := strings.IndexAny(line[x+1:], "012345")
 			if index < 0 {
 				break
 			}
 			x = x + 1 + index
 			tileWithColor := *grid.TileAt(x, y)
-			tileWithColor.Data.Color = 1
+			tileWithColor.Data.Color = gs.TileColor(line[x] - '0')
 			ts.Add(tileWithColor)
 		}
 	}
@@ -89,48 +89,48 @@ func testPathsIterAbstract(t *testing.T, level string, x1, y1, x2, y2 int, solut
 func TestPathsIter_levelA1(t *testing.T) {
 	const level = example.LevelA1
 
-	solutions := []string{"xxxx"}
+	solutions := []string{"1111"}
 	testPathsIterAbstract(t, level, 0, 0, 3, 0, solutions)
 }
 
 func TestPathsIter_levelA2(t *testing.T) {
 	const level = example.LevelA2
-	solutions := []string{"x xx|xxx "}
+	solutions := []string{"1 11|111 "}
 	testPathsIterAbstract(t, level, 0, 1, 3, 1, solutions)
 }
 
 func TestPathsIter_levelA3(t *testing.T) {
 	const level = example.LevelA3
-	solutions := []string{" xxx |xx xx|     ", "     |xx xx| xxx "}
+	solutions := []string{" 111 |11 11|     ", "     |11 11| 111 "}
 	testPathsIterAbstract(t, level, 0, 1, 4, 1, solutions)
 }
 
 func TestPathsIter_levelA4(t *testing.T) {
 	const level = example.LevelA4
-	solutions := []string{"x x|xxx"}
+	solutions := []string{"1 1|111"}
 	testPathsIterAbstract(t, level, 0, 1, 2, 1, solutions)
 }
 
 func TestPathsIter_levelA5(t *testing.T) {
 	const level = example.LevelA5
-	solutions := []string{"xxx |x xx|x  x"}
+	solutions := []string{"111 |1 11|1  1"}
 	testPathsIterAbstract(t, level, 0, 0, 3, 0, solutions)
 }
 
 func TestPathsIter_levelA6(t *testing.T) {
 	const level = example.LevelA6
 	solutions := []string{
-		"xxx xxx |x x x x |x xxx xx",
-		"    xxx |xxx x x |x xxx xx",
-		"xxx xxx |x x x xx|x xxx  x",
-		"    xxx |xxx x xx|x xxx  x",
+		"111 111 |1 1 1 1 |1 111 11",
+		"    111 |111 1 1 |1 111 11",
+		"111 111 |1 1 1 11|1 111  1",
+		"    111 |111 1 11|1 111  1",
 	}
 	testPathsIterAbstract(t, level, 0, 0, 7, 0, solutions)
 }
 
 func TestPathsIter_levelA9(t *testing.T) {
 	const level = example.LevelA9
-	solutions := []string{"   xxxx|x xx  x|xxx    ", "   xxx |x xx xx|xxx    "}
+	solutions := []string{"   1111|1 11  1|111    ", "   111 |1 11 11|111    "}
 	testPathsIterAbstract(t, level, 0, 1, 6, 1, solutions)
 }
 
