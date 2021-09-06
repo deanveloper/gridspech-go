@@ -56,7 +56,7 @@ func TestMakeGridFromString(t *testing.T) {
 		{tiles[1][7].Data, gs.TileData{Type: gs.TypeGoal, Color: 1}},
 		{tiles[1][6].Data, gs.TileData{Type: gs.TypeHole}},
 		{tiles[1][5].Data, gs.TileData{Type: gs.TypeBlank, Color: 1, Sticky: true}},
-		{tiles[3][2].Data, gs.TileData{Type: gs.TypePlus, Color: 2}},
+		{tiles[3][2].Data, gs.TileData{Type: gs.TypeJoin, Color: 2}},
 	}
 
 	for _, testCase := range cases {

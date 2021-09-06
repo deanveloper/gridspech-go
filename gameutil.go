@@ -319,7 +319,7 @@ func (td TileData) String() string {
 		sb.WriteString("m2")
 	case TypeDot3:
 		sb.WriteString("m3")
-	case TypePlus:
+	case TypeJoin:
 		sb.WriteString("j1")
 	default:
 		panic(fmt.Sprintf("invalid type %d", td.Type))

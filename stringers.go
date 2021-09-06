@@ -15,10 +15,10 @@ func _() {
 	_ = x[TypeDot1-4]
 	_ = x[TypeDot2-5]
 	_ = x[TypeDot3-6]
-	_ = x[TypePlus-7]
+	_ = x[TypeJoin-7]
 }
 
-const _TileType_name = "_BlankGoalCrownDot1Dot2Dot3Plus"
+const _TileType_name = "_BlankGoalCrownDot1Dot2Dot3Join"
 
 var _TileType_index = [...]uint8{0, 1, 6, 10, 15, 19, 23, 27, 31}
 

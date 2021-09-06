@@ -38,7 +38,7 @@ func (g Grid) ValidTile(coord TileCoord) bool {
 		return g.NeighborsWith(t.Coord, func(other Tile) bool {
 			return other.Data.Color != ColorNone
 		}).Len() == 3
-	case TypePlus:
+	case TypeJoin:
 		return g.validPlus(t)
 	default:
 		panic(fmt.Sprintf("invalid tile type %v", t.Data.Type))

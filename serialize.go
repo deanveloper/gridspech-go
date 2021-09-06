@@ -24,7 +24,7 @@ func stringToTileData(s string) TileData {
 		case strings.Contains(s, "m3"):
 			data.Type = TypeDot3
 		case strings.Contains(s, "j1"):
-			data.Type = TypePlus
+			data.Type = TypeJoin
 		}
 	}
 	return data
