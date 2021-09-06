@@ -1,136 +1,76 @@
 package solve
 
 import (
-	"container/heap"
-
 	gs "github.com/deanveloper/gridspech-go"
 )
 
-type blobHeap []gs.TileCoordSet
-
-var _ heap.Interface = &blobHeap{}
-
-func (e *blobHeap) Push(v interface{}) {
-	*e = append(*e, v.(gs.TileCoordSet))
-}
-
-func (e *blobHeap) Pop() interface{} {
-	elem := (*e)[len(*e)-1]
-	*e = (*e)[:len(*e)-1]
-	return elem
-}
-
-func (e blobHeap) Swap(i, j int) {
-	e[i], e[j] = e[j], e[i]
-}
-
-func (e blobHeap) Less(i, j int) bool {
-	return e[i].Len() < e[j].Len()
-}
-
-func (e blobHeap) Len() int {
-	return len(e)
-}
-
 // SolveCrowns will return a channel of solutions for all the crown tiles in g.
 //
-// For performance reasons, SolveCrowns _must_ be run after all other tiles have been solved.
+// For performance reasons, it is expected that you run this after all other tiles have been solved.
 func (g GridSolver) SolveCrowns() <-chan gs.TileSet {
 	return nil
 }
 
-// ShapesIter returns an iterator of all shapes which contain `start`, and be made out `color`, as well
-// as a communication channel to say whether this branch should be traversed or not.
-// The two channels will be closed after
-func (g GridSolver) ShapesIter(start gs.TileCoord, color gs.TileColor) (<-chan gs.TileSet, chan<- bool) {
-	solutionsChan := make(chan gs.TileSet)
-	pruneChan := make(chan bool)
+func (g GridSolver) solveCrown(crown gs.TileCoord, color gs.TileColor) <-chan gs.TileSet {
+
+	crownIter := make(chan gs.TileSet)
 
 	go func() {
-		g.bfsShapes(start, color, solutionsChan, pruneChan)
-		close(solutionsChan)
-		close(pruneChan)
+
+		shapesCh, pruneCh := g.ShapesIter(crown, gs.TileColor(color))
+
+		for shape := range shapesCh {
+			prune := shouldPrune(g, crown, shape, color)
+			pruneCh <- prune
+			if !prune {
+				crownIter <- shape
+			}
+		}
+
+		close(crownIter)
 	}()
 
-	return solutionsChan, pruneChan
+	return crownIter
 }
 
-func (g GridSolver) bfsShapes(start gs.TileCoord, color gs.TileColor, solutions chan<- gs.TileSet, pruneChan <-chan bool) {
-
-	initialBlob := g.Grid.BlobWith(start, func(o gs.Tile) bool {
-		return o.Data.Color == color && !g.UnknownTiles.Has(o.Coord)
-	}).ToTileCoordSet()
-	initialBlob.Add(start)
-
-	var blobPQ blobHeap
-	heap.Init(&blobPQ)
-	heap.Push(&blobPQ, initialBlob)
-
-	var dupeChecker []gs.TileCoordSet
-	blobSize := 1
-
-	for blobPQ.Len() > 0 {
-
-		curShape := heap.Pop(&blobPQ).(gs.TileCoordSet)
-
-		if curShape.Len() > blobSize {
-			dupeChecker = nil
-			blobSize = curShape.Len()
-		}
-
-		tileSet := curShape.ToTileSet(func(t gs.TileCoord) gs.Tile {
-			tileCopy := *g.Grid.TileAtCoord(t)
-			tileCopy.Data.Color = color
-			return tileCopy
-		})
-		solutions <- tileSet
-		if <-pruneChan {
-			continue
-		}
-
-		nextNeighbors := g.aroundShape(curShape, func(o gs.Tile) bool {
-			return g.UnknownTiles.Has(o.Coord) || o.Data.Color == color
-		})
-
-	neighborLoop:
-		for _, nextNeighbor := range nextNeighbors.Slice() {
-			var newShape gs.TileCoordSet
-			newShape.Merge(curShape)
-			newShape.Add(nextNeighbor)
-
-			// special behavior: if nextNeighbor has any neighbors which we know are the same color,
-			// add the blob of each of those neighbors to newShape
-			transitiveNeighbors := g.Grid.NeighborsWith(nextNeighbor, func(o gs.Tile) bool {
-				return o.Data.Color == color && !g.UnknownTiles.Has(o.Coord)
-			})
-			for _, transitiveNeighbor := range transitiveNeighbors.Slice() {
-				neighborBlob := g.Grid.BlobWith(transitiveNeighbor.Coord, func(o gs.Tile) bool {
-					return !g.UnknownTiles.Has(o.Coord)
-				})
-				newShape.Merge(neighborBlob.ToTileCoordSet())
-			}
-
-			// check if newShape has already been done
-			for _, dupe := range dupeChecker {
-				if dupe.Eq(newShape) {
-					continue neighborLoop
-				}
-			}
-
-			heap.Push(&blobPQ, newShape)
-			dupeChecker = append(dupeChecker, newShape)
+// prune if:
+// - this shape contains a separate crown of the same color
+// - has a goal tile, and:
+//   - any tile has >2 neighbors
+//   - any goal tile has >1 neighbor
+func shouldPrune(g GridSolver, crown gs.TileCoord, shape gs.TileSet, color gs.TileColor) bool {
+	shapeAsSlice := shape.Slice()
+	var coordsWithColor gs.TileCoordSet
+	for _, tile := range shapeAsSlice {
+		if tile.Data.Color == color {
+			coordsWithColor.Add(tile.Coord)
 		}
 	}
-}
 
-func (g GridSolver) aroundShape(shape gs.TileCoordSet, filter func(o gs.Tile) bool) gs.TileCoordSet {
-	var allNeighbors gs.TileCoordSet
-	for _, tile := range shape.Slice() {
-		newNeighbors := g.Grid.NeighborsWith(tile, func(o gs.Tile) bool {
-			return !shape.Has(o.Coord) && filter(o)
+	var containsGoalTile bool
+	var containsTrineighborTile bool
+	for _, tile := range shapeAsSlice {
+		if tile.Data.Type == gs.TypeCrown && tile.Data.Color == color && tile.Coord != crown {
+			return true
+		}
+
+		sameColorNeighborsInShape := g.Grid.NeighborsWith(tile.Coord, func(o gs.Tile) bool {
+			return coordsWithColor.Has(o.Coord)
 		})
-		allNeighbors.Merge(newNeighbors.ToTileCoordSet())
+		if sameColorNeighborsInShape.Len() > 2 {
+			containsTrineighborTile = true
+		}
+		if tile.Data.Type == gs.TypeGoal && tile.Data.Color == color {
+			if sameColorNeighborsInShape.Len() > 1 {
+				return true
+			}
+			containsGoalTile = true
+		}
+
+		if containsGoalTile && containsTrineighborTile {
+			return true
+		}
 	}
 
-	return allNeighbors
+	return false
 }
