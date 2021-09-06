@@ -73,29 +73,6 @@ func TestShapesIter_withHole(t *testing.T) {
 	testShapesIterAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
 }
 
-func TestShapesIter_noDuplicates(t *testing.T) {
-	const level = `
-	0  0  0  
-	0  0  0  
-	0  0  0  
-	`
-	solver := solve.NewGridSolver(gs.MakeGridFromString(level, 2))
-
-	var solutions []gs.TileSet
-
-	solutionsCh, pruneCh := solver.ShapesIter(gs.TileCoord{X: 1, Y: 1}, 1)
-	for sol := range solutionsCh {
-		for _, oldSol := range solutions {
-			if sol.Eq(oldSol) {
-				t.Errorf("Duplicate found: %v", oldSol)
-				break
-			}
-		}
-		solutions = append(solutions, sol)
-		pruneCh <- false
-	}
-}
-
 func TestShapesIter_noTraverseKnownDifferent(t *testing.T) {
 	const level = `
 	0   0   0  
@@ -118,6 +95,58 @@ func TestShapesIter_traverseKnownSame(t *testing.T) {
 	testShapesIterAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 1, solutions)
 }
 
-func TestShapesIter_decoratedBorder(t *testing.T) {
+func TestShapesIter_decoratedBorderSmall(t *testing.T) {
 
+	const level = `
+	0  0
+	0  0
+	`
+
+	solutions := []string{
+		" 1|10",
+		"10|10", "11|00",
+		"10|00", "00|10", "01|00",
+		"00|00",
+	}
+
+	testShapesIterAbstract(t, level, gs.TileCoord{X: 1, Y: 0}, 0, solutions)
+}
+
+func TestShapesIter_decoratedBorderLarge(t *testing.T) {
+	const level = `
+	0  0  0  
+	0  0  0  
+	`
+
+	solutions := []string{
+		"  1| 10", " 10| 10", "100| 10", "000|110",
+		" 11|100", " 10|100", "100|100", "000|100", "001|100", "101|100",
+		"111|000", "110|000", "100|000", "000|000", "001|000", "101|000", "011|000", "010|000",
+		"000|010",
+	}
+
+	testShapesIterAbstract(t, level, gs.TileCoord{X: 2, Y: 0}, 0, solutions)
+}
+
+func TestShapesIter_noDuplicates(t *testing.T) {
+	const level = `
+	0  0  0  
+	0  0  0  
+	0  0  0  
+	`
+	solver := solve.NewGridSolver(gs.MakeGridFromString(level, 2))
+
+	var solutions []gs.TileSet
+
+	solutionsCh, pruneCh := solver.ShapesIter(gs.TileCoord{X: 1, Y: 1}, 1)
+	for sol := range solutionsCh {
+		for _, oldSol := range solutions {
+			if sol.Eq(oldSol) {
+				t.Errorf("Duplicate found: %v", oldSol)
+				break
+			}
+		}
+		solutions = append(solutions, sol)
+		pruneCh <- false
+	}
 }
