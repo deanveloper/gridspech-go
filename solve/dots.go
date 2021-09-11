@@ -24,15 +24,14 @@ func (g GridSolver) SolveDots() <-chan gs.TileSet {
 	for i := 1; i < len(dotTiles); i++ {
 		mergedIter := mergeSolutionsIters(tilesToSolutions[i-1], tilesToSolutions[i])
 		uniqueIter := filterUnique(mergedIter)
-		validIter := filterValidSoFar(g, dotTiles[:i+1], dotTiles[i], uniqueIter)
-		tilesToSolutions[i] = validIter
+		tilesToSolutions[i] = uniqueIter
 	}
 
 	return tilesToSolutions[len(dotTiles)-1]
 }
 
 func mergeSolutionsIters(sols1, sols2 <-chan gs.TileSet) <-chan gs.TileSet {
-	iter := make(chan gs.TileSet, 200)
+	iter := make(chan gs.TileSet, 50)
 
 	go func() {
 		// read sols2 into a slice
@@ -43,8 +42,20 @@ func mergeSolutionsIters(sols1, sols2 <-chan gs.TileSet) <-chan gs.TileSet {
 
 		// merge
 		for sol1 := range sols1 {
+
+		nextSolution:
 			for _, sol2 := range sols2slice {
 				var merged gs.TileSet
+
+				// do not merge if they have any tiles with unmatched colors
+				for _, t1 := range sol1.Slice() {
+					for _, t2 := range sol2.Slice() {
+						if t1.Coord == t2.Coord && t1.Data.Color != t2.Data.Color {
+							continue nextSolution
+						}
+					}
+				}
+
 				merged.Merge(sol1)
 				merged.Merge(sol2)
 				iter <- merged
@@ -80,51 +91,6 @@ func filterUnique(in <-chan gs.TileSet) <-chan gs.TileSet {
 	return filtered
 }
 
-func filterValidSoFar(
-	g GridSolver,
-	previousTiles []gs.Tile,
-	current gs.Tile,
-	sols <-chan gs.TileSet,
-) <-chan gs.TileSet {
-	filtered := make(chan gs.TileSet, 200)
-
-	go func() {
-		defer close(filtered)
-		for solution := range sols {
-			newBase := g.Grid.Clone()
-			newBase.ApplyTileSet(solution)
-
-			var nearbyPreviousTiles []gs.Tile
-			for _, dotTile := range previousTiles {
-				xDist := dotTile.Coord.X - current.Coord.X
-				yDist := dotTile.Coord.Y - current.Coord.Y
-				if xDist < 0 {
-					xDist = -xDist
-				}
-				if yDist < 0 {
-					yDist = -yDist
-				}
-				if xDist+yDist <= 2 {
-					nearbyPreviousTiles = append(nearbyPreviousTiles, dotTile)
-				}
-			}
-
-			allValid := true
-			for _, dotTile := range nearbyPreviousTiles {
-				if !newBase.ValidTile(dotTile.Coord) {
-					allValid = false
-					break
-				}
-			}
-			if allValid {
-				filtered <- solution
-			}
-		}
-	}()
-
-	return filtered
-}
-
 // there are very few valid solutions for an individual tile, so this just returns a slice
 func (g GridSolver) solveDots(t gs.Tile) <-chan gs.TileSet {
 	var numDots int
@@ -140,54 +106,61 @@ func (g GridSolver) solveDots(t gs.Tile) <-chan gs.TileSet {
 		panic(fmt.Sprint("invalid type", t.Data.Type))
 	}
 
-	enabledTiles := g.Grid.NeighborsWith(t.Coord, func(o gs.Tile) bool {
-		return o.Data.Color != gs.ColorNone
+	knownEnabledTiles := g.Grid.NeighborsWith(t.Coord, func(o gs.Tile) bool {
+		return o.Data.Color != gs.ColorNone && !g.UnknownTiles.Has(o.Coord)
 	})
 
-	return solveDotsRecur(g, t, gs.NewTileCoordSet(), numDots-enabledTiles.Len())
+	return g.solveDotsRecur(t.Coord, gs.NewTileCoordSet(), numDots-knownEnabledTiles.Len())
 }
 
-func solveDotsRecur(
-	g GridSolver,
-	t gs.Tile,
+func (g GridSolver) solveDotsRecur(
+	t gs.TileCoord,
 	tilesBeingUsed gs.TileCoordSet,
-	remainingDots int,
+	numDots int,
 ) <-chan gs.TileSet {
+
 	ch := make(chan gs.TileSet, 4)
 
 	go func() {
 
 		defer close(ch)
 
-		if remainingDots == 0 {
+		if numDots < 0 {
+			return
+		}
+		if numDots == 0 {
 			ch <- gs.NewTileSet()
 			return
 		}
 
-		// if there are not enough unknown neighbors to fulfil this dot, then there are no solutions
-		unknownNeighbors := g.Grid.NeighborsWith(t.Coord, func(o gs.Tile) bool {
+		unknownNeighbors := g.Grid.NeighborsWith(t, func(o gs.Tile) bool {
 			return g.UnknownTiles.Has(o.Coord) && !tilesBeingUsed.Has(o.Coord)
 		})
-		if remainingDots > unknownNeighbors.Len() {
+
+		// if there are not enough unknown neighbors to fulfil this dot, then there are no solutions
+		if numDots > unknownNeighbors.Len() {
 			return
 		}
 
-		for tile := range unknownNeighbors.Iter() {
-			tilesBeingUsed.Add(tile.Coord)
-			for subSolution := range solveDotsRecur(g, t, tilesBeingUsed, remainingDots-1) {
-				// c=1 to avoid ColorNone
-				for c := 1; c < g.Grid.MaxColors; c++ {
-
-					newTile := tile
-					newTile.Data.Color = gs.TileColor(c)
-
-					var newSolution gs.TileSet
-					newSolution.Merge(subSolution)
-					newSolution.Add(newTile)
-					ch <- newSolution
+		unknownSlice := unknownNeighbors.Slice()
+		for perm := range Permutation(g.Grid.MaxColors, len(unknownSlice)) {
+			var numNonZero int
+			for _, i := range perm {
+				if i > 0 {
+					numNonZero++
 				}
 			}
-			tilesBeingUsed.Remove(tile.Coord)
+			if numNonZero != numDots {
+				continue
+			}
+
+			var result gs.TileSet
+			for i, c := range perm {
+				tCopy := unknownSlice[i]
+				tCopy.Data.Color = gs.TileColor(c)
+				result.Add(tCopy)
+			}
+			ch <- result
 		}
 	}()
 

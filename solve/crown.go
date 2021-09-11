@@ -8,26 +8,47 @@ import (
 //
 // For performance reasons, it is expected that you run this after all other tiles have been solved.
 func (g GridSolver) SolveCrowns() <-chan gs.TileSet {
-	return nil
+
+	// get all crown tiles
+	crownTiles := g.Grid.TilesWith(func(o gs.Tile) bool {
+		return o.Data.Type == gs.TypeCrown
+	}).Slice()
+
+	tilesToSolutions := make([]<-chan gs.TileSet, len(crownTiles))
+	for i, tile := range crownTiles {
+		tilesToSolutions[i] = g.solveCrown(tile.Coord)
+	}
+
+	// now merge them all together
+	for i := 1; i < len(crownTiles); i++ {
+		mergedIter := mergeSolutionsIters(tilesToSolutions[i-1], tilesToSolutions[i])
+		tilesToSolutions[i] = mergedIter
+	}
+
+	return tilesToSolutions[len(tilesToSolutions)-1]
 }
 
-func (g GridSolver) solveCrown(crown gs.TileCoord, color gs.TileColor) <-chan gs.TileSet {
+func (g GridSolver) solveCrown(crown gs.TileCoord) <-chan gs.TileSet {
 
 	crownIter := make(chan gs.TileSet)
 
 	go func() {
+		defer close(crownIter)
 
-		shapesCh, pruneCh := g.ShapesIter(crown, gs.TileColor(color))
+		for c := 0; c < g.Grid.MaxColors; c++ {
 
-		for shape := range shapesCh {
-			prune := shouldPrune(g, crown, shape, color)
-			pruneCh <- prune
-			if !prune {
-				crownIter <- shape
+			shapesCh, pruneCh := g.ShapesIter(crown, gs.TileColor(c))
+
+			for shape := range shapesCh {
+				prune := shouldPruneCrown(g, crown, shape, gs.TileColor(c))
+				pruneCh <- prune
+				if !prune {
+					for decorated := range decorateSetBorder(g, gs.TileColor(c), shape) {
+						crownIter <- decorated
+					}
+				}
 			}
 		}
-
-		close(crownIter)
 	}()
 
 	return crownIter
@@ -35,42 +56,44 @@ func (g GridSolver) solveCrown(crown gs.TileCoord, color gs.TileColor) <-chan gs
 
 // prune if:
 // - this shape contains a separate crown of the same color
-// - has a goal tile, and:
-//   - any tile has >2 neighbors
-//   - any goal tile has >1 neighbor
-func shouldPrune(g GridSolver, crown gs.TileCoord, shape gs.TileSet, color gs.TileColor) bool {
-	shapeAsSlice := shape.Slice()
-	var coordsWithColor gs.TileCoordSet
-	for _, tile := range shapeAsSlice {
-		if tile.Data.Color == color {
-			coordsWithColor.Add(tile.Coord)
-		}
-	}
+// - this list used to be longer lmao
+func shouldPruneCrown(g GridSolver, crown gs.TileCoord, shape gs.TileSet, color gs.TileColor) bool {
 
-	var containsGoalTile bool
-	var containsTrineighborTile bool
-	for _, tile := range shapeAsSlice {
+	for _, tile := range shape.Slice() {
 		if tile.Data.Type == gs.TypeCrown && tile.Data.Color == color && tile.Coord != crown {
-			return true
-		}
-
-		sameColorNeighborsInShape := g.Grid.NeighborsWith(tile.Coord, func(o gs.Tile) bool {
-			return coordsWithColor.Has(o.Coord)
-		})
-		if sameColorNeighborsInShape.Len() > 2 {
-			containsTrineighborTile = true
-		}
-		if tile.Data.Type == gs.TypeGoal && tile.Data.Color == color {
-			if sameColorNeighborsInShape.Len() > 1 {
-				return true
-			}
-			containsGoalTile = true
-		}
-
-		if containsGoalTile && containsTrineighborTile {
 			return true
 		}
 	}
 
 	return false
+}
+
+func filterValidSoFar(
+	g GridSolver,
+	previousTiles []gs.Tile,
+	current gs.Tile,
+	sols <-chan gs.TileSet,
+) <-chan gs.TileSet {
+	filtered := make(chan gs.TileSet, 200)
+
+	go func() {
+		defer close(filtered)
+		for solution := range sols {
+			newBase := g.Grid.Clone()
+			newBase.ApplyTileSet(solution)
+
+			allValid := true
+			for _, tile := range previousTiles {
+				if !newBase.ValidTile(tile.Coord) {
+					allValid = false
+					break
+				}
+			}
+			if allValid {
+				filtered <- solution
+			}
+		}
+	}()
+
+	return filtered
 }

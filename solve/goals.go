@@ -74,7 +74,18 @@ func (g GridSolver) solveGoals(ch chan<- gs.TileSet) {
 func mergeSolutionsSlices(sols1, sols2 []gs.TileSet) []gs.TileSet {
 	var result []gs.TileSet
 	for _, sol1 := range sols1 {
+	nextSolution:
 		for _, sol2 := range sols2 {
+
+			// do not merge if they have any tiles with unmatched colors
+			for _, t1 := range sol1.Slice() {
+				for _, t2 := range sol2.Slice() {
+					if t1.Coord == t2.Coord && t1.Data.Color != t2.Data.Color {
+						continue nextSolution
+					}
+				}
+			}
+
 			var merged gs.TileSet
 			merged.Merge(sol1)
 			merged.Merge(sol2)

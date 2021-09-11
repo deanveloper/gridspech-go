@@ -101,36 +101,42 @@ func TestPathsIter_levelA2(t *testing.T) {
 
 func TestPathsIter_levelA3(t *testing.T) {
 	const level = example.LevelA3
-	solutions := []string{" 111 |11 11|     ", "     |11 11| 111 "}
+	solutions := []string{
+		" 111 |11 11| 0 0 ",
+		" 0 0 |11 11| 111 ",
+	}
 	testPathsIterAbstract(t, level, 0, 1, 4, 1, solutions)
 }
 
 func TestPathsIter_levelA4(t *testing.T) {
 	const level = example.LevelA4
-	solutions := []string{"1 1|111"}
+	solutions := []string{"101|111"}
 	testPathsIterAbstract(t, level, 0, 1, 2, 1, solutions)
 }
 
 func TestPathsIter_levelA5(t *testing.T) {
 	const level = example.LevelA5
-	solutions := []string{"111 |1 11|1  1"}
+	solutions := []string{"1110|1011|10 1"}
 	testPathsIterAbstract(t, level, 0, 0, 3, 0, solutions)
 }
 
 func TestPathsIter_levelA6(t *testing.T) {
 	const level = example.LevelA6
 	solutions := []string{
-		"111 111 |1 1 1 1 |1 111 11",
-		"    111 |111 1 1 |1 111 11",
-		"111 111 |1 1 1 11|1 111  1",
-		"    111 |111 1 11|1 111  1",
+		"11101110|10101011|10111001",
+		"11101110|10101010|10111011",
+		"00001110|11101011|10111001",
+		"00001110|11101010|10111011",
 	}
 	testPathsIterAbstract(t, level, 0, 0, 7, 0, solutions)
 }
 
 func TestPathsIter_levelA9(t *testing.T) {
 	const level = example.LevelA9
-	solutions := []string{"   1111|1 11  1|111    ", "   111 |1 11 11|111    "}
+	solutions := []string{
+		"0 01111|1011001|1110  0",
+		"0 01110|1011011|1110 00",
+	}
 	testPathsIterAbstract(t, level, 0, 1, 6, 1, solutions)
 }
 

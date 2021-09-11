@@ -42,14 +42,13 @@ func (g GridSolver) ShapesIter(start gs.TileCoord, color gs.TileColor) (<-chan g
 	pruneChan := make(chan bool)
 
 	go func() {
+		defer close(solutionsChan)
+		defer close(pruneChan)
+
 		g.bfsShapes(start, color, solutionsChan, pruneChan)
-		close(solutionsChan)
-		close(pruneChan)
 	}()
 
-	withDecorationIter := decorateSetBorders(g, color, solutionsChan)
-
-	return withDecorationIter, pruneChan
+	return solutionsChan, pruneChan
 }
 
 func (g GridSolver) bfsShapes(start gs.TileCoord, color gs.TileColor, solutions chan<- gs.TileSet, pruneChan <-chan bool) {

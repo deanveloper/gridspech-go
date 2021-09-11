@@ -23,7 +23,7 @@ func (g GridSolver) PathsIter(start, end gs.TileCoord, color gs.TileColor) <-cha
 		g.dfsDirectPaths(color, startTile, endTile, gs.NewTileCoordSet(start), pathIter)
 	}()
 
-	withBorderIter := decorateSetBorders(g, color, pathIter)
+	withBorderIter := decorateSetIterBorders(g, color, pathIter)
 	return withBorderIter
 }
 
@@ -89,7 +89,38 @@ func (g GridSolver) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path g
 	}
 }
 
-func decorateSetBorders(g GridSolver, shapeColor gs.TileColor, tileSets <-chan gs.TileSet) <-chan gs.TileSet {
+func decorateSetBorder(g GridSolver, shapeColor gs.TileColor, tileSet gs.TileSet) <-chan gs.TileSet {
+	iter := make(chan gs.TileSet)
+	go func() {
+		defer close(iter)
+
+		var unknownNeighbors []gs.Tile
+		for tile := range tileSet.Iter() {
+			neighboringUnknowns := g.Grid.NeighborsWith(tile.Coord, func(o gs.Tile) bool {
+				return g.UnknownTiles.Has(o.Coord) &&
+					!tileSet.ToTileCoordSet().Has(o.Coord)
+			})
+			unknownNeighbors = append(unknownNeighbors, neighboringUnknowns.Slice()...)
+		}
+
+		for permutation := range Permutation(g.Grid.MaxColors-1, len(unknownNeighbors)) {
+			var setWithDecoration gs.TileSet
+			setWithDecoration.Merge(tileSet)
+			for i, unknown := range unknownNeighbors {
+				color := permutation[i]
+				if color >= int(shapeColor) {
+					color++
+				}
+				unknown.Data.Color = gs.TileColor(color)
+				setWithDecoration.Add(unknown)
+			}
+			iter <- setWithDecoration
+		}
+	}()
+	return iter
+}
+
+func decorateSetIterBorders(g GridSolver, shapeColor gs.TileColor, tileSets <-chan gs.TileSet) <-chan gs.TileSet {
 	iter := make(chan gs.TileSet)
 	go func() {
 		defer close(iter)
@@ -99,20 +130,23 @@ func decorateSetBorders(g GridSolver, shapeColor gs.TileColor, tileSets <-chan g
 			for tile := range tileSet.Iter() {
 				neighboringUnknowns := g.Grid.NeighborsWith(tile.Coord, func(o gs.Tile) bool {
 					return g.UnknownTiles.Has(o.Coord) &&
-						!tileSet.ToTileCoordSet().Has(o.Coord) &&
-						o.Data.Color == shapeColor
+						!tileSet.ToTileCoordSet().Has(o.Coord)
 				})
 				unknownNeighbors = append(unknownNeighbors, neighboringUnknowns.Slice()...)
 			}
 
 			for permutation := range Permutation(g.Grid.MaxColors-1, len(unknownNeighbors)) {
-				var pathWithDecoration gs.TileSet
-				pathWithDecoration.Merge(tileSet)
+				var setWithDecoration gs.TileSet
+				setWithDecoration.Merge(tileSet)
 				for i, unknown := range unknownNeighbors {
-					unknown.Data.Color = gs.TileColor(permutation[i] + 1)
-					pathWithDecoration.Add(unknown)
+					color := permutation[i]
+					if color >= int(shapeColor) {
+						color++
+					}
+					unknown.Data.Color = gs.TileColor(color)
+					setWithDecoration.Add(unknown)
 				}
-				iter <- pathWithDecoration
+				iter <- setWithDecoration
 			}
 		}
 	}()
