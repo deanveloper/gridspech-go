@@ -29,13 +29,15 @@ func (g Grid) TileAtCoord(coord TileCoord) *Tile {
 func (g Grid) NorthOf(t Tile) Tile {
 	// special behavior if we have an arrow
 	if t.Data.ArrowNorth {
-		var y int
-		for y = t.Coord.Y + 1; y != t.Coord.Y; y++ {
-			if g.TileAt(t.Coord.X, y).Data.Type != TypeHole {
+		y := t.Coord.Y
+		for {
+			y = (y + 1) % g.Height()
+			if y == t.Coord.Y {
 				break
 			}
-			if y == g.Height()-1 {
-				y = -1
+
+			if g.TileAt(t.Coord.X, y).Data.Type != TypeHole {
+				break
 			}
 		}
 		return *g.TileAt(t.Coord.X, y)
@@ -51,13 +53,15 @@ func (g Grid) NorthOf(t Tile) Tile {
 func (g Grid) EastOf(t Tile) Tile {
 	// special behavior if we have an arrow
 	if t.Data.ArrowEast {
-		var x int
-		for x = t.Coord.X + 1; x != t.Coord.X; x++ {
-			if g.TileAt(x, t.Coord.Y).Data.Type != TypeHole {
+		x := t.Coord.X
+		for {
+			x = (x + 1) % g.Width()
+			if x == t.Coord.X {
 				break
 			}
-			if x == g.Width()-1 {
-				x = -1
+
+			if g.TileAt(x, t.Coord.Y).Data.Type != TypeHole {
+				break
 			}
 		}
 		return *g.TileAt(x, t.Coord.Y)
@@ -73,13 +77,15 @@ func (g Grid) EastOf(t Tile) Tile {
 func (g Grid) SouthOf(t Tile) Tile {
 	// special behavior if we have an arrow
 	if t.Data.ArrowSouth {
-		var y int
-		for y = t.Coord.Y - 1; y != t.Coord.Y; y-- {
-			if g.TileAt(t.Coord.X, y).Data.Type != TypeHole {
+		y := t.Coord.Y
+		for {
+			y = (y + g.Height() - 1) % g.Height()
+			if y == t.Coord.Y {
 				break
 			}
-			if y == 0 {
-				y = g.Height()
+
+			if g.TileAt(t.Coord.X, y).Data.Type != TypeHole {
+				break
 			}
 		}
 		return *g.TileAt(t.Coord.X, y)
@@ -95,13 +101,15 @@ func (g Grid) SouthOf(t Tile) Tile {
 func (g Grid) WestOf(t Tile) Tile {
 	// special behavior if we have an arrow
 	if t.Data.ArrowWest {
-		var x int
-		for x = t.Coord.X - 1; x != t.Coord.X; x-- {
-			if g.TileAt(x, t.Coord.Y).Data.Type != TypeHole {
+		x := t.Coord.X
+		for {
+			x = (x + g.Width() - 1) % g.Width()
+			if x == t.Coord.X {
 				break
 			}
-			if x == 0 {
-				x = g.Width()
+
+			if g.TileAt(x, t.Coord.Y).Data.Type != TypeHole {
+				break
 			}
 		}
 		return *g.TileAt(x, t.Coord.Y)
@@ -128,8 +136,52 @@ func findTile(start Tile, iter func(each Tile) (next Tile, ok bool)) Tile {
 	}
 }
 
-// Neighbors returns all tiles directly next to t.
-func (g Grid) Neighbors(coord TileCoord) TileSet {
+// NeighborSlice returns a slice of the tiles directly next to t.
+// Note that arrows can cause a tile to be its own neighbor, or to
+// have a tile appear more than once in the slice.
+func (g Grid) NeighborSlice(coord TileCoord) []Tile {
+	t := *g.TileAtCoord(coord)
+	var neighbors []Tile
+	if neighbor := g.NorthOf(t); neighbor.Data.Type != TypeHole {
+		neighbors = append(neighbors, neighbor)
+	}
+	if neighbor := g.EastOf(t); neighbor.Data.Type != TypeHole {
+		neighbors = append(neighbors, neighbor)
+	}
+	if neighbor := g.SouthOf(t); neighbor.Data.Type != TypeHole {
+		neighbors = append(neighbors, neighbor)
+	}
+	if neighbor := g.WestOf(t); neighbor.Data.Type != TypeHole {
+		neighbors = append(neighbors, neighbor)
+	}
+	return neighbors
+}
+
+// NeighborSliceWith returns a slice of the tiles directly next to t, such that pred returns true.
+// Note that arrows can cause a tile to be its own neighbor, or to
+// have a tile appear more than once in the slice.
+func (g Grid) NeighborSliceWith(coord TileCoord, pred func(o Tile) bool) []Tile {
+	t := *g.TileAtCoord(coord)
+	var neighbors []Tile
+	if neighbor := g.NorthOf(t); neighbor.Data.Type != TypeHole && pred(neighbor) {
+		neighbors = append(neighbors, neighbor)
+	}
+	if neighbor := g.EastOf(t); neighbor.Data.Type != TypeHole && pred(neighbor) {
+		neighbors = append(neighbors, neighbor)
+	}
+	if neighbor := g.SouthOf(t); neighbor.Data.Type != TypeHole && pred(neighbor) {
+		neighbors = append(neighbors, neighbor)
+	}
+	if neighbor := g.WestOf(t); neighbor.Data.Type != TypeHole && pred(neighbor) {
+		neighbors = append(neighbors, neighbor)
+	}
+	return neighbors
+}
+
+// NeighborSet returns a set of all tiles directly next to t.
+// Note that because this is a TileSet, if a neighbor would appear
+// more than once in NeighborSlice(), it will only appear once here.
+func (g Grid) NeighborSet(coord TileCoord) TileSet {
 	t := *g.TileAtCoord(coord)
 	var ts TileSet
 	if neighbor := g.NorthOf(t); neighbor.Data.Type != TypeHole {
@@ -147,15 +199,23 @@ func (g Grid) Neighbors(coord TileCoord) TileSet {
 	return ts
 }
 
-// NeighborsWith returns the set of neighbors such that `pred` returns true
-func (g Grid) NeighborsWith(coord TileCoord, pred func(o Tile) bool) TileSet {
-	neighbors := g.Neighbors(coord)
-	for _, neighbor := range neighbors.Slice() {
-		if !pred(neighbor) {
-			neighbors.Remove(neighbor)
-		}
+// NeighborSetWith returns the set of neighbors such that `pred` returns true
+func (g Grid) NeighborSetWith(coord TileCoord, pred func(o Tile) bool) TileSet {
+	t := *g.TileAtCoord(coord)
+	var ts TileSet
+	if neighbor := g.NorthOf(t); neighbor.Data.Type != TypeHole && pred(neighbor) {
+		ts.Add(neighbor)
 	}
-	return neighbors
+	if neighbor := g.EastOf(t); neighbor.Data.Type != TypeHole && pred(neighbor) {
+		ts.Add(neighbor)
+	}
+	if neighbor := g.SouthOf(t); neighbor.Data.Type != TypeHole && pred(neighbor) {
+		ts.Add(neighbor)
+	}
+	if neighbor := g.WestOf(t); neighbor.Data.Type != TypeHole && pred(neighbor) {
+		ts.Add(neighbor)
+	}
+	return ts
 }
 
 // TilesWith returns all non-hole tiles such that `pred` returns true.
@@ -201,7 +261,7 @@ func (g Grid) BlobWith(coord TileCoord, filter func(o Tile) bool) TileSet {
 
 func (g Grid) blobRecur(coord TileCoord, ts *TileSet, filter func(o Tile) bool) {
 	t := g.TileAtCoord(coord)
-	neighbors := g.NeighborsWith(coord, func(o Tile) bool {
+	neighbors := g.NeighborSetWith(coord, func(o Tile) bool {
 		return o.Data.Color == t.Data.Color && filter(o)
 	})
 

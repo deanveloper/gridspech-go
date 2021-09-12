@@ -106,7 +106,7 @@ func (g GridSolver) solveDots(t gs.Tile) <-chan gs.TileSet {
 		panic(fmt.Sprint("invalid type", t.Data.Type))
 	}
 
-	knownEnabledTiles := g.Grid.NeighborsWith(t.Coord, func(o gs.Tile) bool {
+	knownEnabledTiles := g.Grid.NeighborSetWith(t.Coord, func(o gs.Tile) bool {
 		return o.Data.Color != gs.ColorNone && !g.UnknownTiles.Has(o.Coord)
 	})
 
@@ -133,17 +133,16 @@ func (g GridSolver) solveDotsRecur(
 			return
 		}
 
-		unknownNeighbors := g.Grid.NeighborsWith(t, func(o gs.Tile) bool {
+		unknownNeighbors := g.Grid.NeighborSliceWith(t, func(o gs.Tile) bool {
 			return g.UnknownTiles.Has(o.Coord) && !tilesBeingUsed.Has(o.Coord)
 		})
 
 		// if there are not enough unknown neighbors to fulfil this dot, then there are no solutions
-		if numDots > unknownNeighbors.Len() {
+		if numDots > len(unknownNeighbors) {
 			return
 		}
 
-		unknownSlice := unknownNeighbors.Slice()
-		for perm := range Permutation(g.Grid.MaxColors, len(unknownSlice)) {
+		for perm := range Permutation(g.Grid.MaxColors, len(unknownNeighbors)) {
 			var numNonZero int
 			for _, i := range perm {
 				if i > 0 {
@@ -156,7 +155,7 @@ func (g GridSolver) solveDotsRecur(
 
 			var result gs.TileSet
 			for i, c := range perm {
-				tCopy := unknownSlice[i]
+				tCopy := unknownNeighbors[i]
 				tCopy.Data.Color = gs.TileColor(c)
 				result.Add(tCopy)
 			}

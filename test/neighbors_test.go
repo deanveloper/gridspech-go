@@ -58,7 +58,7 @@ func TestNeighbors(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		actual := grid.Neighbors(testCase.Tile.Coord)
+		actual := grid.NeighborSet(testCase.Tile.Coord)
 		if !actual.Eq(testCase.Expected) {
 			t.Errorf("\nexpected:\n%v\ngot:\n%v", testCase.Expected.MultiLineString(), actual.MultiLineString())
 		}
@@ -87,7 +87,7 @@ func TestNeighborsWith(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.Name, func(t *testing.T) {
-			actual := grid.NeighborsWith(testCase.Tile.Coord, testCase.Func)
+			actual := grid.NeighborSetWith(testCase.Tile.Coord, testCase.Func)
 			if !actual.Eq(testCase.Expected) {
 				t.Errorf("\nexpected:\n%v\ngot:\n%v", testCase.Expected.MultiLineString(), actual.MultiLineString())
 			}
@@ -104,6 +104,31 @@ func TestNorthOf_arrow(t *testing.T) {
 	grid := gs.MakeGridFromString(level, 2)
 	actual := grid.NorthOf(*grid.TileAt(0, 0)).Coord
 	expected := gs.TileCoord{X: 0, Y: 2}
+	if actual != expected {
+		t.Errorf("expected: %v, actual %v", expected, actual)
+	}
+}
+
+func TestNorthOf_arrowWrap(t *testing.T) {
+	const level = `
+	0^
+	0
+	`
+	grid := gs.MakeGridFromString(level, 2)
+	actual := grid.NorthOf(*grid.TileAt(0, 1)).Coord
+	expected := gs.TileCoord{X: 0, Y: 0}
+	if actual != expected {
+		t.Errorf("expected: %v, actual %v", expected, actual)
+	}
+}
+
+func TestNorthOf_arrowWrapSelf(t *testing.T) {
+	const level = `
+	0^
+	`
+	grid := gs.MakeGridFromString(level, 2)
+	actual := grid.NorthOf(*grid.TileAt(0, 0)).Coord
+	expected := gs.TileCoord{X: 0, Y: 0}
 	if actual != expected {
 		t.Errorf("expected: %v, actual %v", expected, actual)
 	}

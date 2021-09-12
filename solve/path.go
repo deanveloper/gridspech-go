@@ -33,13 +33,13 @@ func (g GridSolver) PathsIter(start, end gs.TileCoord, color gs.TileColor) <-cha
 func (g GridSolver) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path gs.TileCoordSet, ch chan<- gs.TileSet) {
 
 	// possible next tiles include unknown tiles, and tiles of the target color
-	possibleNext := g.Grid.NeighborsWith(prev.Coord, func(o gs.Tile) bool {
+	possibleNext := g.Grid.NeighborSetWith(prev.Coord, func(o gs.Tile) bool {
 		return !path.Has(o.Coord) && (g.UnknownTiles.Has(o.Coord) || o.Data.Color == color)
 	})
 
 	for _, next := range possibleNext.Slice() {
 		// prev's neighbors we _know_ are same color (including those that are part of the path)
-		prevNeighborsSameColor := g.Grid.NeighborsWith(prev.Coord, func(o gs.Tile) bool {
+		prevNeighborsSameColor := g.Grid.NeighborSetWith(prev.Coord, func(o gs.Tile) bool {
 			knownSameColor := (o.Data.Color == color && !g.UnknownTiles.Has(o.Coord))
 			partOfPath := path.Has(o.Coord) || o.Coord == next.Coord
 			return knownSameColor || partOfPath
@@ -61,7 +61,7 @@ func (g GridSolver) dfsDirectPaths(color gs.TileColor, prev, end gs.Tile, path g
 
 			// make sure the goal only has 1 neighbor we know is the same color
 			if end.Data.Type == gs.TypeGoal {
-				endNeighbors := g.Grid.NeighborsWith(end.Coord, func(o gs.Tile) bool {
+				endNeighbors := g.Grid.NeighborSetWith(end.Coord, func(o gs.Tile) bool {
 					return (o.Data.Color == color && !g.UnknownTiles.Has(o.Coord)) || path.Has(o.Coord)
 				})
 				if endNeighbors.Len() > 1 {
@@ -96,7 +96,7 @@ func decorateSetBorder(g GridSolver, shapeColor gs.TileColor, tileSet gs.TileSet
 
 		var unknownNeighbors []gs.Tile
 		for tile := range tileSet.Iter() {
-			neighboringUnknowns := g.Grid.NeighborsWith(tile.Coord, func(o gs.Tile) bool {
+			neighboringUnknowns := g.Grid.NeighborSetWith(tile.Coord, func(o gs.Tile) bool {
 				return g.UnknownTiles.Has(o.Coord) &&
 					!tileSet.ToTileCoordSet().Has(o.Coord)
 			})
@@ -128,7 +128,7 @@ func decorateSetIterBorders(g GridSolver, shapeColor gs.TileColor, tileSets <-ch
 
 			var unknownNeighbors []gs.Tile
 			for tile := range tileSet.Iter() {
-				neighboringUnknowns := g.Grid.NeighborsWith(tile.Coord, func(o gs.Tile) bool {
+				neighboringUnknowns := g.Grid.NeighborSetWith(tile.Coord, func(o gs.Tile) bool {
 					return g.UnknownTiles.Has(o.Coord) &&
 						!tileSet.ToTileCoordSet().Has(o.Coord)
 				})

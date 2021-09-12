@@ -27,17 +27,17 @@ func (g Grid) ValidTile(coord TileCoord) bool {
 	case TypeCrown:
 		return g.validCrown(t)
 	case TypeDot1:
-		return g.NeighborsWith(t.Coord, func(other Tile) bool {
+		return len(g.NeighborSliceWith(t.Coord, func(other Tile) bool {
 			return other.Data.Color != ColorNone
-		}).Len() == 1
+		})) == 1
 	case TypeDot2:
-		return g.NeighborsWith(t.Coord, func(other Tile) bool {
+		return len(g.NeighborSliceWith(t.Coord, func(other Tile) bool {
 			return other.Data.Color != ColorNone
-		}).Len() == 2
+		})) == 2
 	case TypeDot3:
-		return g.NeighborsWith(t.Coord, func(other Tile) bool {
+		return len(g.NeighborSliceWith(t.Coord, func(other Tile) bool {
 			return other.Data.Color != ColorNone
-		}).Len() == 3
+		})) == 3
 	case TypeJoin:
 		return g.validPlus(t)
 	default:
@@ -58,18 +58,18 @@ func (g Grid) validGoal(start Tile) bool {
 			goals++
 
 			// requirement 2: The goals should have exactly 1 neighbor with the same state.
-			neighbors := g.NeighborsWith(t.Coord, func(o Tile) bool {
+			neighbors := g.NeighborSliceWith(t.Coord, func(o Tile) bool {
 				return t.Data.Color == o.Data.Color
 			})
-			if len(neighbors.Slice()) != 1 {
+			if len(neighbors) != 1 {
 				return false
 			}
 		}
 
 		// requirement 3: All other tiles in the blob should have exactly 2 neighbors with the same state.
-		neighborsSameColor := g.NeighborsWith(t.Coord, func(o Tile) bool {
+		neighborsSameColor := g.NeighborSliceWith(t.Coord, func(o Tile) bool {
 			return t.Data.Color == o.Data.Color
-		}).Slice()
+		})
 		if t.Data.Type != TypeGoal && len(neighborsSameColor) != 2 {
 			return false
 		}
