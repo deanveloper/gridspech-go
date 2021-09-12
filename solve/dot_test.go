@@ -10,20 +10,7 @@ import (
 func testSolveDotsAbstract(t *testing.T, level string, maxColors int, expectedSolutionStrings []string) {
 	t.Helper()
 
-	solver := solve.NewGridSolver(gs.MakeGridFromString(level, 2))
-
-	var expectedSolutions []gs.TileSet
-	var actualSolutions []gs.TileSet
-
-	for _, solutionString := range expectedSolutionStrings {
-		expectedSolutions = append(expectedSolutions, tileSetFromString(solver.Grid, solutionString))
-	}
-
-	for solution := range solver.SolveDots() {
-		actualSolutions = append(actualSolutions, solution)
-	}
-
-	testUnorderedTilesetSliceEq(t, expectedSolutions, actualSolutions)
+	testSolveAbstract(t, level, expectedSolutionStrings, maxColors, solve.GridSolver.SolveDots)
 }
 
 func TestDots_levelBasic1(t *testing.T) {

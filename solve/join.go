@@ -1,6 +1,8 @@
 package solve
 
-import gs "github.com/deanveloper/gridspech-go"
+import (
+	gs "github.com/deanveloper/gridspech-go"
+)
 
 // SolveJoins returns a channel of solutions for all of the Join tiles.
 func (g GridSolver) SolveJoins() <-chan gs.TileSet {
@@ -10,7 +12,7 @@ func (g GridSolver) SolveJoins() <-chan gs.TileSet {
 
 	tilesToSolutions := make([]<-chan gs.TileSet, len(joinTiles))
 	for i, tile := range joinTiles {
-		tilesToSolutions[i] = g.SolveCrown(tile.Coord)
+		tilesToSolutions[i] = g.SolveJoin(tile)
 	}
 
 	// now merge them all together
@@ -19,7 +21,7 @@ func (g GridSolver) SolveJoins() <-chan gs.TileSet {
 		tilesToSolutions[i] = mergedIter
 	}
 
-	return nil
+	return tilesToSolutions[len(tilesToSolutions)-1]
 }
 
 // SolveJoin returns a channel of solutions for an individual join tile.
@@ -27,6 +29,8 @@ func (g GridSolver) SolveJoin(join gs.Tile) <-chan gs.TileSet {
 	joinIter := make(chan gs.TileSet)
 
 	go func() {
+		defer close(joinIter)
+
 		var joinNum int
 		switch join.Data.Type {
 		case gs.TypeJoin1:
