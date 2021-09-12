@@ -12,8 +12,8 @@ func (g GridSolver) SolveGoals() <-chan gs.TileSet {
 	iter := make(chan gs.TileSet, 4)
 
 	go func() {
+		defer close(iter)
 		g.solveGoals(iter)
-		close(iter)
 	}()
 
 	return iter
@@ -23,6 +23,12 @@ func (g GridSolver) solveGoals(ch chan<- gs.TileSet) {
 	goalTiles := g.Grid.TilesWith(func(o gs.Tile) bool {
 		return o.Data.Type == gs.TypeGoal
 	}).Slice()
+
+	if len(goalTiles) == 0 {
+		ch <- gs.NewTileSet()
+		return
+	}
+
 	goalTileCoords := make([]gs.TileCoord, len(goalTiles))
 	for i := range goalTiles {
 		goalTileCoords[i] = goalTiles[i].Coord
@@ -39,7 +45,9 @@ func (g GridSolver) solveGoals(ch chan<- gs.TileSet) {
 				for c := 0; c < g.Grid.MaxColors; c++ {
 					for path := range g.PathsIter(goalPairCoords[0], goalPairCoords[1], gs.TileColor(c)) {
 						pairsToSolutionMx.Lock()
-						pairsToSolutions[goalPairCoords] = append(pairsToSolutions[goalPairCoords], path)
+						for decorated := range decorateSetBorder(g, gs.TileColor(c), path) {
+							pairsToSolutions[goalPairCoords] = append(pairsToSolutions[goalPairCoords], decorated)
+						}
 						pairsToSolutionMx.Unlock()
 					}
 				}

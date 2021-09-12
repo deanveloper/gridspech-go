@@ -43,31 +43,31 @@ func TestPathsIter_levelA2(t *testing.T) {
 func TestPathsIter_levelA3(t *testing.T) {
 	const level = example.LevelA3
 	solutions := []string{
-		" 111 |11 11| 0 0 ",
-		" 0 0 |11 11| 111 ",
+		" 111 |11 11|     ",
+		"     |11 11| 111 ",
 	}
 	testPathsIterAbstract(t, level, 0, 1, 4, 1, solutions)
 }
 
 func TestPathsIter_levelA4(t *testing.T) {
 	const level = example.LevelA4
-	solutions := []string{"101|111"}
+	solutions := []string{"1 1|111"}
 	testPathsIterAbstract(t, level, 0, 1, 2, 1, solutions)
 }
 
 func TestPathsIter_levelA5(t *testing.T) {
 	const level = example.LevelA5
-	solutions := []string{"1110|1011|10 1"}
+	solutions := []string{"111 |1 11|1  1"}
 	testPathsIterAbstract(t, level, 0, 0, 3, 0, solutions)
 }
 
 func TestPathsIter_levelA6(t *testing.T) {
 	const level = example.LevelA6
 	solutions := []string{
-		"11101110|10101011|10111001",
-		"11101110|10101010|10111011",
-		"00001110|11101011|10111001",
-		"00001110|11101010|10111011",
+		"111 111 |1 1 1 11|1 111  1",
+		"111 111 |1 1 1 1 |1 111 11",
+		"    111 |111 1 11|1 111  1",
+		"    111 |111 1 1 |1 111 11",
 	}
 	testPathsIterAbstract(t, level, 0, 0, 7, 0, solutions)
 }
@@ -75,8 +75,8 @@ func TestPathsIter_levelA6(t *testing.T) {
 func TestPathsIter_levelA9(t *testing.T) {
 	const level = example.LevelA9
 	solutions := []string{
-		"0 01111|1011001|1110  0",
-		"0 01110|1011011|1110 00",
+		"   1111|1 11  1|111    ",
+		"   111 |1 11 11|111    ",
 	}
 	testPathsIterAbstract(t, level, 0, 1, 6, 1, solutions)
 }
@@ -98,16 +98,10 @@ func TestPathsIter_basicColorNonePath(t *testing.T) {
 		t.Fatalf("solutions length expected to be 1 but was %d", len(solutions))
 	}
 	expected := gs.NewTileSet(
-		gs.Tile{Coord: gs.TileCoord{X: 1, Y: 2}, Data: gs.TileData{Color: 1, Type: gs.TypeBlank}},
-		gs.Tile{Coord: gs.TileCoord{X: 2, Y: 2}, Data: gs.TileData{Color: 1, Type: gs.TypeBlank}},
-
 		gs.Tile{Coord: gs.TileCoord{X: 0, Y: 1}, Data: gs.TileData{Sticky: true, Type: gs.TypeGoal}},
 		gs.Tile{Coord: gs.TileCoord{X: 1, Y: 1}, Data: gs.TileData{Type: gs.TypeBlank}},
 		gs.Tile{Coord: gs.TileCoord{X: 2, Y: 1}, Data: gs.TileData{Type: gs.TypeBlank}},
 		gs.Tile{Coord: gs.TileCoord{X: 3, Y: 1}, Data: gs.TileData{Type: gs.TypeGoal}},
-
-		gs.Tile{Coord: gs.TileCoord{X: 1, Y: 0}, Data: gs.TileData{Color: 1, Type: gs.TypeBlank}},
-		gs.Tile{Coord: gs.TileCoord{X: 2, Y: 0}, Data: gs.TileData{Color: 1, Type: gs.TypeBlank}},
 	)
 
 	if !expected.Eq(solutions[0]) {

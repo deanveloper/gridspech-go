@@ -260,14 +260,15 @@ func (g Grid) BlobWith(coord TileCoord, filter func(o Tile) bool) TileSet {
 }
 
 func (g Grid) blobRecur(coord TileCoord, ts *TileSet, filter func(o Tile) bool) {
-	t := g.TileAtCoord(coord)
+	t := *g.TileAtCoord(coord)
+	ts.Add(t)
+
 	neighbors := g.NeighborSetWith(coord, func(o Tile) bool {
 		return o.Data.Color == t.Data.Color && filter(o)
 	})
 
 	for _, neighbor := range neighbors.Slice() {
 		if !ts.Has(neighbor) {
-			ts.Add(neighbor)
 			g.blobRecur(neighbor.Coord, ts, filter)
 		}
 	}

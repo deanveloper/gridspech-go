@@ -23,8 +23,7 @@ func (g GridSolver) PathsIter(start, end gs.TileCoord, color gs.TileColor) <-cha
 		g.dfsDirectPaths(color, startTile, endTile, gs.NewTileCoordSet(start), pathIter)
 	}()
 
-	withBorderIter := decorateSetIterBorders(g, color, pathIter)
-	return withBorderIter
+	return pathIter
 }
 
 // we do not iterate in any particular order since it does not matter.

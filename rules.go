@@ -118,10 +118,10 @@ func (g Grid) validJoin(t Tile, n int) bool {
 	for _, blobTile := range g.Blob(t.Coord).Slice() {
 		if blobTile.Data.Type != TypeHole && blobTile.Data.Type != TypeBlank {
 			found++
-			if found > n {
+			if found > n+1 {
 				return false
 			}
 		}
 	}
-	return found == n
+	return found == n+1
 }

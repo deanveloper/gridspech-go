@@ -15,6 +15,13 @@ func (g GridSolver) SolveDots() <-chan gs.TileSet {
 		return o.Data.Type == gridspech.TypeDot1 || o.Data.Type == gridspech.TypeDot2 || o.Data.Type == gridspech.TypeDot3
 	}).Slice()
 
+	if len(dotTiles) == 0 {
+		ch := make(chan gs.TileSet, 1)
+		ch <- gs.NewTileSet()
+		close(ch)
+		return ch
+	}
+
 	tilesToSolutions := make([]<-chan gs.TileSet, len(dotTiles))
 	for i, tile := range dotTiles {
 		tilesToSolutions[i] = g.SolveDot(tile)

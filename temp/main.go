@@ -43,12 +43,21 @@ func tryE8() {
 }
 
 func tryTest() {
-	const lvl = `0   0   0k`
-	grid := gridspech.MakeGridFromString(lvl, 3)
-	ch := solve.NewGridSolver(grid).SolveCrowns()
-	for solvedGrid := range ch {
-		fmt.Println(solvedGrid.MultiLineString())
-		fmt.Println("=============")
+	const lvl = `
+	0    0    0    0    0    0  
+	0    0e   0k   0    0    0  
+	0    0    0k   0    0    0  
+	0    0    0k   0    0    0  
+	0    0    0k   0e   0    0  
+	0j1  0e   0    0    0j1  0e 
+	`
+	grid := gridspech.MakeGridFromString(lvl, 2)
+	ch := solve.NewGridSolver(grid).SolveAllTiles()
+	for solved := range ch {
+		newGrid := grid.Clone()
+		newGrid.ApplyTileSet(solved)
+		fmt.Println("======")
+		fmt.Println(newGrid)
 	}
 }
 

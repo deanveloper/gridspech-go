@@ -45,6 +45,10 @@ func (g GridSolver) ShapesIter(start gs.TileCoord, color gs.TileColor) (<-chan g
 		defer close(solutionsChan)
 		defer close(pruneChan)
 
+		if !g.UnknownTiles.Has(start) && g.Grid.TileAtCoord(start).Data.Color != color {
+			return
+		}
+
 		g.bfsShapes(start, color, solutionsChan, pruneChan)
 	}()
 
@@ -95,11 +99,11 @@ func (g GridSolver) bfsShapes(start gs.TileCoord, color gs.TileColor, solutions 
 			newShape.Add(nextNeighbor)
 
 			// special behavior: if nextNeighbor has any neighbors which we know are the same color,
-			// add the blob of each of those neighbors to ne`wShape
-			transitiveNeighbors := g.Grid.NeighborSetWith(nextNeighbor, func(o gs.Tile) bool {
-				return o.Data.Color == color && !g.UnknownTiles.Has(o.Coord)
+			// add the blob of each of those neighbors to newShape
+			nextNextNeighbors := g.Grid.NeighborSetWith(nextNeighbor, func(o gs.Tile) bool {
+				return o.Data.Color == color && !g.UnknownTiles.Has(o.Coord) && !newShape.Has(o.Coord)
 			})
-			for _, transitiveNeighbor := range transitiveNeighbors.Slice() {
+			for _, transitiveNeighbor := range nextNextNeighbors.Slice() {
 				neighborBlob := g.Grid.BlobWith(transitiveNeighbor.Coord, func(o gs.Tile) bool {
 					return !g.UnknownTiles.Has(o.Coord)
 				})
