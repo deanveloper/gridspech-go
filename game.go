@@ -26,8 +26,11 @@ const (
 	// TypeDot3 must be touching exactly 3 tiles with Color >= 1.
 	TypeDot3 // Dot3
 
-	// TypeJoin must touch exactly 1 tile with a non-blank type.
-	TypeJoin // Join
+	// TypeJoin1 must touch exactly 1 tile with a non-blank type.
+	TypeJoin1 // Join1
+
+	// TypeJoin2 must touch exactly 1 tile with a non-blank type.
+	TypeJoin2 // Join2
 )
 
 // Constants for TileColor

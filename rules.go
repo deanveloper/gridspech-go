@@ -38,8 +38,10 @@ func (g Grid) ValidTile(coord TileCoord) bool {
 		return len(g.NeighborSliceWith(t.Coord, func(other Tile) bool {
 			return other.Data.Color != ColorNone
 		})) == 3
-	case TypeJoin:
-		return g.validPlus(t)
+	case TypeJoin1:
+		return g.validJoin(t, 1)
+	case TypeJoin2:
+		return g.validJoin(t, 2)
 	default:
 		panic(fmt.Sprintf("invalid tile type %v", t.Data.Type))
 	}
@@ -111,15 +113,15 @@ func (g Grid) validCrown(start Tile) bool {
 	return crownsBlobSet.Eq(stateSet)
 }
 
-func (g Grid) validPlus(t Tile) bool {
-	var foundExactlyOne bool
+func (g Grid) validJoin(t Tile, n int) bool {
+	var found int
 	for _, blobTile := range g.Blob(t.Coord).Slice() {
 		if blobTile.Data.Type != TypeHole && blobTile.Data.Type != TypeBlank {
-			if foundExactlyOne {
+			found++
+			if found > n {
 				return false
 			}
-			foundExactlyOne = true
 		}
 	}
-	return foundExactlyOne
+	return found == n
 }
