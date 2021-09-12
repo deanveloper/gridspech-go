@@ -17,7 +17,7 @@ func (g GridSolver) SolveDots() <-chan gs.TileSet {
 
 	tilesToSolutions := make([]<-chan gs.TileSet, len(dotTiles))
 	for i, tile := range dotTiles {
-		tilesToSolutions[i] = g.solveDots(tile)
+		tilesToSolutions[i] = g.SolveDot(tile)
 	}
 
 	// now merge them all together
@@ -30,69 +30,8 @@ func (g GridSolver) SolveDots() <-chan gs.TileSet {
 	return tilesToSolutions[len(dotTiles)-1]
 }
 
-func mergeSolutionsIters(sols1, sols2 <-chan gs.TileSet) <-chan gs.TileSet {
-	iter := make(chan gs.TileSet, 50)
-
-	go func() {
-		// read sols2 into a slice
-		var sols2slice []gs.TileSet
-		for sol2 := range sols2 {
-			sols2slice = append(sols2slice, sol2)
-		}
-
-		// merge
-		for sol1 := range sols1 {
-
-		nextSolution:
-			for _, sol2 := range sols2slice {
-				var merged gs.TileSet
-
-				// do not merge if they have any tiles with unmatched colors
-				for _, t1 := range sol1.Slice() {
-					for _, t2 := range sol2.Slice() {
-						if t1.Coord == t2.Coord && t1.Data.Color != t2.Data.Color {
-							continue nextSolution
-						}
-					}
-				}
-
-				merged.Merge(sol1)
-				merged.Merge(sol2)
-				iter <- merged
-			}
-		}
-		close(iter)
-	}()
-
-	return iter
-}
-
-func filterUnique(in <-chan gs.TileSet) <-chan gs.TileSet {
-	filtered := make(chan gs.TileSet, 200)
-
-	go func() {
-		var alreadySeen []gs.TileSet
-		for newSolution := range in {
-			unique := true
-			for _, seen := range alreadySeen {
-				if newSolution.Eq(seen) {
-					unique = false
-					break
-				}
-			}
-			if unique {
-				alreadySeen = append(alreadySeen, newSolution)
-				filtered <- newSolution
-			}
-		}
-		close(filtered)
-	}()
-
-	return filtered
-}
-
-// there are very few valid solutions for an individual tile, so this just returns a slice
-func (g GridSolver) solveDots(t gs.Tile) <-chan gs.TileSet {
+// SolveDot returns a channel of solutions for a given dot tile.
+func (g GridSolver) SolveDot(t gs.Tile) <-chan gs.TileSet {
 	var numDots int
 
 	switch t.Data.Type {
@@ -110,10 +49,10 @@ func (g GridSolver) solveDots(t gs.Tile) <-chan gs.TileSet {
 		return o.Data.Color != gs.ColorNone && !g.UnknownTiles.Has(o.Coord)
 	})
 
-	return g.solveDotsRecur(t.Coord, gs.NewTileCoordSet(), numDots-knownEnabledTiles.Len())
+	return g.solveDotRecur(t.Coord, gs.NewTileCoordSet(), numDots-knownEnabledTiles.Len())
 }
 
-func (g GridSolver) solveDotsRecur(
+func (g GridSolver) solveDotRecur(
 	t gs.TileCoord,
 	tilesBeingUsed gs.TileCoordSet,
 	numDots int,

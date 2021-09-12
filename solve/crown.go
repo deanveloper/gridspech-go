@@ -14,7 +14,7 @@ func (g GridSolver) SolveCrowns() <-chan gs.TileSet {
 
 	tilesToSolutions := make([]<-chan gs.TileSet, len(crownTiles))
 	for i, tile := range crownTiles {
-		tilesToSolutions[i] = g.solveCrown(tile.Coord)
+		tilesToSolutions[i] = g.SolveCrown(tile.Coord)
 	}
 
 	// now merge them all together
@@ -26,9 +26,10 @@ func (g GridSolver) SolveCrowns() <-chan gs.TileSet {
 	return tilesToSolutions[len(tilesToSolutions)-1]
 }
 
-func (g GridSolver) solveCrown(crown gs.TileCoord) <-chan gs.TileSet {
+// SolveCrown returns a channel of solutions for a crown at the given coordinate.
+func (g GridSolver) SolveCrown(crown gs.TileCoord) <-chan gs.TileSet {
 
-	crownIter := make(chan gs.TileSet)
+	crownIter := make(chan gs.TileSet, 50)
 
 	go func() {
 		defer close(crownIter)
@@ -64,34 +65,4 @@ func shouldPruneCrown(g GridSolver, crown gs.TileCoord, shape gs.TileSet, color 
 	}
 
 	return false
-}
-
-func filterValidSoFar(
-	g GridSolver,
-	previousTiles []gs.Tile,
-	current gs.Tile,
-	sols <-chan gs.TileSet,
-) <-chan gs.TileSet {
-	filtered := make(chan gs.TileSet, 200)
-
-	go func() {
-		defer close(filtered)
-		for solution := range sols {
-			newBase := g.Grid.Clone()
-			newBase.ApplyTileSet(solution)
-
-			allValid := true
-			for _, tile := range previousTiles {
-				if !newBase.ValidTile(tile.Coord) {
-					allValid = false
-					break
-				}
-			}
-			if allValid {
-				filtered <- solution
-			}
-		}
-	}()
-
-	return filtered
 }
