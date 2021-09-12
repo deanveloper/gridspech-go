@@ -7,21 +7,23 @@ import (
 	"github.com/deanveloper/gridspech-go/solve"
 )
 
-func testSolveDotsAbstract(t *testing.T, level string, maxColors int, solutions []string) {
+func testSolveDotsAbstract(t *testing.T, level string, maxColors int, expectedSolutionStrings []string) {
 	t.Helper()
 
-	grid := solve.NewGridSolver(gs.MakeGridFromString(level, 2))
+	solver := solve.NewGridSolver(gs.MakeGridFromString(level, 2))
 
-	actualSolutions := grid.SolveDots()
-	var actualSolutionsStrs []string
-	for solution := range actualSolutions {
-		solvedGrid := grid.Grid.Clone()
-		solvedGrid.ApplyTileSet(solution)
+	var expectedSolutions []gs.TileSet
+	var actualSolutions []gs.TileSet
 
-		actualSolutionsStrs = append(actualSolutionsStrs, gridToSolutionString(t, solvedGrid))
+	for _, solutionString := range expectedSolutionStrings {
+		expectedSolutions = append(expectedSolutions, tileSetFromString(solver.Grid, solutionString))
 	}
 
-	testStringSlicesEq(t, solutions, actualSolutionsStrs)
+	for solution := range solver.SolveDots() {
+		actualSolutions = append(actualSolutions, solution)
+	}
+
+	testUnorderedTilesetSliceEq(t, expectedSolutions, actualSolutions)
 }
 
 func TestDots_levelBasic1(t *testing.T) {
@@ -31,10 +33,10 @@ func TestDots_levelBasic1(t *testing.T) {
 	0    0    0  
 	`
 	solutions := []string{
-		" A \n   \n   ",
-		"   \nA  \n   ",
-		"   \n  A\n   ",
-		"   \n   \n A ",
+		" 1 |0 0| 0 ",
+		" 0 |1 0| 0 ",
+		" 0 |0 1| 0 ",
+		" 0 |0 0| 1 ",
 	}
 	testSolveDotsAbstract(t, level, 2, solutions)
 }
@@ -46,12 +48,12 @@ func TestDots_levelBasic2(t *testing.T) {
 	0    0    0  
 	`
 	solutions := []string{
-		" A \nA  \n   ",
-		" A \n  A\n   ",
-		" A \n   \n A ",
-		"   \nA A\n   ",
-		"   \nA  \n A ",
-		"   \n  A\n A ",
+		" 1 |1 0| 0 ",
+		" 1 |0 1| 0 ",
+		" 1 |0 0| 1 ",
+		" 0 |1 1| 0 ",
+		" 0 |1 0| 1 ",
+		" 0 |0 1| 1 ",
 	}
 	testSolveDotsAbstract(t, level, 2, solutions)
 }
@@ -65,7 +67,7 @@ func TestDots_levelE8(t *testing.T) {
 	0m2  0m1  0m2  0m1  0m2
 	`
 	solutions := []string{
-		" A A \n A A \n     \nA   A\n AAA ",
+		"01010|01010|00000|10001|01110",
 	}
 	testSolveDotsAbstract(t, level, 2, solutions)
 

@@ -94,3 +94,17 @@ func TestNeighborsWith(t *testing.T) {
 		})
 	}
 }
+
+func TestNorthOf_arrow(t *testing.T) {
+	const level = `
+	0
+	_
+	0^
+	`
+	grid := gs.MakeGridFromString(level, 2)
+	actual := grid.NorthOf(*grid.TileAt(0, 0)).Coord
+	expected := gs.TileCoord{X: 0, Y: 2}
+	if actual != expected {
+		t.Errorf("expected: %v, actual %v", expected, actual)
+	}
+}

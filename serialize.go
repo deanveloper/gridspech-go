@@ -26,6 +26,18 @@ func stringToTileData(s string) TileData {
 		case strings.Contains(s, "j1"):
 			data.Type = TypeJoin
 		}
+		if strings.Contains(s, "^") {
+			data.ArrowNorth = true
+		}
+		if strings.Contains(s, ">") {
+			data.ArrowEast = true
+		}
+		if strings.Contains(s, "v") {
+			data.ArrowSouth = true
+		}
+		if strings.Contains(s, "<") {
+			data.ArrowWest = true
+		}
 	}
 	return data
 }

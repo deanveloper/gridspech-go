@@ -29,16 +29,16 @@ func (g Grid) TileAtCoord(coord TileCoord) *Tile {
 func (g Grid) NorthOf(t Tile) Tile {
 	// special behavior if we have an arrow
 	if t.Data.ArrowNorth {
-		nextTile := findTile(t, func(each Tile) (Tile, bool) {
-			if each.Coord.Y == g.Height()-1 {
-				return g.Tiles[each.Coord.X][0], true
+		var y int
+		for y = t.Coord.Y + 1; y != t.Coord.Y; y++ {
+			if g.TileAt(t.Coord.X, y).Data.Type != TypeHole {
+				break
 			}
-			if each.Data.Type == TypeHole {
-				return g.Tiles[each.Coord.X][each.Coord.Y+1], true
+			if y == g.Height()-1 {
+				y = -1
 			}
-			return Tile{}, false
-		})
-		return nextTile
+		}
+		return *g.TileAt(t.Coord.X, y)
 	}
 
 	if t.Coord.Y == g.Height()-1 || t.Data.Type == TypeHole {
@@ -51,16 +51,16 @@ func (g Grid) NorthOf(t Tile) Tile {
 func (g Grid) EastOf(t Tile) Tile {
 	// special behavior if we have an arrow
 	if t.Data.ArrowEast {
-		nextTile := findTile(t, func(each Tile) (Tile, bool) {
-			if each.Coord.X == g.Width()-1 {
-				return g.Tiles[0][each.Coord.Y], true
+		var x int
+		for x = t.Coord.X + 1; x != t.Coord.X; x++ {
+			if g.TileAt(x, t.Coord.Y).Data.Type != TypeHole {
+				break
 			}
-			if each.Data.Type == TypeHole {
-				return g.Tiles[each.Coord.X+1][each.Coord.Y], true
+			if x == g.Width()-1 {
+				x = -1
 			}
-			return Tile{}, false
-		})
-		return nextTile
+		}
+		return *g.TileAt(x, t.Coord.Y)
 	}
 
 	if t.Coord.X == g.Width()-1 || t.Data.Type == TypeHole {
@@ -73,16 +73,16 @@ func (g Grid) EastOf(t Tile) Tile {
 func (g Grid) SouthOf(t Tile) Tile {
 	// special behavior if we have an arrow
 	if t.Data.ArrowSouth {
-		nextTile := findTile(t, func(each Tile) (Tile, bool) {
-			if each.Coord.Y == 0 {
-				return g.Tiles[each.Coord.X][g.Height()-1], true
+		var y int
+		for y = t.Coord.Y - 1; y != t.Coord.Y; y-- {
+			if g.TileAt(t.Coord.X, y).Data.Type != TypeHole {
+				break
 			}
-			if each.Data.Type == TypeHole {
-				return g.Tiles[each.Coord.X][each.Coord.Y-1], true
+			if y == 0 {
+				y = g.Height()
 			}
-			return Tile{}, false
-		})
-		return nextTile
+		}
+		return *g.TileAt(t.Coord.X, y)
 	}
 
 	if t.Coord.Y == 0 || t.Data.Type == TypeHole {
@@ -95,16 +95,16 @@ func (g Grid) SouthOf(t Tile) Tile {
 func (g Grid) WestOf(t Tile) Tile {
 	// special behavior if we have an arrow
 	if t.Data.ArrowWest {
-		nextTile := findTile(t, func(each Tile) (Tile, bool) {
-			if each.Coord.X == 0 {
-				return g.Tiles[g.Width()-1][each.Coord.Y], true
+		var x int
+		for x = t.Coord.X - 1; x != t.Coord.X; x-- {
+			if g.TileAt(x, t.Coord.Y).Data.Type != TypeHole {
+				break
 			}
-			if each.Data.Type == TypeHole {
-				return g.Tiles[each.Coord.X-1][each.Coord.Y], true
+			if x == 0 {
+				x = g.Width()
 			}
-			return Tile{}, false
-		})
-		return nextTile
+		}
+		return *g.TileAt(x, t.Coord.Y)
 	}
 
 	if t.Coord.X == 0 || t.Data.Type == TypeHole {
@@ -113,7 +113,7 @@ func (g Grid) WestOf(t Tile) Tile {
 	return g.Tiles[t.Coord.X-1][t.Coord.Y]
 }
 
-func findTile(start Tile, iter func(each Tile) (Tile, bool)) Tile {
+func findTile(start Tile, iter func(each Tile) (next Tile, ok bool)) Tile {
 	last := start
 	next, ok := iter(start)
 	for {
@@ -214,7 +214,11 @@ func (g Grid) blobRecur(coord TileCoord, ts *TileSet, filter func(o Tile) bool) 
 }
 
 func (t Tile) String() string {
-	return t.Data.String()
+	return fmt.Sprintf("[%v: %v]", t.Coord, t.Data)
+}
+
+func (t TileCoord) String() string {
+	return fmt.Sprintf("(%d, %d)", t.X, t.Y)
 }
 
 func (td TileData) String() string {
