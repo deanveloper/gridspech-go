@@ -5,8 +5,6 @@ import (
 )
 
 // SolveCrowns will return a channel of solutions for all the crown tiles in g.
-//
-// For performance reasons, it is expected that you run this after all other tiles have been solved.
 func (g GridSolver) SolveCrowns() <-chan gs.TileSet {
 
 	// get all crown tiles
