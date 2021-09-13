@@ -24,7 +24,7 @@ func (g GridSolver) SolveJoins() <-chan gs.TileSet {
 
 	// now merge them all together
 	for i := 1; i < len(joinTiles); i++ {
-		mergedIter := mergeSolutionsIters(tilesToSolutions[i-1], tilesToSolutions[i])
+		mergedIter := MergeSolutionsIters(tilesToSolutions[i-1], tilesToSolutions[i])
 		tilesToSolutions[i] = mergedIter
 	}
 

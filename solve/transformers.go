@@ -2,8 +2,12 @@ package solve
 
 import gs "github.com/deanveloper/gridspech-go"
 
-func mergeSolutionsIters(sols1, sols2 <-chan gs.TileSet) <-chan gs.TileSet {
-	iter := make(chan gs.TileSet, 50)
+// MergeSolutionsIters makes pairs of solutions from sols1 and sols2 into
+// a single solution, then returns a channel of the merged pairs of solutions.
+//
+// A solution pair will only be sent if any tiles which appear in both solutions are equal.
+func MergeSolutionsIters(sols1, sols2 <-chan gs.TileSet) <-chan gs.TileSet {
+	iter := make(chan gs.TileSet, 20)
 
 	go func() {
 		// read sols2 into a slice
@@ -22,7 +26,7 @@ func mergeSolutionsIters(sols1, sols2 <-chan gs.TileSet) <-chan gs.TileSet {
 				// do not merge if they have any tiles with unmatched colors
 				for _, t1 := range sol1.Slice() {
 					for _, t2 := range sol2.Slice() {
-						if t1.Coord == t2.Coord && t1.Data.Color != t2.Data.Color {
+						if t1.Coord == t2.Coord && t1.Data != t2.Data {
 							continue nextSolution
 						}
 					}
@@ -40,7 +44,7 @@ func mergeSolutionsIters(sols1, sols2 <-chan gs.TileSet) <-chan gs.TileSet {
 }
 
 func filterUnique(in <-chan gs.TileSet) <-chan gs.TileSet {
-	filtered := make(chan gs.TileSet, 200)
+	filtered := make(chan gs.TileSet, 20)
 
 	go func() {
 		var alreadySeen []gs.TileSet
@@ -69,7 +73,7 @@ func filterValid(
 	current gs.Tile,
 	sols <-chan gs.TileSet,
 ) <-chan gs.TileSet {
-	filtered := make(chan gs.TileSet, 200)
+	filtered := make(chan gs.TileSet, 20)
 
 	go func() {
 		defer close(filtered)
@@ -85,6 +89,21 @@ func filterValid(
 				}
 			}
 			if allValid {
+				filtered <- solution
+			}
+		}
+	}()
+
+	return filtered
+}
+
+func filterHasTile(in <-chan gs.TileSet, coord gs.TileCoord) <-chan gs.TileSet {
+	filtered := make(chan gs.TileSet, 20)
+
+	go func() {
+		defer close(filtered)
+		for solution := range in {
+			if solution.ToTileCoordSet().Has(coord) {
 				filtered <- solution
 			}
 		}

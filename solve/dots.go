@@ -29,7 +29,7 @@ func (g GridSolver) SolveDots() <-chan gs.TileSet {
 
 	// now merge them all together
 	for i := 1; i < len(dotTiles); i++ {
-		mergedIter := mergeSolutionsIters(tilesToSolutions[i-1], tilesToSolutions[i])
+		mergedIter := MergeSolutionsIters(tilesToSolutions[i-1], tilesToSolutions[i])
 		uniqueIter := filterUnique(mergedIter)
 		tilesToSolutions[i] = uniqueIter
 	}
