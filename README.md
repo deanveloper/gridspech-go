@@ -8,4 +8,4 @@ This implementation was written to make a solver, which the package can be found
 
 Binaries for common environments can be found on the [releases page](https://github.com/deanveloper/gridspech-go/releases). After this, you can add it to your PATH.
 
-To install the CLI from source, first make sure you have the [Go compiler](https://golang.org/dl/) installed. Then, run `go install "github.com/deanveloper/gridspech-go/solve/cli/gs-solve@latest"`. The binary will appear in $GOBIN, which by default is `~/go/bin`
+To install the CLI from source, first make sure you have the [Go compiler](https://golang.org/dl/) installed. Then, run `go install "github.com/deanveloper/gridspech-go/solve/cmd/gs-solve@latest"`. The binary will appear in $GOBIN, which by default is `~/go/bin`
