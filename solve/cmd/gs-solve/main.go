@@ -12,20 +12,21 @@ import (
 )
 
 const (
-	outputString = "lines"
-	outputJSON   = "json"
+	outputLines = "lines"
+	outputJSON  = "json"
+	outputEmoji = "emoji"
 )
 
 var (
-	helpFlag    = getopt.BoolLong("help", 'h', "display help")
-	maxColors   = getopt.IntLong("maxcolors", 'm', 0, "the total number of colors available for this level", "2")
-	solveTiles  = getopt.ListLong("tiles", 't', "solve specific tiles. a comma-separated list of space-separated coordinates")
-	solveGoals  = getopt.BoolLong("goals", 'g', "solve all goal tiles")
-	solveCrowns = getopt.BoolLong("crowns", 'c', "solve all crown tiles")
-	solveDots   = getopt.BoolLong("dots", 'd', "solve all dot tiles")
-	solveJoins  = getopt.BoolLong("joins", 'j', "solve all join tiles")
-	solveAll    = getopt.BoolLong("all", 'a', "solve all tiles")
-	jsonOutput  = getopt.EnumLong("format", 'f', []string{outputString, outputJSON}, "", "output format (lines or json)")
+	helpFlag     = getopt.BoolLong("help", 'h', "display help")
+	maxColors    = getopt.IntLong("maxcolors", 'm', 2, "the total number of colors available for this level", "2")
+	solveTiles   = getopt.ListLong("tiles", 't', "solve specific tiles. a comma-separated list of space-separated coordinates")
+	solveGoals   = getopt.BoolLong("goals", 'g', "solve all goal tiles")
+	solveCrowns  = getopt.BoolLong("crowns", 'c', "solve all crown tiles")
+	solveDots    = getopt.BoolLong("dots", 'd', "solve all dot tiles")
+	solveJoins   = getopt.BoolLong("joins", 'j', "solve all join tiles")
+	solveAll     = getopt.BoolLong("all", 'a', "solve all tiles")
+	outputFormat = getopt.EnumLong("format", 'f', []string{outputLines, outputJSON, outputEmoji}, outputLines, "output format (lines/json/blocks)")
 )
 
 func solutionsFromFlags(solver solve.GridSolver) <-chan gridspech.TileSet {
@@ -118,15 +119,14 @@ func main() {
 	solver := solve.NewGridSolver(gridspech.MakeGridFromString(level, *maxColors))
 
 	solutions := solutionsFromFlags(solver)
-
-	first := true
-	for solution := range solutions {
-		if !first {
-			fmt.Println()
-		}
-
-		newGrid := solver.Grid.Clone()
-		newGrid.ApplyTileSet(solution)
-		fmt.Println(newGrid)
+	switch *outputFormat {
+	case outputLines:
+		printSolutionAsLines(solver, solutions)
+	case outputJSON:
+		printSolutionAsJSON(solver, solutions)
+	case outputEmoji:
+		printSolutionAsBlocks(solver, solutions)
+	default:
+		panic("invalid output format: " + *outputFormat)
 	}
 }

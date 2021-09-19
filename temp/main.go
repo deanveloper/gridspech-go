@@ -44,12 +44,13 @@ func tryE8() {
 
 func tryTest() {
 	const lvl = `
-	0    0    0    0    0    0  
-	0    0e   0k   0    0    0  
-	0    0    0k   0    0    0  
-	0    0    0k   0    0    0  
-	0    0    0k   0e   0    0  
-	0j1  0e   0    0    0j1  0e 
+	_ 0 0 0 0/ 0 0
+	0 0 0 0 0 0 0 
+	0 _ 0 0e 0 0 0e
+	0/ 0 0 0k 0 0 1/
+	0e 0 0 0e 0 _ 0
+	0 0 0 0 0 0 0
+	0 0 1/ 0 0 0 _
 	`
 	grid := gridspech.MakeGridFromString(lvl, 2)
 	ch := solve.NewGridSolver(grid).SolveAllTiles()

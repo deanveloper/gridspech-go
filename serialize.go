@@ -49,13 +49,17 @@ func emptyLine(s string) bool {
 }
 
 func stripEmptyLines(lines []string) []string {
+	if len(lines) == 0 {
+		return nil
+	}
+
+	restOfLines := stripEmptyLines(lines[1:])
+
 	if emptyLine(lines[0]) {
-		lines = lines[1:]
+		return restOfLines
 	}
-	if emptyLine(lines[len(lines)-1]) {
-		lines = lines[:len(lines)-1]
-	}
-	return lines
+
+	return append(lines[:1], restOfLines...)
 }
 
 // MakeGridFromString takes a string and converts it into a Grid.
